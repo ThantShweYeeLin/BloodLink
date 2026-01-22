@@ -4,13 +4,25 @@ import bodyParser from 'body-parser';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { query } from './sql.js';
+import { query, getPool } from './sql.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
+
+// Database connection test on startup
+async function testDatabaseConnection() {
+  try {
+    const result = await query('SELECT NOW() as current_time');
+    console.log('✓ Database connected successfully');
+    return true;
+  } catch (error) {
+    console.error('✗ Database connection failed:', error.message);
+    return false;
+  }
+}
 
 // Middleware
 app.use(cors({
@@ -1359,12 +1371,22 @@ app.use((err, req, res, next) => {
 
 // Start server
 async function startServer() {
+  // Test database connection first
+  console.log('\n🩸 BloodLink API Server');
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log('Connecting to database...');
+  
+  const dbConnected = await testDatabaseConnection();
+  
+  if (!dbConnected) {
+    console.error('⚠️ Warning: Database not connected. Server will start but may not function properly.');
+    console.error('Check your PostgreSQL is running and .env credentials are correct.');
+  }
+  
   app.listen(PORT, () => {
-    console.log(`\n🩸 BloodLink API Server`);
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`Server running on: http://localhost:${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`Database: PostgreSQL`);
+    console.log(`Database: PostgreSQL${dbConnected ? ' ✓' : ' ✗ (not connected)'}`);
     console.log(`\nAvailable endpoints:`);
     console.log(`  POST /api/register/donor`);
     console.log(`  POST /api/register/hospital`);

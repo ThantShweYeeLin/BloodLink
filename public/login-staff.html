@@ -171,24 +171,6 @@
   </style>
 </head>
 <body>
-  <script>
-    // Auto-redirect logged-in users to their dashboard
-    (function() {
-      try {
-        const token = localStorage.getItem('token');
-        const userType = localStorage.getItem('userType');
-        if (token && userType) {
-          const redirectMap = {
-            donor: '/dashboards/donor-dashboard.html',
-            staff: '/dashboards/staff-dashboard.html',
-            hospital: '/dashboards/hospital-dashboard.html'
-          };
-          const dest = redirectMap[userType];
-          if (dest) window.location.href = dest;
-        }
-      } catch (e) { /* ignore */ }
-    })();
-  </script>
   <div class="container">
     <div class="header">
       <a href="/index.html" class="back-btn">← Back</a>

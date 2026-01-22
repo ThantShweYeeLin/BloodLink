@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BloodLink — Lifesaving Blood Management</title>
+  <script>
+    // Redirect logged-in users to their dashboards when visiting root
+    (function() {
+      try {
+        const token = localStorage.getItem('token');
+        const userType = localStorage.getItem('userType');
+        if (token && userType) {
+          const redirectMap = {
+            donor: '/dashboards/donor-dashboard.html',
+            staff: '/dashboards/staff-dashboard.html',
+            hospital: '/dashboards/hospital-dashboard.html'
+          };
+          const dest = redirectMap[userType];
+          if (dest) {
+            window.location.replace(dest);
+            return;
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .hero {
+      background: white;
+      border-radius: 16px;
+      padding: clamp(2rem, 8vw, 4rem);
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      margin-bottom: 3rem;
+    }
+    
+    .logo {
+      font-size: clamp(3rem, 10vw, 5rem);
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      margin: 0.5rem 0;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .lead {
+      color: #6b7280;
+      margin: 0.5rem 0 2rem;
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 400;
+    }
+    
+    .cta {
+      display: inline-block;
+      background: #c62828;
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+    
+    .cta:hover {
+      background: #a01e1e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(198, 40, 40, 0.3);
+    }
+    
+    a.cta {
+      border: none;
+      background: #c62828;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    
+    .card {
+      background: white;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    .card-icon {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      margin-bottom: 1rem;
+    }
+    
+    .card h3 {
+      margin: 0.5rem 0;
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      font-weight: 600;
+    }
+    
+    .card p {
+      color: #6b7280;
+      margin: 0.5rem 0;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+      .features {
+        grid-template-columns: 1fr;
+      }
+      .hero {
+        padding: 2rem 1.5rem;
+      }
+      .container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero" role="banner">
+      <div class="logo">🩸</div>
+      <h1>BloodLink</h1>
+      <p class="lead">Blood Management — Simple, Secure and Connected</p>
+      <a href="register.html" class="cta">Get Started</a>
+    </header>
+
+    <section class="features" aria-label="Key features">
+      <div class="card">
+        <div class="card-icon">🩸</div>
+        <h3>For Donors</h3>
+        <p>View profile, donation history and eligibility information.</p>
+        <a href="register-donor.html" style="color: #c62828; text-decoration: none; font-weight: 600;">Register as Donor →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🏥</div>
+        <h3>For Hospitals</h3>
+        <p>Submit and track blood requests, view inventory status.</p>
+        <a href="register-hospital.html" style="color: #0369a1; text-decoration: none; font-weight: 600;">Register as Hospital →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">👩‍⚕️</div>
+        <h3>For Blood Bank Staff</h3>
+        <p>Manage donors, inventory and hospital requests.</p>
+        <a href="register-staff.html" style="color: #7c3aed; text-decoration: none; font-weight: 600;">Register as Staff →</a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

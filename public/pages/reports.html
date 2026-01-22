@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reports & Analytics — BloodLink</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+        .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
+    .nav-item:hover { background: #f3f4f6; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; }
+    .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+    .container { width: 100%; }
+    .header { background: #b91c1c; color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
+    @media (max-width: 768px) { .main-content { padding: 1rem; } .header { flex-direction: column; text-align: center; } }
+    .container { width: 1400px; margin: 0 auto; padding: 2rem; }
+    .header { background: linear-gradient(135deg, #b91c1c ; color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 2rem; margin: 0; }
+    .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+    .toolbar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .btn { background: #b91c1c; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #5568d3; }
+    .btn-secondary { background: #6b7280; }
+    .btn-secondary:hover { background: #4b5563; }
+    select { padding: 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; border-top: 4px solid #b91c1c; }
+    .stat-card h4 { color: #6b7280; margin: 0 0 0.5rem; font-size: 0.9rem; }
+    .stat-card .number { font-size: 2rem; font-weight: 700; color: #111827; }
+    .stat-card .subtext { font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; }
+    .chart-container { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; position: relative; height: 400px; }
+    .chart-container h3 { margin-bottom: 1.5rem; font-size: 1.1rem; }
+    canvas { max-height: 350px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f3f4f6; padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 1rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+    .table-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .loading { text-align: center; padding: 2rem; color: #6b7280; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .no-data { text-align: center; padding: 3rem; color: #9ca3af; }
+    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #86efac; }
+    .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    @media (max-width: 900px) { .two-column { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">🩸 BloodLink</div>
+    <nav class="nav">
+      <a href="/dashboards/staff-dashboard.html" class="nav-item">🏠 Dashboard</a>
+      <a href="/pages/donor-management.html" class="nav-item">👥 Donor Mgmt</a>
+      <a href="/pages/event-management.html" class="nav-item">📅 Events</a>
+      <a href="/donation-recording.html" class="nav-item">🩸 Record Donation</a>
+      <a href="/pages/inventory-management.html" class="nav-item">📦 Inventory</a>
+      <a href="/pages/request-management.html" class="nav-item">🏥 Requests</a>
+      <a href="/pages/emergency-requests.html" class="nav-item">🚨 Emergency</a>
+      <a href="/pages/reports.html" class="nav-item">📊 Reports</a>
+      <a href="/pages/staff-profile.html" class="nav-item">👤 Profile</a>
+      <a href="/pages/audit-logs.html" class="nav-item">🔐 Audit Logs</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar" id="userInitial">S</div>
+      <div class="user-info">
+        <div class="user-email" id="userName">Staff</div>
+        <div class="user-role">Staff Account</div>
+      </div>
+      <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+    </div>
+  </aside>
+  <main class="main-content">
+  <div class="container">
+    <div class="header">
+      <h1>📊 Reports & Analytics</h1>
+      </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="toolbar">
+      <select id="periodFilter" onchange="loadReports()">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly" selected>Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+      <button class="btn" onclick="exportPDF()">📥 Export PDF</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">📊 Export CSV</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <h4>Total Donations</h4>
+        <div class="number" id="totalDonations">-</div>
+        <div class="subtext">This period</div>
+      </div>
+      <div class="stat-card">
+        <h4>Total Collected (ml)</h4>
+        <div class="number" id="totalCollected">-</div>
+        <div class="subtext">Blood volume</div>
+      </div>
+      <div class="stat-card">
+        <h4>Requests Fulfilled</h4>
+        <div class="number" id="requestsFulfilled">-</div>
+        <div class="subtext">Success rate</div>
+      </div>
+      <div class="stat-card">
+        <h4>Active Donors</h4>
+        <div class="number" id="activeDonors">-</div>
+        <div class="subtext">Total registered</div>
+      </div>
+    </div>
+
+    <div class="two-column">
+      <div class="chart-container">
+        <h3>Donations Over Time</h3>
+        <canvas id="donationChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Blood Type Distribution</h3>
+        <canvas id="bloodTypeChart"></canvas>
+      </div>
+    </div>
+
+    <div class="two-column">
+      <div class="chart-container">
+        <h3>Request Fulfillment Status</h3>
+        <canvas id="fulfillmentChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>Most Requested Types</h3>
+        <canvas id="requestedTypesChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Donations</th>
+            <th>Volume (ml)</th>
+            <th>Requests</th>
+            <th>Fulfilled</th>
+            <th>Fulfillment Rate</th>
+          </tr>
+        </thead>
+        <tbody id="dailyTable">
+          <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3 style="padding: 1.5rem 1.5rem 0;">Top Blood Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Blood Type</th>
+            <th>Units Available</th>
+            <th>Total Collected</th>
+            <th>Average Demand</th>
+          </tr>
+        </thead>
+        <tbody id="bloodTypeTable">
+          <tr><td colspan="4" class="loading"><div class="spinner"></div>Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let charts = {};
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login-staff.html';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      try {
+        const options = { method, headers: getAuthHeader() };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+        if (!response.ok && response.status === 401) {
+          localStorage.clear();
+          window.location.href = '/login-staff.html';
+        }
+        return data;
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    async function loadReports() {
+      const reports = await apiCall('/staff/reports');
+      if (!reports.success) return showAlert('Failed to load reports', 'error');
+
+      const data = reports.data || {};
+
+      // Update stats
+      document.getElementById('totalDonations').textContent = data.total_donations || 0;
+      document.getElementById('totalCollected').textContent = (data.total_collected || 0).toLocaleString() + 'ml';
+      document.getElementById('requestsFulfilled').textContent = data.requests_fulfilled || 0;
+      document.getElementById('activeDonors').textContent = data.active_donors || 0;
+
+      // Create charts
+      createCharts(data);
+      displayDailyTable(data.daily_data || []);
+      displayBloodTypeTable(data.blood_type_stats || []);
+    }
+
+    function createCharts(data) {
+      // Donations Over Time
+      const donationCtx = document.getElementById('donationChart').getContext('2d');
+      if (charts.donation) charts.donation.destroy();
+      charts.donation = new Chart(donationCtx, {
+        type: 'line',
+        data: {
+          labels: (data.daily_data || []).map(d => d.date),
+          datasets: [{
+            label: 'Donations',
+            data: (data.daily_data || []).map(d => d.donations),
+            borderColor: '#b91c1c',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+      });
+
+      // Blood Type Distribution
+      const bloodCtx = document.getElementById('bloodTypeChart').getContext('2d');
+      if (charts.blood) charts.blood.destroy();
+      charts.blood = new Chart(bloodCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(data.blood_type_distribution || {}),
+          datasets: [{
+            data: Object.values(data.blood_type_distribution || {}),
+            backgroundColor: ['#dc2626', '#ec4899', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6'],
+            borderColor: 'white',
+            borderWidth: 2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      // Request Fulfillment
+      const fulfillCtx = document.getElementById('fulfillmentChart').getContext('2d');
+      if (charts.fulfill) charts.fulfill.destroy();
+      charts.fulfill = new Chart(fulfillCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Fulfilled', 'Pending', 'Rejected'],
+          datasets: [{
+            label: 'Count',
+            data: [
+              data.requests_fulfilled || 0,
+              data.requests_pending || 0,
+              data.requests_rejected || 0
+            ],
+            backgroundColor: ['#10b981', '#fbbf24', '#ef4444'],
+            borderRadius: 8
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+      });
+
+      // Most Requested Types
+      const requestedCtx = document.getElementById('requestedTypesChart').getContext('2d');
+      if (charts.requested) charts.requested.destroy();
+      charts.requested = new Chart(requestedCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data.most_requested_types || {}),
+          datasets: [{
+            label: 'Requests',
+            data: Object.values(data.most_requested_types || {}),
+            backgroundColor: '#b91c1c',
+            borderRadius: 8
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function displayDailyTable(data) {
+      const html = data.map(d => `
+        <tr>
+          <td>${d.date}</td>
+          <td>${d.donations}</td>
+          <td>${d.volume}ml</td>
+          <td>${d.requests}</td>
+          <td>${d.fulfilled}</td>
+          <td>
+            <span class="badge badge-success">${Math.round((d.fulfilled / (d.requests || 1)) * 100)}%</span>
+          </td>
+        </tr>
+      `).join('');
+      document.getElementById('dailyTable').innerHTML = html || '<tr><td colspan="6" class="no-data">No data</td></tr>';
+    }
+
+    function displayBloodTypeTable(data) {
+      const html = data.map(d => `
+        <tr>
+          <td><strong>${d.blood_type}</strong></td>
+          <td>${d.units_available}</td>
+          <td>${d.total_collected}ml</td>
+          <td>${d.avg_demand} units/week</td>
+        </tr>
+      `).join('');
+      document.getElementById('bloodTypeTable').innerHTML = html || '<tr><td colspan="4" class="no-data">No data</td></tr>';
+    }
+
+    async function exportPDF() {
+      showAlert('PDF export functionality would be implemented with a library like jsPDF', 'success');
+      // In production, use jsPDF or similar library
+    }
+
+    async function exportCSV() {
+      const data = await apiCall('/staff/reports');
+      if (!data.success) return showAlert('Failed to export data', 'error');
+
+      const csv = 'Blood Bank Report\n' +
+        `Generated: ${new Date().toISOString()}\n\n` +
+        'Metrics:\n' +
+        `Total Donations,${data.data.total_donations}\n` +
+        `Total Collected (ml),${data.data.total_collected}\n` +
+        `Requests Fulfilled,${data.data.requests_fulfilled}\n` +
+        `Active Donors,${data.data.active_donors}\n`;
+
+      downloadCSV(csv, 'blood-bank-report.csv');
+    }
+
+    function downloadCSV(content, filename) {
+      const element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+      element.setAttribute('download', filename);
+      element.click();
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+      container.innerHTML = `<div class="alert ${alertClass}">✓ ${message}</div>`;
+      setTimeout(() => { container.innerHTML = ''; }, 5000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login-staff.html';
+    }
+
+    if (checkAuth()) {
+      loadReports();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hospital Profile — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; }
+    .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 0.5rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.35rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; }
+    .nav-item:hover { background: #f3f4f6; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; border: 1px solid #fde8e8; }
+    .main { padding: 1.5rem 2rem; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .header { background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); color: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2); }
+    .header-content { display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 2rem; margin: 0; }
+    .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+    
+    .profile-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+    .profile-header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid #f3f4f6; }
+    .profile-avatar { width: 120px; height: 120px; border-radius: 20px; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: 700; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3); }
+    .profile-info { flex: 1; }
+    .profile-info h2 { margin: 0 0 0.5rem; font-size: 1.8rem; color: #111827; }
+    .profile-info p { color: #6b7280; margin: 0.3rem 0; font-size: 0.95rem; }
+    .hospital-type-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #dbeafe; color: #1e40af; padding: 0.5rem 1.2rem; border-radius: 20px; font-size: 1rem; font-weight: 600; margin-top: 0.5rem; border: 2px solid #bfdbfe; }
+    .profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.5rem; }
+    .stat-box { background: #f9fafb; padding: 1.2rem; border-radius: 10px; text-align: center; border-left: 3px solid #b91c1c; transition: all 0.2s; }
+    .stat-box:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .stat-box .number { font-size: 2rem; font-weight: 700; color: #b91c1c; }
+    .stat-box .label { font-size: 0.85rem; color: #6b7280; margin-top: 0.3rem; }
+    
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #111827; display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f3f4f6; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+    .info-item { background: #f9fafb; padding: 1.2rem; border-radius: 8px; border-left: 3px solid #e5e7eb; transition: all 0.2s; }
+    .info-item:hover { border-left-color: #b91c1c; transform: translateX(2px); }
+    .info-label { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { font-weight: 600; font-size: 1.05rem; color: #111827; }
+    
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+    input, select, textarea { width: 100%; padding: 0.85rem; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); background: #fff; }
+    textarea { min-height: 100px; resize: vertical; }
+    
+    .btn { background: #b91c1c; color: white; border: none; padding: 0.85rem 1.8rem; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 0.5rem; transition: all 0.2s; font-size: 0.95rem; }
+    .btn:hover { background: #a01818; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(185, 28, 28, 0.3); }
+    .btn-secondary { background: #6b7280; }
+    .btn-secondary:hover { background: #4b5563; transform: translateY(-1px); }
+    .button-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    
+    .table-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; color: #374151; }
+    td { padding: 1rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+    .badge { display: inline-block; padding: 0.4rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    
+    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #86efac; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .loading { text-align: center; padding: 2rem; color: #6b7280; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    @media (max-width: 768px) {
+      .profile-stats { grid-template-columns: repeat(2, 1fr); }
+      .profile-header { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">🩸 BloodLink</div>
+      <nav class="nav">
+        <a class="nav-item" href="../dashboards/hospital-dashboard.html">🏠 Dashboard</a>
+        <a class="nav-item" href="./hospital-submit-request.html">📝 Submit Request</a>
+        <a class="nav-item" href="./hospital-request-status.html">📊 Request Status</a>
+        <a class="nav-item" href="./hospital-emergency-request.html">🚨 Emergency</a>
+        <a class="nav-item" href="./hospital-request-history.html">🕑 History & Reports</a>
+        <a class="nav-item" href="./hospital-notifications.html">🔔 Notifications</a>
+        <a class="nav-item active" href="./hospital-profile.html">👤 Profile</a>
+        <a class="nav-item" href="./hospital-analytics.html">📈 Analytics</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="container">
+        <div class="header">
+          <div class="header-content">
+            <h1>🏥 Hospital Profile</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="profile-card">
+          <div class="profile-header">
+            <div class="profile-avatar" id="avatar">🏥</div>
+            <div class="profile-info">
+              <h2 id="hospitalName">Loading...</h2>
+              <p>📧 <span id="hospitalEmail">-</span></p>
+              <p>📱 <span id="hospitalPhone">-</span></p>
+              <div class="hospital-type-badge" id="typeBadge">
+                🏥 <span id="hospitalType">Medical Center</span>
+              </div>
+              <div class="profile-stats">
+                <div class="stat-box">
+                  <div class="number" id="totalRequests">0</div>
+                  <div class="label">Blood Requests</div>
+                </div>
+                <div class="stat-box">
+                  <div class="number" id="fulfilledRequests">0</div>
+                  <div class="label">Fulfilled</div>
+                </div>
+                <div class="stat-box">
+                  <div class="number" id="pendingRequests">0</div>
+                  <div class="label">Pending</div>
+                </div>
+                <div class="stat-box">
+                  <div class="number" id="memberYears">0</div>
+                  <div class="label">Years as Partner</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">📋 Hospital Information</div>
+            <div class="info-grid" id="hospitalInfo">
+              <div class="loading"><div class="spinner"></div>Loading profile...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="section">
+            <div class="section-title">✏️ Edit Profile</div>
+            <form id="editForm" onsubmit="saveProfile(event)">
+              <div class="form-group">
+                <label>Hospital Name</label>
+                <input type="text" id="hospitalNameInput" required>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" required>
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" id="phone">
+              </div>
+              <div class="form-group">
+                <label>Address</label>
+                <textarea id="address"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Hospital Type</label>
+                <select id="hospitalTypeInput">
+                  <option value="General">General Hospital</option>
+                  <option value="Specialty">Specialty Hospital</option>
+                  <option value="Teaching">Teaching Hospital</option>
+                  <option value="Clinic">Clinic</option>
+                  <option value="Emergency">Emergency Center</option>
+                </select>
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Discard</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="section">
+            <div class="section-title">🔒 Change Password</div>
+            <form id="passwordForm" onsubmit="changePassword(event)">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="currentPassword" required>
+              </div>
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" required minlength="8">
+              </div>
+              <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirmPassword" required minlength="8">
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn">Update Password</button>
+                <button type="button" class="btn btn-secondary" onclick="resetPasswordForm()">Clear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="section">
+            <div class="section-title">📋 Request History</div>
+            <div class="table-card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Request ID</th>
+                    <th>Blood Type</th>
+                    <th>Quantity</th>
+                    <th>Urgency</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTable">
+                  <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading requests...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let currentHospitalData = null;
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login-hospital.html';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      try {
+        const options = { method, headers: getAuthHeader() };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+        if (!response.ok && response.status === 401) {
+          localStorage.clear();
+          window.location.href = '/login-hospital.html';
+        }
+        return data;
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    async function loadProfile() {
+      const hospitalId = localStorage.getItem('hospitalId');
+      const data = await apiCall(`/hospital/profile/${hospitalId}`);
+
+      if (!data.success) return showAlert('Failed to load profile', 'error');
+
+      currentHospitalData = data.data;
+
+      // Update header
+      const initial = data.data.hospital_name.substring(0, 2).toUpperCase();
+      document.getElementById('avatar').textContent = initial;
+      document.getElementById('hospitalName').textContent = data.data.hospital_name;
+      document.getElementById('hospitalEmail').textContent = data.data.email;
+      document.getElementById('hospitalPhone').textContent = data.data.phone || 'Not provided';
+      document.getElementById('hospitalType').textContent = data.data.hospital_type || 'Medical Center';
+
+      // Calculate stats
+      const requests = data.data.requests || [];
+      const totalRequests = requests.length;
+      const fulfilledRequests = requests.filter(r => r.status === 'fulfilled').length;
+      const pendingRequests = requests.filter(r => r.status === 'pending').length;
+      const joinDate = new Date(data.data.created_at);
+      const years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
+
+      document.getElementById('totalRequests').textContent = totalRequests;
+      document.getElementById('fulfilledRequests').textContent = fulfilledRequests;
+      document.getElementById('pendingRequests').textContent = pendingRequests;
+      document.getElementById('memberYears').textContent = years;
+
+      // Update form
+      document.getElementById('hospitalNameInput').value = data.data.hospital_name;
+      document.getElementById('email').value = data.data.email;
+      document.getElementById('phone').value = data.data.phone || '';
+      document.getElementById('address').value = data.data.address || '';
+      document.getElementById('hospitalTypeInput').value = data.data.hospital_type || 'General';
+
+      // Display hospital info
+      const infoHtml = `
+        <div class="info-item">
+          <div class="info-label">Hospital ID</div>
+          <div class="info-value">#${String(data.data.id).padStart(4, '0')}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Hospital Type</div>
+          <div class="info-value">${data.data.hospital_type || 'Medical Center'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Email Address</div>
+          <div class="info-value">${data.data.email}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Phone Number</div>
+          <div class="info-value">${data.data.phone || 'Not provided'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Address</div>
+          <div class="info-value">${data.data.address || 'Not provided'}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Registration Date</div>
+          <div class="info-value">${new Date(data.data.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        </div>
+      `;
+      document.getElementById('hospitalInfo').innerHTML = infoHtml;
+
+      // Load request history
+      loadRequestHistory(requests);
+    }
+
+    function loadRequestHistory(requests) {
+      if (!requests || requests.length === 0) {
+        document.getElementById('requestsTable').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #9ca3af;">No blood requests yet</td></tr>';
+        return;
+      }
+
+      const html = requests.map(r => {
+        let badgeClass = 'badge-info';
+        if (r.status === 'fulfilled') badgeClass = 'badge-success';
+        else if (r.status === 'cancelled') badgeClass = 'badge-danger';
+        else if (r.urgency === 'emergency') badgeClass = 'badge-danger';
+        
+        return `
+          <tr>
+            <td><strong>#${String(r.id).padStart(4, '0')}</strong></td>
+            <td><strong>${r.blood_type}</strong></td>
+            <td>${r.quantity_units} units</td>
+            <td><span class="badge ${r.urgency === 'emergency' ? 'badge-danger' : 'badge-warning'}">${r.urgency || 'Standard'}</span></td>
+            <td>${new Date(r.request_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+            <td><span class="badge ${badgeClass}">${r.status || 'Pending'}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('requestsTable').innerHTML = html;
+    }
+
+    async function saveProfile(e) {
+      e.preventDefault();
+
+      const hospitalId = localStorage.getItem('hospitalId');
+      const data = {
+        hospital_name: document.getElementById('hospitalNameInput').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        hospital_type: document.getElementById('hospitalTypeInput').value
+      };
+
+      const result = await apiCall(`/hospitals/${hospitalId}`, 'PUT', data);
+
+      if (result.success) {
+        showAlert('Profile updated successfully', 'success');
+        currentHospitalData = { ...currentHospitalData, ...data };
+        document.getElementById('hospitalName').textContent = data.hospital_name;
+      } else {
+        showAlert(result.message || 'Failed to update profile', 'error');
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('hospitalNameInput').value = currentHospitalData.hospital_name;
+      document.getElementById('email').value = currentHospitalData.email;
+      document.getElementById('phone').value = currentHospitalData.phone || '';
+      document.getElementById('address').value = currentHospitalData.address || '';
+      document.getElementById('hospitalTypeInput').value = currentHospitalData.hospital_type || 'General';
+    }
+
+    async function changePassword(e) {
+      e.preventDefault();
+
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        return showAlert('Passwords do not match', 'error');
+      }
+
+      const hospitalId = localStorage.getItem('hospitalId');
+      const result = await apiCall(`/hospitals/${hospitalId}/password`, 'PUT', {
+        current_password: document.getElementById('currentPassword').value,
+        new_password: newPassword
+      });
+
+      if (result.success) {
+        showAlert('Password changed successfully', 'success');
+        resetPasswordForm();
+      } else {
+        showAlert(result.message || 'Failed to change password', 'error');
+      }
+    }
+
+    function resetPasswordForm() {
+      document.getElementById('passwordForm').reset();
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+      const icon = type === 'success' ? '✓' : '✗';
+      container.innerHTML = `<div class="alert ${alertClass}">${icon} ${message}</div>`;
+      setTimeout(() => { container.innerHTML = ''; }, 5000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login-hospital.html';
+    }
+
+    if (checkAuth()) {
+      loadProfile();
+    }
+  </script>
+</body>
+</html>

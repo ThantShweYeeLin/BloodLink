@@ -209,7 +209,7 @@
       const token = localStorage.getItem('token');
       const hospitalId = localStorage.getItem('hospitalId');
       if (token && hospitalId) {
-        window.location.href = '/dashboards/hospital-dashboard.html';
+        window.location.href = 'dashboards/hospital-dashboard.html';
       }
     });
 
@@ -249,7 +249,7 @@
           successMsg.style.display = 'block';
           
           setTimeout(() => {
-            window.location.href = '/dashboards/hospital-dashboard.html';
+            window.location.href = 'dashboards/hospital-dashboard.html';
           }, 1500);
         } else {
           errorMsg.textContent = '✗ ' + result.message;

@@ -390,7 +390,7 @@
       const token = localStorage.getItem('token');
       const hospitalId = localStorage.getItem('hospitalId');
       if (!token || !hospitalId) {
-        window.location.href = '/login-hospital.html';
+        window.location.href = '../login-hospital.html';
         return null;
       }
       return { token, hospitalId };
@@ -485,7 +485,7 @@
       localStorage.removeItem('userType');
       localStorage.removeItem('hospitalId');
       localStorage.removeItem('userName');
-      window.location.href = '/login-hospital.html';
+      window.location.href = '../login-hospital.html';
     }
 
     function setupNav() {

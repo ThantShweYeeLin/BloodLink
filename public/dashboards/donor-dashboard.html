@@ -780,7 +780,7 @@
       const token = localStorage.getItem('token');
       const donorId = localStorage.getItem('donorId');
       if (!token || !donorId) {
-        window.location.href = '/login-donor.html';
+        window.location.href = '../login-donor.html';
         return false;
       }
       return { token, donorId };
@@ -966,7 +966,7 @@
         localStorage.removeItem('donorId');
         localStorage.removeItem('userType');
         localStorage.removeItem('userName');
-        window.location.href = '/login-donor.html';
+        window.location.href = '../login-donor.html';
       }
     }
 

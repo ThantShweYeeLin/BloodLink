@@ -183,7 +183,7 @@
     function checkAuth() {
       const token = localStorage.getItem('token');
       if (!token) {
-        window.location.href = '/login-staff.html';
+        window.location.href = '../login-staff.html';
         return false;
       }
       return true;
@@ -209,7 +209,7 @@
 
         if (!response.ok && response.status === 401) {
           localStorage.clear();
-          window.location.href = '/login-staff.html';
+          window.location.href = '../login-staff.html';
         }
 
         return data;
@@ -354,7 +354,7 @@
 
     function logout() {
       localStorage.clear();
-      window.location.href = '/login-staff.html';
+      window.location.href = '../login-staff.html';
     }
 
     // Event listeners

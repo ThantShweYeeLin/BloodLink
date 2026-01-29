@@ -333,7 +333,7 @@
       const token = localStorage.getItem('token');
       const staffId = localStorage.getItem('staffId');
       if (!token || !staffId) {
-        window.location.href = '/login-staff.html';
+        window.location.href = '../login-staff.html';
         return null;
       }
       return { token, staffId };
@@ -669,7 +669,7 @@
       localStorage.removeItem('userType');
       localStorage.removeItem('staffId');
       localStorage.removeItem('userName');
-      window.location.href = '/login-staff.html';
+      window.location.href = '../login-staff.html';
     }
 
     document.addEventListener('DOMContentLoaded', () => {

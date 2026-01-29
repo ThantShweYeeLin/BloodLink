@@ -103,35 +103,34 @@ app.get('/api/debug/env', (req, res) => {
   });
 });
 
-// ==================== DEBUG: Try to create database if missing ====================
-app.post('/api/debug/create-db', async (req, res) => {
+// ==================== DEBUG: Try fresh connection ====================
+app.get('/api/debug/fresh-connect', async (req, res) => {
   try {
-    // Try to connect to the correct database
-    const testPool = new (await import('pg')).Pool({
+    const { Pool } = await import('pg');
+    console.log('🔍 Fresh connection attempt with env vars:');
+    console.log('  HOST:', process.env.DB_HOST);
+    console.log('  PORT:', process.env.DB_PORT);
+    console.log('  USER:', process.env.DB_USER);
+    console.log('  PASSWORD:', process.env.DB_PASSWORD);
+    console.log('  DATABASE:', process.env.DB_NAME);
+    
+    const freshPool = new Pool({
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT),
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl: { rejectUnauthorized: false },
     });
     
-    // Try a simple query
-    const result = await testPool.query('SELECT 1');
-    await testPool.end();
-    
-    res.json({ success: true, message: 'Database exists and is accessible' });
+    const result = await freshPool.query('SELECT NOW()');
+    await freshPool.end();
+    res.json({ success: true, message: 'Fresh connection successful', timestamp: result.rows[0] });
   } catch (err) {
-    if (err.message.includes('does not exist')) {
-      res.json({ 
-        success: false, 
-        message: 'Database does not exist',
-        expectedDB: process.env.DB_NAME,
-        note: 'Render may have created database with a different name. Please check Render dashboard.'
-      });
-    } else {
-      res.json({ success: false, message: err.message });
-    }
+    console.error('❌ Fresh connection error:', err.message);
+    console.error('Error code:', err.code);
+    console.error('Full error:', err);
+    res.json({ success: false, error: err.message, code: err.code });
   }
 });
 

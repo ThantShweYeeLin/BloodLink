@@ -26,6 +26,7 @@ export function getPool() {
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     });
     
     pool.on('error', (err) => {

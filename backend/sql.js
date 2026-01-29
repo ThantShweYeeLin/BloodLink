@@ -14,6 +14,27 @@ if (process.env.NODE_ENV === 'production') {
 
 const { Pool } = pg;
 
+// CRITICAL FIX: Override environment variables if they appear to be truncated or wrong
+// This happens when Render's dashboard env vars are set incorrectly
+const CORRECT_HOST = 'dpg-d5tpl7cr85hc73ejik5g-a.virginia-postgres.render.com';
+const CORRECT_PASSWORD = 'e0ZnyyYGn1F7en9rQQFvdXHI8fUR3Rbm';
+const CORRECT_DB_NAME = 'bloodline_db_38xf';
+
+if (process.env.DB_HOST !== CORRECT_HOST) {
+  console.warn(`⚠️  Overriding DB_HOST: "${process.env.DB_HOST}" → "${CORRECT_HOST}"`);
+  process.env.DB_HOST = CORRECT_HOST;
+}
+
+if (process.env.DB_PASSWORD !== CORRECT_PASSWORD) {
+  console.warn(`⚠️  Overriding DB_PASSWORD: ${process.env.DB_PASSWORD?.length || 0} chars → ${CORRECT_PASSWORD.length} chars`);
+  process.env.DB_PASSWORD = CORRECT_PASSWORD;
+}
+
+if (process.env.DB_NAME !== CORRECT_DB_NAME) {
+  console.warn(`⚠️  Overriding DB_NAME: "${process.env.DB_NAME}" → "${CORRECT_DB_NAME}"`);
+  process.env.DB_NAME = CORRECT_DB_NAME;
+}
+
 // Try to use DATABASE_URL if available (Render provides this), otherwise use individual env vars
 const poolConfig = process.env.DATABASE_URL 
   ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }

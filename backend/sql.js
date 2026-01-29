@@ -44,8 +44,16 @@ function convertPlaceholders(sql, params) {
 
 export async function query(sql, params = []) {
   const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
-  const result = await getPool().query(convertedSql, convertedParams);
-  return result.rows;
+  console.log('🔍 Executing SQL:', convertedSql);
+  console.log('   Parameters:', convertedParams);
+  try {
+    const result = await getPool().query(convertedSql, convertedParams);
+    console.log('✅ Query successful, returned', result.rows.length, 'rows');
+    return result.rows;
+  } catch (err) {
+    console.error('❌ Query failed:', err.message);
+    throw err;
+  }
 }
 
 export async function transaction(fn) {

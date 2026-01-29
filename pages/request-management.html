@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Request Management — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
+    .nav-item:hover { background: #f3f4f6; }
+    .nav-item.active { background: #fee2e2; color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; }
+    .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+    .container { width: 100%; max-width: 1400px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header h1 { font-size: 2rem; margin: 0; }
+    @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
+    @media (max-width: 768px) { .main-content { padding: 1rem; } .header { padding: 1.5rem; } .header h1 { font-size: 1.5rem; } }
+    .toolbar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; }
+    .btn { background: #b91c1c; color: white; border: none; padding: 0.7rem 1.3rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s ease; }
+    .btn:hover { background: #991b1b; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    .btn-secondary { background: #6b7280; }
+    .btn-secondary:hover { background: #4b5563; }
+    .btn-success { background: #10b981; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .filter-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.65rem 1.1rem; border: 2px solid #d1d5db; background: white; color: #111827; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s ease; }
+    .filter-btn:hover { border-color: #b91c1c; color: #b91c1c; }
+    .filter-btn.active { background: #b91c1c; color: white; border-color: #b91c1c; }
+    .request-card { background: white; border-radius: 12px; padding: 1.75rem; border-left: 5px solid #b91c1c; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.08); transition: all 0.2s ease; }
+    .request-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    .request-card.emergency { border-left-color: #dc2626; background: linear-gradient(to right, #fff5f5 0%, white 10%); }
+    .request-card.urgent { border-left-color: #f59e0b; background: linear-gradient(to right, #fffbeb 0%, white 10%); }
+    .request-card.fulfilled { border-left-color: #10b981; background: linear-gradient(to right, #f0fdf4 0%, white 10%); }
+    .request-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.25rem; }
+    .request-title { font-size: 1.2rem; font-weight: 700; color: #111827; }
+    .badge { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-emergency { background: #dc2626; color: white; }
+    .badge-urgent { background: #fee2e2; color: #991b1b; }
+    .badge-routine { background: #e5e7eb; color: #374151; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-fulfilled { background: #d1fae5; color: #065f46; }
+    .badge-cancelled { background: #e5e7eb; color: #6b7280; }
+    .request-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin: 1.25rem 0; }
+    .detail-item { }
+    .detail-item strong { display: block; color: #6b7280; margin-bottom: 0.3rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-item span { color: #111827; font-size: 1rem; font-weight: 600; }
+    .request-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+    .modal-header { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; color: #111827; }
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.6rem; font-weight: 600; color: #374151; }
+    input, select, textarea { width: 100%; padding: 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+    textarea { resize: vertical; min-height: 100px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); }
+    .modal-footer { display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; }
+    .alert { padding: 1.1rem 1.3rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 500; }
+    .alert-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+    .alert-error { background: #fee2e2; color: #991b1b; border-left: 4px solid #dc2626; }
+    .loading { text-align: center; padding: 3rem; color: #6b7280; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .no-data { text-align: center; padding: 3rem; color: #9ca3af; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">🩸 BloodLink</div>
+    <nav class="nav">
+      <a href="../dashboards/staff-dashboard.html" class="nav-item">🏠 Dashboard</a>
+      <a href="./donor-management.html" class="nav-item">👥 Donor Mgmt</a>
+      <a href="./event-management.html" class="nav-item">📅 Events</a>
+      <a href="../donation-recording.html" class="nav-item">🩸 Record Donation</a>
+      <a href="./inventory-management.html" class="nav-item">📦 Inventory</a>
+      <a href="./request-management.html" class="nav-item">🏥 Requests</a>
+      <a href="./emergency-requests.html" class="nav-item">🚨 Emergency</a>
+      <a href="./reports.html" class="nav-item">📊 Reports</a>
+      <a href="./staff-profile.html" class="nav-item">👤 Profile</a>
+      <a href="./audit-logs.html" class="nav-item">🔐 Audit Logs</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar" id="userInitial">S</div>
+      <div class="user-info">
+        <div class="user-email" id="userName">Staff</div>
+        <div class="user-role">Staff Account</div>
+      </div>
+      <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+    </div>
+  </aside>
+  <main class="main-content">
+  <div class="container">
+    <div class="header">
+      <h1>🏥 Hospital Requests</h1>
+      </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="toolbar">
+      <div class="filter-group">
+        <button class="filter-btn active" onclick="setFilter('all')">All</button>
+        <button class="filter-btn" onclick="setFilter('pending')">Pending</button>
+        <button class="filter-btn" onclick="setFilter('fulfilled')">Fulfilled</button>
+        <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
+      </div>
+    </div>
+
+    <div id="requestsContainer"></div>
+  </div>
+
+  <!-- Fulfill Request Modal -->
+  <div id="fulfillModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Fulfill Blood Request</div>
+      <div id="fulfillRequestInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: #f3f4f6; border-radius: 8px;"></div>
+      <form id="fulfillForm" onsubmit="fulfillRequest(event)">
+        <div class="form-group">
+          <label>Select Blood Units to Fulfill *</label>
+          <select id="unitsSelect" multiple required style="min-height: 150px;">
+            <!-- Populated dynamically -->
+          </select>
+          <small style="display: block; margin-top: 0.5rem; color: #6b7280;">Ctrl+Click to select multiple</small>
+        </div>
+        <div class="form-group">
+          <label>Notes (Optional)</label>
+          <textarea id="fulfillNotes" placeholder="Any notes about the fulfillment..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeFulfillModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Fulfill Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reject Request Modal -->
+  <div id="rejectModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Reject Request</div>
+      <form id="rejectForm" onsubmit="rejectRequest(event)">
+        <div class="form-group">
+          <label>Reason for Rejection *</label>
+          <textarea id="rejectReason" required placeholder="Explain why this request cannot be fulfilled..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeRejectModal()">Cancel</button>
+          <button type="submit" class="btn btn-danger">Reject Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let allRequests = [];
+    let availableUnits = [];
+    let currentFilter = 'all';
+    let currentRequestId = null;
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login-staff.html';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      try {
+        const options = { method, headers: getAuthHeader() };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+        if (!response.ok && response.status === 401) {
+          localStorage.clear();
+          window.location.href = '/login-staff.html';
+        }
+        return data;
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    async function loadRequests() {
+      const data = await apiCall('/staff/requests');
+      if (!data.success) return showAlert('Failed to load requests', 'error');
+
+      const inventory = await apiCall('/staff/inventory');
+      availableUnits = inventory.success ? inventory.data : [];
+
+      allRequests = data.data || [];
+      displayRequests();
+    }
+
+    function displayRequests() {
+      let requests = allRequests;
+      if (currentFilter !== 'all') {
+        requests = requests.filter(r => r.status.toLowerCase() === currentFilter);
+      }
+
+      const html = requests.map(r => {
+        const isPending = r.status.toLowerCase() === 'pending';
+        const isFulfilled = r.status.toLowerCase() === 'fulfilled';
+        const isEmergency = r.urgency === 'emergency';
+        const isUrgent = r.urgency === 'urgent';
+        
+        let cardClass = '';
+        if (isFulfilled) cardClass = 'fulfilled';
+        else if (isEmergency) cardClass = 'emergency';
+        else if (isUrgent) cardClass = 'urgent';
+
+        let urgencyBadge = '';
+        if (isEmergency) urgencyBadge = 'badge-emergency';
+        else if (isUrgent) urgencyBadge = 'badge-urgent';
+        else urgencyBadge = 'badge-routine';
+
+        let statusBadge = '';
+        if (r.status.toLowerCase() === 'fulfilled') statusBadge = 'badge-fulfilled';
+        else if (r.status.toLowerCase() === 'cancelled') statusBadge = 'badge-cancelled';
+        else statusBadge = 'badge-pending';
+
+        return `
+          <div class="request-card ${cardClass}">
+            <div class="request-header">
+              <div class="request-title">🏥 ${r.hospital_name || 'Unknown Hospital'}</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <span class="badge ${urgencyBadge}">${r.urgency}</span>
+                <span class="badge ${statusBadge}">${r.status}</span>
+              </div>
+            </div>
+            <div class="request-details">
+              <div class="detail-item">
+                <strong>Blood Type</strong>
+                <span style="color: #b91c1c; font-size: 1.2rem;">${r.blood_type}</span>
+              </div>
+              <div class="detail-item">
+                <strong>Quantity Required</strong>
+                <span>${r.quantity_required || r.quantity_ml || 0}ml</span>
+              </div>
+              <div class="detail-item">
+                <strong>Requested</strong>
+                <span>${new Date(r.request_date).toLocaleDateString()}</span>
+              </div>
+              <div class="detail-item">
+                <strong>Required By</strong>
+                <span>${r.required_by ? new Date(r.required_by).toLocaleDateString() : 'ASAP'}</span>
+              </div>
+            </div>
+            ${r.notes ? `
+              <div style="margin-top: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 8px; border-left: 3px solid #b91c1c;">
+                <strong style="color: #6b7280; font-size: 0.8rem;">NOTES:</strong>
+                <div style="color: #374151; margin-top: 0.3rem;">${r.notes}</div>
+              </div>
+            ` : ''}
+            ${isPending ? `
+              <div class="request-actions">
+                <button class="btn btn-success" onclick="openFulfillModal('${r.id}', '${r.blood_type}', ${r.quantity_required || r.quantity_ml})">
+                  ✓ Fulfill Request
+                </button>
+                <button class="btn btn-danger" onclick="openRejectModal('${r.id}')">
+                  ✗ Reject
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('requestsContainer').innerHTML = html || '<div class="no-data">📋 No requests found</div>';
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      displayRequests();
+    }
+
+    async function openFulfillModal(requestId, bloodType, quantityRequired) {
+      currentRequestId = requestId;
+      const request = allRequests.find(r => r.id == requestId);
+
+      document.getElementById('fulfillRequestInfo').innerHTML = `
+        <div style="margin-bottom: 0.5rem;"><strong>Hospital:</strong> ${request.hospital_name || 'Unknown'}</div>
+        <div style="margin-bottom: 0.5rem;"><strong>Blood Type:</strong> <span style="color: #b91c1c; font-weight: 700;">${bloodType}</span></div>
+        <div><strong>Quantity Required:</strong> ${quantityRequired}ml</div>
+      `;
+
+      const compatible = availableUnits.filter(u => 
+        u.blood_type === bloodType && 
+        u.status === 'available' &&
+        new Date(u.expiry_date) > new Date()
+      );
+
+      const select = document.getElementById('unitsSelect');
+      if (compatible.length === 0) {
+        select.innerHTML = '<option disabled>No compatible units available</option>';
+      } else {
+        select.innerHTML = compatible.map(u => {
+          const daysLeft = Math.ceil((new Date(u.expiry_date) - new Date()) / (24 * 60 * 60 * 1000));
+          return `<option value="${u.id}">Unit #${u.id} - ${u.quantity_ml}ml (Expires in ${daysLeft} days)</option>`;
+        }).join('');
+      }
+
+      document.getElementById('fulfillModal').classList.add('active');
+    }
+
+    function closeFulfillModal() {
+      document.getElementById('fulfillModal').classList.remove('active');
+    }
+
+    async function fulfillRequest(e) {
+      e.preventDefault();
+
+      const selectedUnits = Array.from(document.getElementById('unitsSelect').selectedOptions).map(o => o.value);
+      if (selectedUnits.length === 0) {
+        return showAlert('Please select at least one unit', 'error');
+      }
+
+      const result = await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
+        blood_unit_ids: selectedUnits,
+        notes: document.getElementById('fulfillNotes').value
+      });
+
+      if (result.success) {
+        showAlert('Request fulfilled successfully', 'success');
+        closeFulfillModal();
+        loadRequests();
+      } else {
+        showAlert(result.message || 'Failed to fulfill request', 'error');
+      }
+    }
+
+    function openRejectModal(requestId) {
+      currentRequestId = requestId;
+      document.getElementById('rejectForm').reset();
+      document.getElementById('rejectModal').classList.add('active');
+    }
+
+    function closeRejectModal() {
+      document.getElementById('rejectModal').classList.remove('active');
+    }
+
+    async function rejectRequest(e) {
+      e.preventDefault();
+
+      const result = await apiCall(`/staff/requests/${currentRequestId}/reject`, 'PUT', {
+        rejection_reason: document.getElementById('rejectReason').value
+      });
+
+      if (result.success) {
+        showAlert('Request rejected', 'success');
+        closeRejectModal();
+        loadRequests();
+      } else {
+        showAlert(result.message || 'Failed to reject request', 'error');
+      }
+    }
+
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+      const icon = type === 'success' ? '✓' : '✗';
+      container.innerHTML = `<div class="alert ${alertClass}">${icon} ${message}</div>`;
+      setTimeout(() => { container.innerHTML = ''; }, 5000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login-staff.html';
+    }
+
+    if (checkAuth()) {
+      loadRequests();
+      setInterval(loadRequests, 20000); // Refresh every 20s
+    }
+  </script>
+</body>
+</html>

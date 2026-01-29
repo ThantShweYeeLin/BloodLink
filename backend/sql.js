@@ -15,21 +15,6 @@ if (process.env.NODE_ENV === 'production') {
 const { Pool } = pg;
 
 // Fix environment variables if they appear to be truncated or wrong from Render dashboard
-const CORRECT_HOST = 'dpg-d5tpl7cr85hc73ejik5g-a.virginia-postgres.render.com';
-const CORRECT_PASSWORD = 'e0ZnyyYGn1F7en9rQQFvdXHI8fUR3Rbm';
-const CORRECT_DB_NAME = 'bloodline_db_38xf';
-
-if (process.env.DB_HOST !== CORRECT_HOST && process.env.NODE_ENV === 'production') {
-  process.env.DB_HOST = CORRECT_HOST;
-}
-
-if (process.env.DB_PASSWORD !== CORRECT_PASSWORD && process.env.NODE_ENV === 'production') {
-  process.env.DB_PASSWORD = CORRECT_PASSWORD;
-}
-
-if (process.env.DB_NAME !== CORRECT_DB_NAME && process.env.NODE_ENV === 'production') {
-  process.env.DB_NAME = CORRECT_DB_NAME;
-}
 
 // Try to use DATABASE_URL if available (Render provides this), otherwise use individual env vars
 const poolConfig = process.env.DATABASE_URL 
@@ -42,11 +27,6 @@ const poolConfig = process.env.DATABASE_URL
       database: process.env.DB_NAME || 'bloodlink_db',
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     };
-
-console.log('🔧 Pool config:', {
-  host: poolConfig.host || poolConfig.connectionString?.split('@')[1]?.split(':')[0],
-  database: poolConfig.database || 'from connection string',
-});
 
 let pool;
 

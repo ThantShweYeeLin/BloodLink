@@ -90,6 +90,19 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// ==================== DEBUG: Show environment ====================
+app.get('/api/debug/env', (req, res) => {
+  res.json({
+    DATABASE_URL: process.env.DATABASE_URL ? '***SET***' : 'NOT SET',
+    DB_HOST: process.env.DB_HOST,
+    DB_PORT: process.env.DB_PORT,
+    DB_USER: process.env.DB_USER,
+    DB_PASSWORD: process.env.DB_PASSWORD ? `***${process.env.DB_PASSWORD.length} chars***` : 'NOT SET',
+    DB_NAME: process.env.DB_NAME,
+    NODE_ENV: process.env.NODE_ENV,
+  });
+});
+
 // ==================== DONOR LOGIN (SQL) ====================
 app.post('/api/login/donor', async (req, res) => {
   try {

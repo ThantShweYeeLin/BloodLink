@@ -278,8 +278,13 @@ app.post('/api/register/donor', async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Donor registered successfully', donorId: String(result[0].id) });
   } catch (error) {
-    console.error('Donor registration error (SQL):', error);
-    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
+    console.error('Donor registration error (SQL):', error.message, error.stack);
+    const isDev = process.env.NODE_ENV !== 'production';
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed. Please try again.',
+      ...(isDev && { error: error.message })
+    });
   }
 });
 
@@ -320,8 +325,13 @@ app.post('/api/register/hospital', async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Hospital registered successfully', hospitalId: String(result[0].id) });
   } catch (error) {
-    console.error('Hospital registration error (SQL):', error);
-    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
+    console.error('Hospital registration error (SQL):', error.message, error.stack);
+    const isDev = process.env.NODE_ENV !== 'production';
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed. Please try again.',
+      ...(isDev && { error: error.message })
+    });
   }
 });
 
@@ -368,8 +378,13 @@ app.post('/api/register/staff', async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Staff registered successfully', staffId: String(result[0].id) });
   } catch (error) {
-    console.error('Staff registration error (SQL):', error);
-    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
+    console.error('Staff registration error (SQL):', error.message, error.stack);
+    const isDev = process.env.NODE_ENV !== 'production';
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed. Please try again.',
+      ...(isDev && { error: error.message })
+    });
   }
 });
 

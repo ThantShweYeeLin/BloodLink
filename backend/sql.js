@@ -17,6 +17,11 @@ const poolConfig = process.env.DATABASE_URL
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     };
 
+console.log('🔧 Pool config:', {
+  ...poolConfig,
+  password: poolConfig.password ? `***${poolConfig.password.length} chars***` : '***no password***',
+});
+
 let pool;
 
 export function getPool() {

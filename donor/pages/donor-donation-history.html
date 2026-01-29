@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donation History — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 0.75rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.35rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
+    .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .main { padding: 1.5rem 2rem; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 0 2rem; }
+    .header { background: linear-gradient(135deg,#b91c1c,#dc2626); color: #fff; padding: 1.6rem; border-radius: 16px; box-shadow: 0 8px 24px rgba(185,28,28,0.18); display: flex; justify-content: space-between; align-items: center; }
+    .filters { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem; margin-top: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 0.75rem; }
+    label { font-weight: 700; color: #374151; margin-bottom: 0.35rem; display: block; }
+    input, select { width: 100%; padding: 0.85rem; border: 1px solid #d1d5db; border-radius: 10px; }
+    input:focus, select:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185,28,28,0.12); }
+    .btn { background: #b91c1c; color: #fff; border: none; padding: 0.85rem 1.3rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn.secondary { background: #6b7280; }
+    .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; margin-top: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 0.9rem; text-align: left; font-weight: 700; color: #374151; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 0.9rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+    .badge { padding: 0.35rem 0.7rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-fail { background: #fee2e2; color: #7f1d1d; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">🩸 BloodLink Donor</div>
+      <nav class="nav">
+        <a class="nav-item" href="../dashboard.html">🏠 Dashboard</a>
+        <a class="nav-item" href="./donor-profile.html">👤 Profile</a>
+        <a class="nav-item active" href="./donor-donation-history.html">🧾 Donation History</a>
+        <a class="nav-item" href="./donor-eligibility.html">✅ Eligibility</a>
+        <a class="nav-item" href="./donor-events.html">📅 Events</a>
+        <a class="nav-item" href="./donor-appointments.html">⏰ Appointments</a>
+        <a class="nav-item" href="./donor-notifications.html">🔔 Notifications</a>
+        <a class="nav-item" href="./donor-rewards.html">🎖️ Rewards</a>
+        <a class="nav-item" href="./donor-faq.html">❓ FAQ</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="container">
+        <div class="header">
+          <div>
+            <h1>Donation History</h1>
+            <p style="margin-top:0.35rem; color:#fee2e2;">Review past donations and test results.</p>
+          </div>
+          <button class="btn" onclick="window.location.href='../dashboard.html'">← Dashboard</button>
+        </div>
+
+        <div class="filters">
+          <div>
+            <label>From Date</label>
+            <input type="date" />
+          </div>
+          <div>
+            <label>To Date</label>
+            <input type="date" />
+          </div>
+          <div>
+            <label>Status</label>
+            <select>
+              <option value="">All</option>
+              <option>Completed</option>
+              <option>Pending</option>
+              <option>Failed</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:0.6rem;">
+            <button class="btn">Apply</button>
+            <button class="btn secondary">Download CSV</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Test Result</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Dec 12, 2025</td>
+                <td>450 mL</td>
+                <td><span class="badge badge-success">Completed</span></td>
+                <td><span class="badge badge-success">Pass</span></td>
+                <td>City Center Clinic</td>
+              </tr>
+              <tr>
+                <td>Sep 01, 2025</td>
+                <td>450 mL</td>
+                <td><span class="badge badge-success">Completed</span></td>
+                <td><span class="badge badge-success">Pass</span></td>
+                <td>Red Cross Hub</td>
+              </tr>
+              <tr>
+                <td>Jun 10, 2025</td>
+                <td>450 mL</td>
+                <td><span class="badge badge-pending">Pending</span></td>
+                <td><span class="badge badge-pending">In Review</span></td>
+                <td>Mobile Drive</td>
+              </tr>
+              <tr>
+                <td>Jan 15, 2025</td>
+                <td>450 mL</td>
+                <td><span class="badge badge-fail">Cancelled</span></td>
+                <td><span class="badge badge-fail">N/A</span></td>
+                <td>Community Hospital</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

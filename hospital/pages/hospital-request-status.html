@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Request Status — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; }
+    .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 0.5rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.35rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; }
+    .nav-item:hover { background: #f3f4f6; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; border: 1px solid #fde8e8; }
+    .main { padding: 1.5rem 2rem; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0; }
+    .header { background: linear-gradient(135deg, #b91c1c, #dc2626); color: white; padding: 1.5rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25); display: flex; justify-content: space-between; align-items: center; }
+    .btn { background: #b91c1c; color: white; border: none; padding: 0.8rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { background: #a01818; box-shadow: 0 6px 12px rgba(185,28,28,0.3); transform: translateY(-1px); }
+    .card { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-top: 1.25rem; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 0.9rem; text-align: left; font-weight: 700; color: #374151; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 0.9rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+    .badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-fulfilled { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fee2e2; color: #991b1b; }
+    .status-partial { background: #e0f2fe; color: #075985; }
+    .note { color: #6b7280; font-size: 0.9rem; }
+    .pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">🩸 BloodLink</div>
+      <nav class="nav">
+        <a class="nav-item" href="../dashboard.html">🏠 Dashboard</a>
+        <a class="nav-item" href="./hospital-submit-request.html">📝 Submit Request</a>
+        <a class="nav-item active" href="./hospital-request-status.html">📊 Request Status</a>
+        <a class="nav-item" href="./hospital-emergency-request.html">🚨 Emergency</a>
+        <a class="nav-item" href="./hospital-request-history.html">🕑 History & Reports</a>
+        <a class="nav-item" href="./hospital-notifications.html">🔔 Notifications</a>
+        <a class="nav-item" href="./hospital-profile.html">👤 Profile</a>
+        <a class="nav-item" href="./hospital-analytics.html">📈 Analytics</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="container">
+        <div class="header">
+      <div>
+        <div class="pill">📊 Status Tracker</div>
+        <h1 style="margin-top:0.35rem;">Request Status</h1>
+        <p style="color:#fde8e8; margin-top:0.25rem;">Monitor all blood requests and fulfillment details.</p>
+      </div>
+      <button class="btn" onclick="window.location.href='../dashboard.html'">← Back</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Blood Type</th>
+                <th>Quantity</th>
+                <th>Urgency</th>
+                <th>Requested</th>
+                <th>Status</th>
+                <th>Fulfillment</th>
+              </tr>
+            </thead>
+            <tbody id="statusTable">
+              <tr><td colspan="7" style="text-align:center; padding:1.2rem; color:#6b7280;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+
+    function badge(status) {
+      if (status === 'fulfilled') return 'badge status-fulfilled';
+      if (status === 'rejected') return 'badge status-rejected';
+      if (status === 'partial') return 'badge status-partial';
+      return 'badge status-pending';
+    }
+
+    function showAlert(message, type = 'success') {
+      const container = document.getElementById('alertContainer');
+      const cls = type === 'success' ? 'alert-success' : 'alert-error';
+      container.innerHTML = `<div class="alert ${cls}">${message}</div>`;
+      setTimeout(() => container.innerHTML = '', 4000);
+    }
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` };
+    }
+
+    async function loadStatus() {
+      const hospitalId = localStorage.getItem('hospitalId');
+      try {
+        const res = await fetch(`${API_URL}/hospital/${hospitalId}/requests`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Failed');
+        renderTable(data.data || []);
+      } catch (err) {
+        console.warn('API not ready for hospital requests, using sample data.');
+        const sample = [
+          { id: 101, blood_type: 'O+', quantity_required: 6, urgency: 'emergency', status: 'pending', request_date: new Date(), expected: '2 hrs' },
+          { id: 102, blood_type: 'A-', quantity_required: 4, urgency: 'normal', status: 'fulfilled', request_date: new Date(Date.now()-86400000*3), fulfilled_date: new Date(Date.now()-86400000), notes: 'Delivered via mobile unit' },
+        ];
+        renderTable(sample);
+        showAlert('Using sample data. Hook to GET /api/hospital/:id/requests.', 'error');
+      }
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('statusTable');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:1.3rem; color:#9ca3af;">No requests yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td><strong>#${String(r.id).padStart(4,'0')}</strong></td>
+          <td>${r.blood_type}</td>
+          <td>${r.quantity_required || r.quantity_units || r.quantity}</td>
+          <td>${r.urgency || 'normal'}</td>
+          <td>${r.request_date ? new Date(r.request_date).toLocaleDateString() : '—'}</td>
+          <td><span class="${badge(r.status)}">${r.status || 'pending'}</span></td>
+          <td>${r.fulfilled_date ? new Date(r.fulfilled_date).toLocaleString() : (r.expected || '—')}</td>
+        </tr>
+      `).join('');
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>

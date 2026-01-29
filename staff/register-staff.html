@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register as Blood Bank Staff — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 1rem;
+      background: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-decoration: none;
+      color: #c62828;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: #f3f4f6;
+    }
+    
+    .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 0.5rem;
+    }
+    
+    .form-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #c62828;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+    }
+    
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #c62828;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      background: #a01e1e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(198, 40, 40, 0.3);
+    }
+    
+    .success-message {
+      display: none;
+      background: #d4edda;
+      color: #155724;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      .form-container {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="register.html" class="back-btn">← Back</a>
+      <div class="icon">👩‍⚕️</div>
+      <h1>Register as Blood Bank Staff</h1>
+    </div>
+
+    <div class="form-container">
+      <div class="success-message" id="successMsg">✓ Registration submitted successfully!</div>
+      
+      <form id="staffForm" onsubmit="handleSubmit(event, 'staff')">
+        <div class="form-group">
+          <label for="fullName">Full Name *</label>
+          <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name" />
+        </div>
+
+        <div class="form-group">
+          <label for="employeeId">Employee ID *</label>
+          <input type="text" id="employeeId" name="employeeId" required placeholder="Blood bank employee ID" />
+        </div>
+
+        <div class="form-group">
+          <label for="certification">Certification/License *</label>
+          <input type="text" id="certification" name="certification" required placeholder="Your certification number" />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" required placeholder="your.email@example.com" />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number *</label>
+          <input type="tel" id="phone" name="phone" required placeholder="+1 (555) 123-4567" />
+        </div>
+
+        <div class="form-group">
+          <label for="bloodBank">Blood Bank Name *</label>
+          <input type="text" id="bloodBank" name="bloodBank" required placeholder="Associated blood bank name" />
+        </div>
+
+        <div class="form-group">
+          <label for="department">Department *</label>
+          <select id="department" name="department" required>
+            <option value="">Select your department</option>
+            <option value="collection">Collection</option>
+            <option value="testing">Testing & QA</option>
+            <option value="processing">Processing</option>
+            <option value="storage">Storage & Distribution</option>
+            <option value="inventory">Inventory Management</option>
+            <option value="admin">Administration</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address *</label>
+          <input type="text" id="address" name="address" required placeholder="Your street address" />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" name="password" required placeholder="Create a strong password" />
+        </div>
+
+        <button type="submit">Register Staff</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    async function handleSubmit(event, role) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const submitButton = form.querySelector('button[type="submit"]');
+      const successMsg = document.getElementById('successMsg');
+      
+      // Disable submit button
+      submitButton.disabled = true;
+      submitButton.textContent = 'Registering...';
+      
+      // Collect form data
+      const formData = {
+        fullName: form.fullName.value,
+        employeeId: form.employeeId.value,
+        certification: form.certification.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        bloodBank: form.bloodBank.value,
+        department: form.department.value,
+        address: form.address.value,
+        password: form.password.value
+      };
+      
+      try {
+        // Send to backend API
+        const response = await fetch('https://bloodlink-mbvw.onrender.com/api/register/staff', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          successMsg.textContent = '✓ Staff registration successful!';
+          successMsg.style.display = 'block';
+          form.reset();
+          
+          // Redirect after 2 seconds
+          setTimeout(() => window.location.href = 'login-staff.html', 2000);
+        } else {
+          alert('Error: ' + result.message);
+          submitButton.disabled = false;
+          submitButton.textContent = 'Register Staff';
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('Registration failed. Please make sure the server is running.');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Register Staff';
+      }
+    }
+  </script>
+</body>
+</html>

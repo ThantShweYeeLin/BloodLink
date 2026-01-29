@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donation Recording — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: #f8f9fa; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+    .header {
+      background: linear-gradient(135deg, #b91c1c 0%, #b91c1c 100%);
+      color: white;
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header h1 { margin: 0; font-size: 2rem; }
+    .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: #b91c1c; text-decoration: none; }
+
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+
+    /* Card Styles */
+    .card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card h2 { margin: 0 0 1.5rem; font-size: 1.3rem; color: #111827; }
+
+    /* Form Styles */
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
+    .nav-item:hover { background: #f3f4f6; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; }
+    .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+    @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
+    @media (max-width: 768px) { .main-content { padding: 1rem; } }
+    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    .nav { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
+    .nav-item:hover { background: #f3f4f6; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; }
+    .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+    @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
+    @media (max-width: 768px) { .main-content { padding: 1rem; } }
+
+
+    input, select, textarea { 
+      width: 100%; 
+      padding: 0.8rem; 
+      border: 1px solid #d1d5db; 
+      border-radius: 8px; 
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    input:focus, select:focus, textarea:focus { 
+      outline: none; 
+      border-color: #b91c1c; 
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* Info Box */
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      color: #1e40af;
+    }
+
+    .info-box strong { color: #1e3a8a; }
+
+    /* Eligibility Alert */
+    .eligibility-alert {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid #dc2626;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .eligibility-alert.error { display: block; }
+    .eligibility-alert.warning { background: #fef3c7; border-left-color: #f59e0b; border-color: #fde047; color: #92400e; }
+    .eligibility-alert.success { background: #d1fae5; border-left-color: #10b981; border-color: #86efac; color: #065f46; }
+
+    .alert-title { font-weight: 600; margin-bottom: 0.5rem; }
+    .alert-body { font-size: 0.85rem; }
+
+    /* Donor Info Card */
+    .donor-info {
+      background: #f3f4f6;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .donor-info.visible { display: block; }
+
+    .donor-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .info-item { }
+    .info-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+    .info-value { font-size: 1.1rem; font-weight: 600; color: #111827; margin-top: 0.3rem; }
+
+    /* Test Results */
+    .test-section { background: #f9fafb; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; }
+    .test-section h3 { margin: 0 0 1rem; font-size: 1rem; color: #111827; }
+
+    .test-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .test-item {
+      padding: 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .test-item:hover { border-color: #d1d5db; background: white; }
+    .test-item.selected { border-color: #10b981; background: #ecfdf5; }
+    .test-item.failed { border-color: #dc2626; background: #fef2f2; }
+
+    .test-name { font-weight: 600; display: block; margin-bottom: 0.5rem; }
+    .test-status { font-size: 0.85rem; color: #6b7280; }
+    .test-item.selected .test-status { color: #10b981; font-weight: 600; }
+    .test-item.failed .test-status { color: #dc2626; font-weight: 600; }
+
+    /* Summary */
+    .summary-card {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-item { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
+    .summary-label { color: #6b7280; }
+    .summary-value { font-weight: 600; color: #111827; }
+
+    .divider { border-top: 1px solid #d1d5db; margin: 1rem 0; }
+
+    /* Buttons */
+    .button-group { display: flex; gap: 1rem; margin-top: 2rem; }
+    .btn {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary { background: #b91c1c; color: white; }
+    .btn-primary:hover { background: #5568d3; }
+    .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    .btn-secondary { background: #6b7280; color: white; }
+    .btn-secondary:hover { background: #4b5563; }
+
+    /* Success Message */
+    .success-message {
+      background: #d1fae5;
+      border: 1px solid #86efac;
+      border-left: 4px solid #10b981;
+      color: #065f46;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .success-message.visible { display: block; }
+
+    /* Error Message */
+    .error-message {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid #dc2626;
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .error-message.visible { display: block; }
+
+    /* Loading */
+    .loading { text-align: center; color: #6b7280; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+
+    /* Timeline */
+    .timeline { margin-top: 2rem; }
+    .timeline-item { display: flex; margin-bottom: 1.5rem; }
+    .timeline-marker {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #b91c1c;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+
+    .timeline-content { flex: 1; }
+    .timeline-title { font-weight: 600; color: #111827; }
+    .timeline-description { font-size: 0.9rem; color: #6b7280; margin-top: 0.3rem; }
+
+    .step-complete .timeline-marker { background: #10b981; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">🩸 BloodLink</div>
+    <nav class="nav">
+      <a href="../staff/dashboard.html" class="nav-item">🏠 Dashboard</a>
+      <a href="pages/donor-management.html" class="nav-item">👥 Donor Mgmt</a>
+      <a href="pages/event-management.html" class="nav-item">📅 Events</a>
+      <a href="#" class="nav-item" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fde8e8;">🩸 Record Donation</a>
+      <a href="pages/inventory-management.html" class="nav-item">📦 Inventory</a>
+      <a href="pages/request-management.html" class="nav-item">🏥 Requests</a>
+      <a href="pages/emergency-requests.html" class="nav-item">🚨 Emergency</a>
+      <a href="pages/reports.html" class="nav-item">📊 Reports</a>
+      <a href="pages/staff-profile.html" class="nav-item">�� Profile</a>
+      <a href="pages/audit-logs.html" class="nav-item">🔐 Audit Logs</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar" id="userInitial">S</div>
+      <div class="user-info">
+        <div class="user-email" id="userName">Staff</div>
+        <div class="user-role">Staff Account</div>
+      </div>
+      <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+    </div>
+  </aside>
+  <main class="main-content">
+  <div class="header">
+    <h1>🩸 Donation Recording</h1>
+    </div>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="staff-management.html">Staff Portal</a> > Donation Recording
+    </div>
+
+    <!-- Success Message -->
+    <div id="successMsg" class="success-message"></div>
+
+    <!-- Error Message -->
+    <div id="errorMsg" class="error-message"></div>
+
+    <div class="main-grid">
+      <!-- Left Column: Donor Selection & Info -->
+      <div class="card">
+        <h2>Donor Selection</h2>
+
+        <div class="info-box">
+          💡 Only donors who are currently eligible for donation are shown in the list.
+        </div>
+
+        <div class="form-group">
+          <label for="donorSelect">Select Donor *</label>
+          <select id="donorSelect" onchange="selectDonor()">
+            <option value="">-- Loading eligible donors --</option>
+          </select>
+        </div>
+
+        <!-- Donor Info -->
+        <div id="donorInfo" class="donor-info">
+          <h3 style="margin-top: 0;">Donor Information</h3>
+          <div class="donor-info-grid">
+            <div class="info-item">
+              <div class="info-label">Blood Type</div>
+              <div class="info-value" id="infoDonorBlood">--</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Phone</div>
+              <div class="info-value" id="infoDonorPhone">--</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Last Donation</div>
+              <div class="info-value" id="infoDonorLastDonation">--</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Registration</div>
+              <div class="info-value" id="infoDonorRegistration">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Eligibility Alert -->
+        <div id="eligibilityAlert" class="eligibility-alert"></div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0;">
+
+        <div class="form-group">
+          <label for="eventSelect">Donation Event (Optional)</label>
+          <select id="eventSelect">
+            <option value="">-- Select Event --</option>
+          </select>
+        </div>
+
+        <div id="eventInfo" style="background: #f3f4f6; padding: 1rem; border-radius: 8px; display: none;">
+          <div style="font-weight: 600; margin-bottom: 0.5rem;" id="eventName">Event Name</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">
+            <strong>Date:</strong> <span id="eventDate">--</span><br>
+            <strong>Location:</strong> <span id="eventLocation">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Donation Details -->
+      <div class="card">
+        <h2>Donation Details</h2>
+
+        <div class="form-group">
+          <label for="bloodType">Blood Type *</label>
+          <select id="bloodType" required>
+            <option value="">-- Select Blood Type --</option>
+            <option value="O+">O+ (Most Common)</option>
+            <option value="O-">O- (Universal Donor)</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB- (Rarest)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantity">Quantity (ml) *</label>
+            <input type="number" id="quantity" min="200" max="500" value="450" required>
+          </div>
+          <div class="form-group">
+            <label for="donationDate">Donation Date *</label>
+            <input type="date" id="donationDate" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="collectionTime">Collection Time</label>
+          <input type="time" id="collectionTime">
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Additional Notes</label>
+          <textarea id="notes" placeholder="Any relevant notes about the donation..." style="height: 80px;"></textarea>
+        </div>
+
+        <!-- Expiry Calculation -->
+        <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #0284c7; margin-top: 1rem;">
+          <div style="font-size: 0.85rem; color: #0c4a6e; margin-bottom: 0.5rem;">📅 Calculated Expiry Date</div>
+          <div style="font-size: 1.2rem; font-weight: 600; color: #0c2d4a;" id="expiryDate">--</div>
+          <div style="font-size: 0.75rem; color: #0c4a6e; margin-top: 0.3rem;">42 days from donation date</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Results Section -->
+    <div class="card">
+      <h2>Test Results</h2>
+
+      <div class="info-box">
+        ✓ Select pass or fail for each blood test. Donations failing critical tests will be rejected.
+      </div>
+
+      <div class="test-section">
+        <h3>Blood Type Verification</h3>
+        <div class="test-group">
+          <div class="test-item" onclick="setTestResult('bloodTypePass', true)">
+            <span class="test-name">✓ Pass</span>
+            <span class="test-status">Correct type</span>
+          </div>
+          <div class="test-item" onclick="setTestResult('bloodTypePass', false)">
+            <span class="test-name">✗ Fail</span>
+            <span class="test-status">Mismatch</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>Infectious Disease Screening (Critical)</h3>
+        <div class="test-group">
+          <div class="test-item" onclick="setTestResult('screeningPass', true)">
+            <span class="test-name">✓ Pass</span>
+            <span class="test-status">All negative</span>
+          </div>
+          <div class="test-item" onclick="setTestResult('screeningPass', false)">
+            <span class="test-name">✗ Fail</span>
+            <span class="test-status">Positive result</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>Blood Count Tests</h3>
+        <div class="test-group">
+          <div class="test-item" onclick="setTestResult('countPass', true)">
+            <span class="test-name">✓ Pass</span>
+            <span class="test-status">Normal values</span>
+          </div>
+          <div class="test-item" onclick="setTestResult('countPass', false)">
+            <span class="test-name">✗ Fail</span>
+            <span class="test-status">Out of range</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>Virology Tests</h3>
+        <div class="test-group">
+          <div class="test-item" onclick="setTestResult('virologyPass', true)">
+            <span class="test-name">✓ Pass</span>
+            <span class="test-status">Negative</span>
+          </div>
+          <div class="test-item" onclick="setTestResult('virologyPass', false)">
+            <span class="test-name">✗ Fail</span>
+            <span class="test-status">Positive</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <h2>Donation Summary</h2>
+
+      <div id="rejectionAlert" class="eligibility-alert error" style="display: none; margin-bottom: 1.5rem;">
+        <div class="alert-title">⚠️ Donation Cannot Be Processed</div>
+        <div class="alert-body" id="rejectionReason"></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-item">
+          <span class="summary-label">Donor</span>
+          <span class="summary-value" id="summaryDonor">Not selected</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Blood Type</span>
+          <span class="summary-value" id="summaryBloodType">--</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Quantity</span>
+          <span class="summary-value" id="summaryQuantity">--</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+          <span class="summary-label">Donation Date</span>
+          <span class="summary-value" id="summaryDate">--</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Expiry Date</span>
+          <span class="summary-value" id="summaryExpiry">--</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+          <span class="summary-label">All Tests Passed</span>
+          <span class="summary-value" id="summaryTests">
+            <span class="badge badge-warning">Incomplete</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitDonation()" disabled>Record Donation</button>
+      </div>
+    </div>
+
+    <!-- Process Timeline -->
+    <div class="card">
+      <h2>Recording Process</h2>
+      <div class="timeline">
+        <div class="timeline-item step-complete">
+          <div class="timeline-marker">✓</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Donor Selection</div>
+            <div class="timeline-description">Eligible donors are automatically filtered</div>
+          </div>
+        </div>
+        <div class="timeline-item" id="step2">
+          <div class="timeline-marker">2</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Donation Details</div>
+            <div class="timeline-description">Enter blood type, quantity, and date</div>
+          </div>
+        </div>
+        <div class="timeline-item" id="step3">
+          <div class="timeline-marker">3</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Blood Tests</div>
+            <div class="timeline-description">Record test results for quality assurance</div>
+          </div>
+        </div>
+        <div class="timeline-item" id="step4">
+          <div class="timeline-marker">4</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Record Donation</div>
+            <div class="timeline-description">Submit and add to inventory</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    let selectedDonor = null;
+    let selectedEvent = null;
+    let testResults = {
+      bloodTypePass: null,
+      screeningPass: null,
+      countPass: null,
+      virologyPass: null
+    };
+
+    // Auth check
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login-staff.html';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      try {
+        const options = {
+          method,
+          headers: getAuthHeader()
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+
+        if (!response.ok && response.status === 401) {
+          localStorage.clear();
+          window.location.href = 'login-staff.html';
+        }
+
+        return data;
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    // Load data on init
+    async function loadDonors() {
+      const data = await apiCall('/staff/donors');
+      if (!data.success) return showError('Failed to load donors');
+
+      const eligible = data.data.filter(d => d.isEligible);
+      const select = document.getElementById('donorSelect');
+      select.innerHTML = '<option value="">-- Select Donor --</option>' +
+        eligible.map(d => `<option value="${d.id}" data-blood="${d.blood_type}">${d.full_name} (${d.blood_type})</option>`).join('');
+    }
+
+    async function loadEvents() {
+      const data = await apiCall('/events');
+      if (!data.success) return;
+
+      const select = document.getElementById('eventSelect');
+      const events = data.data.filter(e => new Date(e.date) >= new Date());
+      select.innerHTML = '<option value="">-- Select Event (Optional) --</option>' +
+        events.map(e => `<option value="${e._id}" data-date="${e.date}" data-time="${e.start_time}" data-location="${e.location}">${e.title} - ${new Date(e.date).toLocaleDateString()}</option>`).join('');
+    }
+
+    // Donor selection
+    function selectDonor() {
+      const select = document.getElementById('donorSelect');
+      const donorId = select.value;
+
+      if (!donorId) {
+        document.getElementById('donorInfo').classList.remove('visible');
+        selectedDonor = null;
+        return;
+      }
+
+      const option = select.options[select.selectedIndex];
+      selectedDonor = {
+        id: donorId,
+        name: option.text.split(' (')[0],
+        blood: option.dataset.blood
+      };
+
+      // Load full donor data
+      fetchDonorDetails(donorId);
+    }
+
+    async function fetchDonorDetails(donorId) {
+      const data = await apiCall(`/staff/donors/${donorId}`);
+      if (!data.success) return;
+
+      const donor = data.data;
+      document.getElementById('infoDonorBlood').textContent = donor.blood_type;
+      document.getElementById('infoDonorPhone').textContent = donor.phone || 'N/A';
+      document.getElementById('infoDonorLastDonation').textContent = donor.last_donation_date ? 
+        new Date(donor.last_donation_date).toLocaleDateString() : 'Never donated';
+      document.getElementById('infoDonorRegistration').textContent = new Date(donor.registration_date).toLocaleDateString();
+
+      document.getElementById('donorInfo').classList.add('visible');
+      document.getElementById('summaryDonor').textContent = donor.full_name;
+
+      // Update blood type
+      document.getElementById('bloodType').value = donor.blood_type;
+      updateSummary();
+    }
+
+    // Event selection
+    document.getElementById('eventSelect').addEventListener('change', function() {
+      const option = this.options[this.selectedIndex];
+      if (this.value) {
+        selectedEvent = {
+          id: this.value,
+          name: option.text,
+          date: option.dataset.date,
+          location: option.dataset.location
+        };
+        document.getElementById('eventName').textContent = option.text;
+        document.getElementById('eventDate').textContent = new Date(option.dataset.date).toLocaleDateString();
+        document.getElementById('eventLocation').textContent = option.dataset.location;
+        document.getElementById('eventInfo').style.display = 'block';
+      } else {
+        selectedEvent = null;
+        document.getElementById('eventInfo').style.display = 'none';
+      }
+    });
+
+    // Update expiry calculation
+    document.getElementById('donationDate').addEventListener('change', calculateExpiry);
+    document.getElementById('quantity').addEventListener('change', updateSummary);
+    document.getElementById('bloodType').addEventListener('change', updateSummary);
+
+    function calculateExpiry() {
+      const donationDate = new Date(document.getElementById('donationDate').value);
+      const expiryDate = new Date(donationDate);
+      expiryDate.setDate(expiryDate.getDate() + 42);
+
+      if (!isNaN(expiryDate)) {
+        const formattedDate = expiryDate.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        document.getElementById('expiryDate').textContent = formattedDate;
+        document.getElementById('summaryExpiry').textContent = formattedDate;
+      }
+
+      updateSummary();
+    }
+
+    // Test results
+    function setTestResult(test, passed) {
+      testResults[test] = passed;
+      
+      const buttons = document.querySelectorAll(`[onclick*="${test}"]`);
+      buttons.forEach(btn => btn.classList.remove('selected', 'failed'));
+      
+      const clickedBtn = event.target.closest('.test-item');
+      clickedBtn.classList.add(passed ? 'selected' : 'failed');
+
+      updateSummary();
+      checkAllTestsComplete();
+    }
+
+    function checkAllTestsComplete() {
+      const allComplete = Object.values(testResults).every(v => v !== null);
+      const allPassed = Object.values(testResults).every(v => v === true);
+
+      if (allComplete) {
+        document.getElementById('summaryTests').innerHTML = 
+          `<span class="badge ${allPassed ? 'badge-success' : 'badge-danger'}">
+            ${allPassed ? '✓ All Pass' : '✗ Some Failed'}
+          </span>`;
+      }
+
+      // Enable submit if donor selected and all tests passed
+      const donorSelected = document.getElementById('donorSelect').value;
+      const submitBtn = document.getElementById('submitBtn');
+      
+      const screeningFailed = testResults.screeningPass === false;
+      
+      if (screeningFailed) {
+        document.getElementById('rejectionAlert').style.display = 'block';
+        document.getElementById('rejectionReason').textContent = 'This donation failed infectious disease screening and cannot be processed.';
+        submitBtn.disabled = true;
+      } else if (donorSelected && allComplete && allPassed) {
+        document.getElementById('rejectionAlert').style.display = 'none';
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.disabled = true;
+      }
+    }
+
+    function updateSummary() {
+      const bloodType = document.getElementById('bloodType').value;
+      const quantity = document.getElementById('quantity').value;
+      const date = document.getElementById('donationDate').value;
+
+      document.getElementById('summaryBloodType').textContent = bloodType || '--';
+      document.getElementById('summaryQuantity').textContent = quantity ? `${quantity} ml` : '--';
+      document.getElementById('summaryDate').textContent = date ? new Date(date).toLocaleDateString() : '--';
+
+      checkAllTestsComplete();
+    }
+
+    // Submit donation
+    async function submitDonation() {
+      if (!selectedDonor) {
+        return showError('Please select a donor');
+      }
+
+      // Check for failed screening
+      if (testResults.screeningPass === false) {
+        return showError('Cannot submit donation: Failed infectious disease screening');
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Recording...';
+
+      const donationData = {
+        donor_id: selectedDonor.id,
+        blood_type: document.getElementById('bloodType').value,
+        quantity_ml: parseInt(document.getElementById('quantity').value),
+        donation_date: document.getElementById('donationDate').value,
+        test_results: testResults,
+        event_id: selectedEvent?.id || null,
+        notes: document.getElementById('notes').value
+      };
+
+      const result = await apiCall('/staff/donations', 'POST', donationData);
+
+      if (result.success) {
+        showSuccess(`✓ Donation recorded successfully!\n\nDonation ID: ${result.data.id}\nExpiry Date: ${result.data.expiryDate}`);
+        resetForm();
+      } else {
+        showError(result.message || 'Failed to record donation');
+        btn.disabled = false;
+        btn.textContent = 'Record Donation';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('donorSelect').value = '';
+      document.getElementById('eventSelect').value = '';
+      document.getElementById('bloodType').value = '';
+      document.getElementById('quantity').value = '450';
+      document.getElementById('donationDate').valueAsDate = new Date();
+      document.getElementById('collectionTime').value = '';
+      document.getElementById('notes').value = '';
+
+      Object.keys(testResults).forEach(key => { testResults[key] = null; });
+      document.querySelectorAll('.test-item').forEach(item => item.classList.remove('selected', 'failed'));
+
+      document.getElementById('donorInfo').classList.remove('visible');
+      document.getElementById('eventInfo').style.display = 'none';
+      document.getElementById('rejectionAlert').style.display = 'none';
+      document.getElementById('summaryTests').innerHTML = '<span class="badge badge-warning">Incomplete</span>';
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').textContent = 'Record Donation';
+
+      selectedDonor = null;
+      selectedEvent = null;
+
+      calculateExpiry();
+      loadDonors();
+    }
+
+    // Messages
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.innerHTML = `<strong>✗ Error:</strong> ${msg}`;
+      el.classList.add('visible');
+      setTimeout(() => el.classList.remove('visible'), 5000);
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('successMsg');
+      el.innerHTML = `<strong>✓ Success!</strong><br>${msg}`;
+      el.classList.add('visible');
+      setTimeout(() => el.classList.remove('visible'), 8000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login-staff.html';
+    }
+
+    // Initialize
+    if (checkAuth()) {
+      document.getElementById('donationDate').valueAsDate = new Date();
+      calculateExpiry();
+      loadDonors();
+      loadEvents();
+    }
+  </script>
+  </main>
+  </main>
+</body>
+</html>

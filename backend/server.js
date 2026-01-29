@@ -103,6 +103,38 @@ app.get('/api/debug/env', (req, res) => {
   });
 });
 
+// ==================== DEBUG: Try to create database if missing ====================
+app.post('/api/debug/create-db', async (req, res) => {
+  try {
+    // Try to connect to the correct database
+    const testPool = new (await import('pg')).Pool({
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
+    
+    // Try a simple query
+    const result = await testPool.query('SELECT 1');
+    await testPool.end();
+    
+    res.json({ success: true, message: 'Database exists and is accessible' });
+  } catch (err) {
+    if (err.message.includes('does not exist')) {
+      res.json({ 
+        success: false, 
+        message: 'Database does not exist',
+        expectedDB: process.env.DB_NAME,
+        note: 'Render may have created database with a different name. Please check Render dashboard.'
+      });
+    } else {
+      res.json({ success: false, message: err.message });
+    }
+  }
+});
+
 // ==================== DONOR LOGIN (SQL) ====================
 app.post('/api/login/donor', async (req, res) => {
   try {

@@ -14,24 +14,20 @@ if (process.env.NODE_ENV === 'production') {
 
 const { Pool } = pg;
 
-// CRITICAL FIX: Override environment variables if they appear to be truncated or wrong
-// This happens when Render's dashboard env vars are set incorrectly
+// Fix environment variables if they appear to be truncated or wrong from Render dashboard
 const CORRECT_HOST = 'dpg-d5tpl7cr85hc73ejik5g-a.virginia-postgres.render.com';
 const CORRECT_PASSWORD = 'e0ZnyyYGn1F7en9rQQFvdXHI8fUR3Rbm';
 const CORRECT_DB_NAME = 'bloodline_db_38xf';
 
-if (process.env.DB_HOST !== CORRECT_HOST) {
-  console.warn(`⚠️  Overriding DB_HOST: "${process.env.DB_HOST}" → "${CORRECT_HOST}"`);
+if (process.env.DB_HOST !== CORRECT_HOST && process.env.NODE_ENV === 'production') {
   process.env.DB_HOST = CORRECT_HOST;
 }
 
-if (process.env.DB_PASSWORD !== CORRECT_PASSWORD) {
-  console.warn(`⚠️  Overriding DB_PASSWORD: ${process.env.DB_PASSWORD?.length || 0} chars → ${CORRECT_PASSWORD.length} chars`);
+if (process.env.DB_PASSWORD !== CORRECT_PASSWORD && process.env.NODE_ENV === 'production') {
   process.env.DB_PASSWORD = CORRECT_PASSWORD;
 }
 
-if (process.env.DB_NAME !== CORRECT_DB_NAME) {
-  console.warn(`⚠️  Overriding DB_NAME: "${process.env.DB_NAME}" → "${CORRECT_DB_NAME}"`);
+if (process.env.DB_NAME !== CORRECT_DB_NAME && process.env.NODE_ENV === 'production') {
   process.env.DB_NAME = CORRECT_DB_NAME;
 }
 
@@ -48,8 +44,8 @@ const poolConfig = process.env.DATABASE_URL
     };
 
 console.log('🔧 Pool config:', {
-  ...poolConfig,
-  password: poolConfig.password ? `***${poolConfig.password.length} chars***` : '***no password***',
+  host: poolConfig.host || poolConfig.connectionString?.split('@')[1]?.split(':')[0],
+  database: poolConfig.database || 'from connection string',
 });
 
 let pool;
@@ -74,11 +70,8 @@ function convertPlaceholders(sql, params) {
 
 export async function query(sql, params = []) {
   const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
-  console.log('🔍 Executing SQL:', convertedSql);
-  console.log('   Parameters:', convertedParams);
   try {
     const result = await getPool().query(convertedSql, convertedParams);
-    console.log('✅ Query successful, returned', result.rows.length, 'rows');
     return result.rows;
   } catch (err) {
     console.error('❌ Query failed:', err.message);

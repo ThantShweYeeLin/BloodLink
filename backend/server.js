@@ -15,12 +15,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 // Database connection test on startup
 async function testDatabaseConnection() {
   try {
-    console.log('🔐 Database credentials check:');
-    console.log('  HOST:', process.env.DB_HOST);
-    console.log('  PORT:', process.env.DB_PORT);
-    console.log('  USER:', process.env.DB_USER);
-    console.log('  PASSWORD:', process.env.DB_PASSWORD);  // TEMP DEBUG
-    console.log('  DATABASE:', process.env.DB_NAME);
     const result = await query('SELECT NOW() as current_time');
     console.log('✓ Database connected successfully');
     return true;
@@ -75,63 +69,6 @@ app.get('/api/health', (req, res) => {
     message: 'BloodLink API is running',
     timestamp: new Date().toISOString()
   });
-});
-
-// ==================== DATABASE TEST ====================
-app.get('/api/test-db', async (req, res) => {
-  try {
-    console.log('🧪 Testing database connection...');
-    const result = await query('SELECT NOW()');
-    console.log('✅ Database connection successful:', result);
-    res.json({ success: true, message: 'Database connected', timestamp: result[0].now });
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// ==================== DEBUG: Show environment ====================
-app.get('/api/debug/env', (req, res) => {
-  res.json({
-    DATABASE_URL: process.env.DATABASE_URL ? '***SET***' : 'NOT SET',
-    DB_HOST: process.env.DB_HOST,
-    DB_PORT: process.env.DB_PORT,
-    DB_USER: process.env.DB_USER,
-    DB_PASSWORD: process.env.DB_PASSWORD ? `***${process.env.DB_PASSWORD.length} chars***` : 'NOT SET',
-    DB_NAME: process.env.DB_NAME,
-    NODE_ENV: process.env.NODE_ENV,
-  });
-});
-
-// ==================== DEBUG: Try fresh connection ====================
-app.get('/api/debug/fresh-connect', async (req, res) => {
-  try {
-    const { Pool } = await import('pg');
-    console.log('🔍 Fresh connection attempt with env vars:');
-    console.log('  HOST:', process.env.DB_HOST);
-    console.log('  PORT:', process.env.DB_PORT);
-    console.log('  USER:', process.env.DB_USER);
-    console.log('  PASSWORD:', process.env.DB_PASSWORD);
-    console.log('  DATABASE:', process.env.DB_NAME);
-    
-    const freshPool = new Pool({
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      ssl: { rejectUnauthorized: false },
-    });
-    
-    const result = await freshPool.query('SELECT NOW()');
-    await freshPool.end();
-    res.json({ success: true, message: 'Fresh connection successful', timestamp: result.rows[0] });
-  } catch (err) {
-    console.error('❌ Fresh connection error:', err.message);
-    console.error('Error code:', err.code);
-    console.error('Full error:', err);
-    res.json({ success: false, error: err.message, code: err.code });
-  }
 });
 
 // ==================== DONOR LOGIN (SQL) ====================

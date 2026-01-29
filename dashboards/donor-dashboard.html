@@ -28,6 +28,34 @@
       position: fixed;
       height: 100vh;
       overflow-y: auto;
+      transition: width 0.25s ease;
+    }
+
+    .sidebar.collapsed {
+      width: 82px;
+    }
+
+    .sidebar.collapsed .logo-text,
+    .sidebar.collapsed .nav-label,
+    .sidebar.collapsed .nav-item span,
+    .sidebar.collapsed .user-info {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-item {
+      justify-content: center;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .sidebar.collapsed .logo-container {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .sidebar-footer {
+      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
     .sidebar-header {
@@ -170,6 +198,11 @@
       margin-left: 270px;
       display: flex;
       flex-direction: column;
+      transition: margin-left 0.25s ease;
+    }
+
+    body.sidebar-collapsed .main-content {
+      margin-left: 82px;
     }
 
     .topbar {
@@ -576,6 +609,7 @@
         />
       </div>
       <div class="topbar-actions">
+        <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">☰</button>
         <button class="icon-btn">
           🔔
           <span class="badge">3</span>
@@ -960,6 +994,26 @@
       alert('Theme toggle coming soon!');
     }
 
+    function setupSidebarToggle() {
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (!sidebar || !toggleBtn) return;
+
+      const applyState = (collapsed) => {
+        sidebar.classList.toggle('collapsed', collapsed);
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+      };
+
+      const saved = localStorage.getItem('donorSidebarCollapsed') === 'true';
+      applyState(saved);
+
+      toggleBtn.addEventListener('click', () => {
+        const next = !sidebar.classList.contains('collapsed');
+        applyState(next);
+        localStorage.setItem('donorSidebarCollapsed', String(next));
+      });
+    }
+
     function logout() {
       if (confirm('Are you sure you want to logout?')) {
         localStorage.removeItem('token');
@@ -970,6 +1024,7 @@
       }
     }
 
+    setupSidebarToggle();
     loadDashboard();
     fetchEvents();
     const searchInput = document.getElementById('eventSearch');

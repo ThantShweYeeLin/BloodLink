@@ -15,8 +15,17 @@
       min-height: 100vh;
     }
 
-    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: grid-template-columns 0.25s ease; }
+    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; transition: width 0.25s ease; }
+    .sidebar.collapsed { width: 82px; padding: 1.25rem 0.75rem; }
+    body.sidebar-collapsed .layout { grid-template-columns: 82px 1fr; }
+    .sidebar.collapsed .logo span:not(.badge),
+    .sidebar.collapsed .nav-item span:not(.icon),
+    .sidebar.collapsed .sidebar-footer div,
+    .sidebar.collapsed .badge { display: none; }
+    .sidebar.collapsed .logo { justify-content: center; }
+    .sidebar.collapsed .nav-item { justify-content: center; }
+    .sidebar.collapsed .sidebar-footer { justify-content: center; }
     .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
     .badge { background: #eef2ff; color: #4338ca; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
     .nav { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -148,6 +157,7 @@
           <input type="text" placeholder="Search requests, donors, inventory..." aria-label="Search" />
         </div>
         <div class="top-actions">
+          <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">☰</button>
           <button class="icon-btn" title="Notifications">🔔</button>
           <button class="icon-btn" title="Toggle theme">🌙</button>
           <button class="pill-btn" onclick="fulfillNow()">Fulfill Request</button>
@@ -672,7 +682,28 @@
       window.location.href = '../login-staff.html';
     }
 
+    function setupSidebarToggle() {
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (!sidebar || !toggleBtn) return;
+
+      const applyState = (collapsed) => {
+        sidebar.classList.toggle('collapsed', collapsed);
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+      };
+
+      const saved = localStorage.getItem('staffSidebarCollapsed') === 'true';
+      applyState(saved);
+
+      toggleBtn.addEventListener('click', () => {
+        const next = !sidebar.classList.contains('collapsed');
+        applyState(next);
+        localStorage.setItem('staffSidebarCollapsed', String(next));
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      setupSidebarToggle();
       setupNav();
       setupChartTabs();
       renderUrgentList();

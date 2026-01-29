@@ -19,6 +19,7 @@
       display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
+      transition: grid-template-columns 0.25s ease;
     }
 
     .sidebar {
@@ -31,7 +32,18 @@
       position: sticky;
       top: 0;
       height: 100vh;
+      transition: width 0.25s ease;
     }
+
+    .sidebar.collapsed { width: 82px; padding: 1.25rem 0.75rem; }
+    body.sidebar-collapsed .layout { grid-template-columns: 82px 1fr; }
+    .sidebar.collapsed .logo span:not(.badge),
+    .sidebar.collapsed .nav-item span:not(.icon),
+    .sidebar.collapsed .sidebar-footer div,
+    .sidebar.collapsed .badge { display: none; }
+    .sidebar.collapsed .logo { justify-content: center; }
+    .sidebar.collapsed .nav-item { justify-content: center; }
+    .sidebar.collapsed .sidebar-footer { justify-content: center; }
 
     .logo {
       font-weight: 700;
@@ -317,6 +329,7 @@
           <input type="text" placeholder="Search donors, hospitals, requests..." aria-label="Search" />
         </div>
         <div class="top-actions">
+          <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">☰</button>
           <button class="icon-btn" title="Notifications">🔔</button>
           <button class="icon-btn" title="Toggle theme">🌙</button>
           <button class="pill-btn" onclick="createRequest()">Create Request</button>
@@ -488,6 +501,26 @@
       window.location.href = '../login-hospital.html';
     }
 
+    function setupSidebarToggle() {
+      const sidebar = document.querySelector('.sidebar');
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (!sidebar || !toggleBtn) return;
+
+      const applyState = (collapsed) => {
+        sidebar.classList.toggle('collapsed', collapsed);
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+      };
+
+      const saved = localStorage.getItem('hospitalSidebarCollapsed') === 'true';
+      applyState(saved);
+
+      toggleBtn.addEventListener('click', () => {
+        const next = !sidebar.classList.contains('collapsed');
+        applyState(next);
+        localStorage.setItem('hospitalSidebarCollapsed', String(next));
+      });
+    }
+
     function setupNav() {
       const pages = {
         dashboard: document.getElementById('dashboardPage'),
@@ -514,6 +547,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      setupSidebarToggle();
       setupNav();
       loadDashboard();
     });

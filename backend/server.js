@@ -71,6 +71,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ==================== DATABASE TEST ====================
+app.get('/api/test-db', async (req, res) => {
+  try {
+    console.log('🧪 Testing database connection...');
+    const result = await query('SELECT NOW()');
+    console.log('✅ Database connection successful:', result);
+    res.json({ success: true, message: 'Database connected', timestamp: result[0].now });
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ==================== DONOR LOGIN (SQL) ====================
 app.post('/api/login/donor', async (req, res) => {
   try {

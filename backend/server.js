@@ -19,7 +19,7 @@ async function testDatabaseConnection() {
     console.log('  HOST:', process.env.DB_HOST);
     console.log('  PORT:', process.env.DB_PORT);
     console.log('  USER:', process.env.DB_USER);
-    console.log('  PASSWORD length:', process.env.DB_PASSWORD ? process.env.DB_PASSWORD.length : 0);
+    console.log('  PASSWORD:', process.env.DB_PASSWORD);  // TEMP DEBUG
     console.log('  DATABASE:', process.env.DB_NAME);
     const result = await query('SELECT NOW() as current_time');
     console.log('✓ Database connected successfully');

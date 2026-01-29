@@ -1,7 +1,16 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load environment variables from .env or .env.production
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: path.join(__dirname, '.env.production') });
+} else {
+  dotenv.config();
+}
 
 const { Pool } = pg;
 

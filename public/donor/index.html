@@ -12,9 +12,9 @@
         const userType = localStorage.getItem('userType');
         if (token && userType) {
           const redirectMap = {
-            donor: 'donor/dashboard.html',
-            staff: 'staff/dashboard.html',
-            hospital: 'hospital/dashboard.html'
+            donor: 'dashboard.html',
+            staff: '../staff/dashboard.html',
+            hospital: '../hospital/dashboard.html'
           };
           const dest = redirectMap[userType];
           if (dest) {
@@ -39,70 +39,81 @@
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1rem;
+      padding: 2rem;
     }
     
     .hero {
+      background: white;
+      border-radius: 16px;
+      padding: clamp(2rem, 8vw, 4rem);
       text-align: center;
-      padding: 4rem 2rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      margin-bottom: 3rem;
     }
     
     .logo {
-      font-size: 4rem;
+      font-size: clamp(3rem, 10vw, 5rem);
       margin-bottom: 1rem;
     }
     
     h1 {
-      font-size: 3rem;
-      margin: 0 0 1rem;
-      color: #111827;
-      font-weight: 900;
+      font-size: clamp(1.8rem, 6vw, 3rem);
+      margin: 0.5rem 0;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
     
     .lead {
-      font-size: 1.2rem;
       color: #6b7280;
-      margin: 0 0 2rem;
+      margin: 0.5rem 0 2rem;
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 400;
     }
     
     .cta {
       display: inline-block;
-      background: #b91c1c;
+      background: #c62828;
       color: white;
-      padding: 1rem 2rem;
-      border-radius: 12px;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
       text-decoration: none;
-      font-weight: 700;
-      font-size: 1.1rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
       transition: all 0.3s ease;
-      box-shadow: 0 8px 18px rgba(185, 28, 28, 0.25);
     }
     
     .cta:hover {
-      background: #991b1b;
-      box-shadow: 0 10px 25px rgba(185, 28, 28, 0.35);
+      background: #a01e1e;
       transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(198, 40, 40, 0.3);
+    }
+    
+    a.cta {
+      border: none;
+      background: #c62828;
     }
     
     .features {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
-      margin: 3rem 0;
+      margin-top: 2rem;
     }
     
     .card {
       background: white;
-      border-radius: 14px;
-      padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s ease;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
       text-align: center;
+      transition: all 0.3s ease;
     }
     
     .card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      transform: translateY(-4px);
+      transform: translateY(-8px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
     }
     
     .card-icon {
@@ -142,7 +153,7 @@
       <div class="logo">🩸</div>
       <h1>BloodLink</h1>
       <p class="lead">Blood Management — Simple, Secure and Connected</p>
-      <a href="donor/register-donor.html" class="cta">Get Started</a>
+      <a href="register-donor.html" class="cta">Get Started</a>
     </header>
 
     <section class="features" aria-label="Key features">
@@ -150,21 +161,21 @@
         <div class="card-icon">🩸</div>
         <h3>For Donors</h3>
         <p>View profile, donation history and eligibility information.</p>
-        <a href="donor/register-donor.html" style="color: #c62828; text-decoration: none; font-weight: 600;">Register as Donor →</a>
+        <a href="register-donor.html" style="color: #c62828; text-decoration: none; font-weight: 600;">Register as Donor →</a>
       </div>
 
       <div class="card">
         <div class="card-icon">🏥</div>
         <h3>For Hospitals</h3>
         <p>Submit and track blood requests, view inventory status.</p>
-        <a href="hospital/register-hospital.html" style="color: #0369a1; text-decoration: none; font-weight: 600;">Register as Hospital →</a>
+        <a href="../hospital/register-hospital.html" style="color: #0369a1; text-decoration: none; font-weight: 600;">Register as Hospital →</a>
       </div>
 
       <div class="card">
         <div class="card-icon">👩‍⚕️</div>
         <h3>For Blood Bank Staff</h3>
         <p>Manage donors, inventory and hospital requests.</p>
-        <a href="staff/register-staff.html" style="color: #7c3aed; text-decoration: none; font-weight: 600;">Register as Staff →</a>
+        <a href="../staff/register-staff.html" style="color: #7c3aed; text-decoration: none; font-weight: 600;">Register as Staff →</a>
       </div>
     </section>
   </div>

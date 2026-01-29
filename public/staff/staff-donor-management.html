@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donor Management — BloodLink Staff</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #111827;
+    }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .nav { display: flex; flex-direction: column; gap: 0.4rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; }
+    .nav-item:hover { background: #f3f4f6; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+    .main { padding: 1.5rem 2rem; overflow-y: auto; }
+    .topbar { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .search { flex: 1; display: flex; align-items: center; gap: 0.6rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.55rem 0.75rem; max-width: 400px; }
+    .search input { border: none; background: transparent; flex: 1; font-size: 0.95rem; outline: none; }
+    .top-actions { display: flex; gap: 0.6rem; }
+    .btn { padding: 0.7rem 1.2rem; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s ease; }
+    .btn-primary { background: #b91c1c; color: #fff; border: none; box-shadow: 0 8px 18px rgba(185, 28, 28, 0.25); }
+    .btn-primary:hover { box-shadow: 0 10px 20px rgba(185, 28, 28, 0.3); }
+    .btn-secondary { background: #f9fafb; }
+    .btn-secondary:hover { background: #f3f4f6; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger:hover { background: #fecaca; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { margin: 0; font-size: 1.8rem; }
+
+    .table-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 0.9rem; text-align: left; font-weight: 700; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 0.9rem; border-bottom: 1px solid #e5e7eb; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #f9fafb; }
+
+    .badge-status { padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+    .badge-eligible { background: #dcfce7; color: #166534; }
+    .badge-ineligible { background: #fee2e2; color: #b91c1c; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: #fff; border-radius: 14px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { margin: 0; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
+
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-weight: 600; margin-bottom: 0.35rem; color: #374151; }
+    input, select, textarea { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d1d5db; border-radius: 10px; font-size: 0.95rem; font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); }
+
+    .action-btns { display: flex; gap: 0.5rem; }
+    .action-btns button { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: #b91c1c; }
+    .stat-label { color: #6b7280; font-size: 0.9rem; margin-top: 0.35rem; }
+
+    .alert { padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+    .alert-info { background: #dbeafe; color: #0c4a6e; border: 1px solid #7dd3fc; }
+    .alert-danger { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">🩸 BloodLink</div>
+      <div class="nav">
+        <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+        <div class="nav-item active" onclick="openPage('donors')">👥 Donors</div>
+        <div class="nav-item" onclick="openPage('events')">📅 Events</div>
+        <div class="nav-item" onclick="openPage('donations')">🩹 Donations</div>
+        <div class="nav-item" onclick="openPage('inventory')">📦 Inventory</div>
+        <div class="nav-item" onclick="openPage('requests')">🏥 Requests</div>
+        <div class="nav-item" onclick="openPage('reports')">📊 Reports</div>
+        <div class="nav-item" onclick="openPage('profile')">👤 Profile</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="avatar" id="avatar">S</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; font-size: 0.9rem;" id="userName">Staff</div>
+          <button onclick="logout()" style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="search">
+          <span>🔍</span>
+          <input type="text" placeholder="Search..." id="searchInput" />
+        </div>
+        <div class="top-actions">
+          <button class="btn btn-primary" id="addBtn" style="display: none;">+ Add New</button>
+        </div>
+      </div>
+
+      <!-- Donor Management Page -->
+      <div id="donors" class="page active">
+        <div class="page-header">
+          <h1>👥 Donor Management</h1>
+          <button class="btn btn-primary" onclick="openAddDonorModal()">+ Add Donor</button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalDonors">0</div>
+            <div class="stat-label">Total Donors</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="eligibleDonors">0</div>
+            <div class="stat-label">Eligible Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="nextDonation">0</div>
+            <div class="stat-label">Next 7 Days</div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table id="donorsTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Blood Type</th>
+                <th>Phone</th>
+                <th>Last Donation</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="donorsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Events Page -->
+      <div id="events" class="page">
+        <div class="page-header">
+          <h1>📅 Donation Events</h1>
+          <button class="btn btn-primary" onclick="openAddEventModal()">+ Create Event</button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Event Title</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Location</th>
+                <th>Expected Donors</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="eventsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Donations Page -->
+      <div id="donations" class="page">
+        <div class="page-header">
+          <h1>🩹 Donation Recording</h1>
+          <button class="btn btn-primary" onclick="openRecordDonationModal()">+ Record Donation</button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Donor</th>
+                <th>Blood Type</th>
+                <th>Quantity (ml)</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Expiry Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="donationsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Inventory Page -->
+      <div id="inventory" class="page">
+        <div class="page-header">
+          <h1>📦 Blood Inventory</h1>
+        </div>
+
+        <div class="stats-grid" id="inventoryStats"></div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Blood Type</th>
+                <th>Quantity (ml)</th>
+                <th>Units</th>
+                <th>Collection Date</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Requests Page -->
+      <div id="requests" class="page">
+        <div class="page-header">
+          <h1>🏥 Hospital Requests</h1>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Hospital</th>
+                <th>Blood Type</th>
+                <th>Quantity (ml)</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Required By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Reports Page -->
+      <div id="reports" class="page">
+        <div class="page-header">
+          <h1>📊 Reports & Analytics</h1>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalDonationsReport">0</div>
+            <div class="stat-label">Total Donations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalMlReport">0</div>
+            <div class="stat-label">Total ML Collected</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="fulfillmentRate">0%</div>
+            <div class="stat-label">Request Fulfillment</div>
+          </div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+          <h3 style="margin-top: 0;">Most Requested Blood Types</h3>
+          <div id="bloodTypeChart"></div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Blood Type</th>
+                <th>Requests</th>
+                <th>Fulfilled</th>
+                <th>Pending</th>
+              </tr>
+            </thead>
+            <tbody id="reportsList"></tbody>
+          </table>
+        </div>
+
+        <button class="btn btn-primary" onclick="exportReportPDF()" style="margin-top: 1rem;">📥 Export as PDF</button>
+      </div>
+
+      <!-- Profile Page -->
+      <div id="profile" class="page">
+        <div class="page-header">
+          <h1>👤 Staff Profile</h1>
+        </div>
+
+        <div class="table-container" style="max-width: 500px;">
+          <form id="profileForm" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="fullName" readonly />
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email" readonly />
+            </div>
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" id="department" readonly />
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="phone" />
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="newPassword" placeholder="Leave blank to keep current" />
+            </div>
+            <button type="button" class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Donor Modal -->
+  <div id="donorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="donorModalTitle">Add New Donor</h2>
+        <button class="close-btn" onclick="closeDonorModal()">✕</button>
+      </div>
+      <form id="donorForm" onsubmit="handleSaveDonor(event)">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="donorName" required />
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="donorEmail" required />
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="tel" id="donorPhone" required />
+        </div>
+        <div class="form-group">
+          <label>Blood Type *</label>
+          <select id="donorBloodType" required>
+            <option value="">Select blood type</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth *</label>
+          <input type="date" id="donorDOB" required />
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea id="donorAddress"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Save Donor</button>
+          <button type="button" class="btn" onclick="closeDonorModal()" style="flex: 1;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Record Donation Modal -->
+  <div id="donationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Record Donation</h2>
+        <button class="close-btn" onclick="closeDonationModal()">✕</button>
+      </div>
+      <form id="donationForm" onsubmit="handleRecordDonation(event)">
+        <div class="form-group">
+          <label>Select Donor *</label>
+          <select id="donationDonor" required>
+            <option value="">Choose donor...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Blood Type *</label>
+          <input type="text" id="donationBloodType" readonly />
+        </div>
+        <div class="form-group">
+          <label>Quantity (ml) *</label>
+          <input type="number" id="donationQuantity" value="450" required />
+        </div>
+        <div class="form-group">
+          <label>Test Result</label>
+          <select id="testResult">
+            <option value="pass">Pass ✓</option>
+            <option value="fail">Fail ✗</option>
+          </select>
+        </div>
+        <div id="eligibilityAlert" class="alert alert-info" style="display: none;"></div>
+        <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Record Donation</button>
+          <button type="button" class="btn" onclick="closeDonationModal()" style="flex: 1;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = 'https://bloodlink-mbvw.onrender.com/api';
+    let currentDonorId = null;
+
+    // Auth
+    function getAuth() {
+      return {
+        token: localStorage.getItem('token'),
+        staffId: localStorage.getItem('staffId'),
+        userName: localStorage.getItem('userName')
+      };
+    }
+
+    function setUser(name) {
+      document.getElementById('userName').textContent = name.split(' ')[0];
+      document.getElementById('avatar').textContent = name[0];
+    }
+
+    // Navigation
+    function openPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(page)?.classList.add('active');
+      event.target.classList.add('active');
+
+      if (page === 'donors') loadDonors();
+      else if (page === 'events') loadEvents();
+      else if (page === 'donations') loadDonations();
+      else if (page === 'inventory') loadInventory();
+      else if (page === 'requests') loadRequests();
+      else if (page === 'reports') loadReports();
+      else if (page === 'profile') loadProfile();
+    }
+
+    // DONORS
+    async function loadDonors() {
+      const auth = getAuth();
+      try {
+        const res = await fetch(`${API}/donors`, {
+          headers: { 'Authorization': `Bearer ${auth.token}` }
+        });
+        const donors = await res.json();
+        
+        document.getElementById('totalDonors').textContent = donors.length;
+        
+        const eligible = donors.filter(d => {
+          const lastDonation = d.last_donation_date ? new Date(d.last_donation_date) : null;
+          if (!lastDonation) return true;
+          const daysSince = (new Date() - lastDonation) / (1000 * 60 * 60 * 24);
+          return daysSince >= 90;
+        });
+        document.getElementById('eligibleDonors').textContent = eligible.length;
+
+        const tbody = document.getElementById('donorsList');
+        tbody.innerHTML = donors.map(d => {
+          const lastDonation = d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString() : 'Never';
+          const daysSince = d.last_donation_date ? Math.floor((new Date() - new Date(d.last_donation_date)) / (1000 * 60 * 60 * 24)) : 999;
+          const isEligible = daysSince >= 90 || !d.last_donation_date;
+          return `
+            <tr>
+              <td>${d.full_name}</td>
+              <td>${d.email}</td>
+              <td>${d.blood_type}</td>
+              <td>${d.phone}</td>
+              <td>${lastDonation}</td>
+              <td><span class="badge-status ${isEligible ? 'badge-eligible' : 'badge-ineligible'}">${isEligible ? 'Eligible' : 'Ineligible'}</span></td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn btn-secondary" onclick="viewDonorHistory(${d.id})">History</button>
+                  <button class="btn btn-danger" onclick="deleteDonor(${d.id})">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load donors', err);
+      }
+    }
+
+    function openAddDonorModal() {
+      currentDonorId = null;
+      document.getElementById('donorModalTitle').textContent = 'Add New Donor';
+      document.getElementById('donorForm').reset();
+      document.getElementById('donorModal').classList.add('active');
+    }
+
+    function closeDonorModal() {
+      document.getElementById('donorModal').classList.remove('active');
+    }
+
+    async function handleSaveDonor(event) {
+      event.preventDefault();
+      const auth = getAuth();
+      const donorData = {
+        fullName: document.getElementById('donorName').value,
+        email: document.getElementById('donorEmail').value,
+        phone: document.getElementById('donorPhone').value,
+        bloodType: document.getElementById('donorBloodType').value,
+        dob: document.getElementById('donorDOB').value,
+        address: document.getElementById('donorAddress').value,
+        city: 'Default',
+        password: Math.random().toString(36).slice(-10)
+      };
+
+      try {
+        const res = await fetch(`${API}/register/donor`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(donorData)
+        });
+        if (res.ok) {
+          closeDonorModal();
+          loadDonors();
+          alert('Donor added successfully!');
+        }
+      } catch (err) {
+        alert('Error saving donor: ' + err.message);
+      }
+    }
+
+    async function viewDonorHistory(donorId) {
+      alert('Donation history for donor ' + donorId + ' - Feature coming soon');
+    }
+
+    async function deleteDonor(donorId) {
+      if (confirm('Are you sure? This action cannot be undone.')) {
+        alert('Delete donor ' + donorId + ' - Feature coming soon');
+      }
+    }
+
+    // EVENTS
+    async function loadEvents() {
+      const auth = getAuth();
+      try {
+        const res = await fetch(`${API}/events`, {
+          headers: { 'Authorization': `Bearer ${auth.token}` }
+        });
+        const events = await res.json();
+        
+        const tbody = document.getElementById('eventsList');
+        tbody.innerHTML = events.map(e => `
+          <tr>
+            <td>${e.title}</td>
+            <td>${e.date}</td>
+            <td>${e.start_time}</td>
+            <td>${e.location}</td>
+            <td>${e.expected || '—'}</td>
+            <td>${e.participants || 0}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-secondary" onclick="editEvent(${e.id})">Edit</button>
+                <button class="btn btn-danger" onclick="deleteEvent(${e.id})">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load events', err);
+      }
+    }
+
+    function openAddEventModal() {
+      alert('Create event modal - Feature coming soon');
+    }
+
+    function editEvent(eventId) {
+      alert('Edit event ' + eventId + ' - Feature coming soon');
+    }
+
+    function deleteEvent(eventId) {
+      if (confirm('Delete event?')) {
+        alert('Delete event ' + eventId + ' - Feature coming soon');
+      }
+    }
+
+    // DONATIONS
+    async function loadDonations() {
+      const auth = getAuth();
+      try {
+        const res = await fetch(`${API}/donors`, {
+          headers: { 'Authorization': `Bearer ${auth.token}` }
+        });
+        const donors = await res.json();
+        
+        const donationSelect = document.getElementById('donationDonor');
+        donationSelect.innerHTML = '<option value="">Choose donor...</option>' + donors.map(d => 
+          `<option value="${d.id}" data-blood="${d.blood_type}">${d.full_name} (${d.blood_type})</option>`
+        ).join('');
+
+        donationSelect.addEventListener('change', (e) => {
+          const selected = e.target.options[e.target.selectedIndex];
+          document.getElementById('donationBloodType').value = selected.dataset.blood || '';
+        });
+      } catch (err) {
+        console.error('Failed to load donations', err);
+      }
+    }
+
+    function openRecordDonationModal() {
+      loadDonations();
+      document.getElementById('donationModal').classList.add('active');
+    }
+
+    function closeDonationModal() {
+      document.getElementById('donationModal').classList.remove('active');
+    }
+
+    async function handleRecordDonation(event) {
+      event.preventDefault();
+      alert('Record donation - Feature coming soon');
+    }
+
+    // INVENTORY
+    async function loadInventory() {
+      alert('Load inventory - Feature coming soon');
+    }
+
+    // REQUESTS
+    async function loadRequests() {
+      alert('Load requests - Feature coming soon');
+    }
+
+    // REPORTS
+    async function loadReports() {
+      alert('Load reports - Feature coming soon');
+    }
+
+    function exportReportPDF() {
+      alert('Export report as PDF - Feature coming soon');
+    }
+
+    // PROFILE
+    async function loadProfile() {
+      const auth = getAuth();
+      try {
+        const res = await fetch(`${API}/staff/profile/${auth.staffId}`, {
+          headers: { 'Authorization': `Bearer ${auth.token}` }
+        });
+        const profile = await res.json();
+        const data = profile.data || profile;
+        
+        document.getElementById('fullName').value = data.full_name;
+        document.getElementById('email').value = data.email;
+        document.getElementById('department').value = data.department;
+        document.getElementById('phone').value = data.phone;
+      } catch (err) {
+        console.error('Failed to load profile', err);
+      }
+    }
+
+    async function updateProfile() {
+      alert('Update profile - Feature coming soon');
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login-staff.html';
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      const auth = getAuth();
+      if (!auth.token) window.location.href = 'login-staff.html';
+      
+      setUser(auth.userName || 'Staff');
+      loadDonors();
+    });
+  </script>
+</body>
+</html>

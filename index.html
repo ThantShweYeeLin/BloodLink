@@ -12,9 +12,9 @@
         const userType = localStorage.getItem('userType');
         if (token && userType) {
           const redirectMap = {
-            donor: '/dashboards/donor-dashboard.html',
-            staff: '/dashboards/staff-dashboard.html',
-            hospital: '/dashboards/hospital-dashboard.html'
+            donor: 'dashboards/donor-dashboard.html',
+            staff: 'dashboards/staff-dashboard.html',
+            hospital: 'dashboards/hospital-dashboard.html'
           };
           const dest = redirectMap[userType];
           if (dest) {

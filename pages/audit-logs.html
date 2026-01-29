@@ -192,7 +192,7 @@
     function checkAuth() {
       const token = localStorage.getItem('token');
       if (!token) {
-        window.location.href = '/login-staff.html';
+        window.location.href = '../login-staff.html';
         return false;
       }
       return true;
@@ -213,7 +213,7 @@
         const data = await response.json();
         if (!response.ok && response.status === 401) {
           localStorage.clear();
-          window.location.href = '/login-staff.html';
+          window.location.href = '../login-staff.html';
         }
         return data;
       } catch (error) {
@@ -365,7 +365,7 @@
 
     function logout() {
       localStorage.clear();
-      window.location.href = '/login-staff.html';
+      window.location.href = '../login-staff.html';
     }
 
     document.getElementById('searchBox').addEventListener('input', applyFilters);

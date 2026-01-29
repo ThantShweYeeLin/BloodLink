@@ -209,7 +209,7 @@
       const token = localStorage.getItem('token');
       const staffId = localStorage.getItem('staffId');
       if (token && staffId) {
-        window.location.href = '/dashboards/staff-dashboard.html';
+        window.location.href = 'dashboards/staff-dashboard.html';
       }
     });
 
@@ -249,7 +249,7 @@
           successMsg.style.display = 'block';
           
           setTimeout(() => {
-            window.location.href = '/dashboards/staff-dashboard.html';
+            window.location.href = 'dashboards/staff-dashboard.html';
           }, 1500);
         } else {
           errorMsg.textContent = '✗ ' + result.message;

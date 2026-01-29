@@ -681,13 +681,13 @@
 
     function logout() {
       localStorage.clear();
-      window.location.href = '/login-staff.html';
+      window.location.href = 'login-staff.html';
     }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       const auth = getAuth();
-      if (!auth.token) window.location.href = '/login-staff.html';
+      if (!auth.token) window.location.href = 'login-staff.html';
       
       setUser(auth.userName || 'Staff');
       loadDonors();

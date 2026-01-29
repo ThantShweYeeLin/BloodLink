@@ -209,7 +209,7 @@
       const token = localStorage.getItem('token');
       const donorId = localStorage.getItem('donorId');
       if (token && donorId) {
-        window.location.href = '/dashboards/donor-dashboard.html';
+        window.location.href = 'dashboards/donor-dashboard.html';
       }
     });
 
@@ -249,7 +249,7 @@
           successMsg.style.display = 'block';
           
           setTimeout(() => {
-            window.location.href = '/dashboards/donor-dashboard.html';
+            window.location.href = 'dashboards/donor-dashboard.html';
           }, 1500);
         } else {
           errorMsg.textContent = '✗ ' + result.message;

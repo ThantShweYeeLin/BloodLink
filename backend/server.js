@@ -248,6 +248,7 @@ app.post('/api/login/staff', async (req, res) => {
 // ==================== DONOR REGISTRATION (SQL) ====================
 app.post('/api/register/donor', async (req, res) => {
   try {
+    console.log('📝 Donor registration request received:', req.body);
     const { 
       fullName, 
       email, 
@@ -268,17 +269,21 @@ app.post('/api/register/donor', async (req, res) => {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
+    console.log('✅ Validation passed. Creating password hash...');
     const passwordHash = await bcrypt.hash(password, 10);
 
+    console.log('🔐 Password hashed. Running INSERT query...');
     const result = await query(
       `INSERT INTO donors (full_name, email, phone, date_of_birth, blood_type, address, city, password_hash)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [fullName, email.toLowerCase(), phone, dob, bloodType, address, city, passwordHash]
     );
 
+    console.log('✅ Donor registration successful:', result[0]);
     res.status(201).json({ success: true, message: 'Donor registered successfully', donorId: String(result[0].id) });
   } catch (error) {
-    console.error('Donor registration error (SQL):', error.message, error.stack);
+    console.error('❌ Donor registration error (SQL):', error.message);
+    console.error('   Full error:', error);
     const isDev = process.env.NODE_ENV !== 'production';
     res.status(500).json({ 
       success: false, 

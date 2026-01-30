@@ -7,9 +7,17 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
-    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; }
-    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 0.75rem; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: grid-template-columns 0.3s ease; }
+    .layout.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; transition: all 0.3s ease; width: 260px; overflow: hidden; }
+    .sidebar-collapsed .sidebar { width: 80px; padding: 1.5rem 0.5rem; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
+    .sidebar-collapsed .logo span { display: none; }
+    .sidebar-collapsed .nav-item span { display: none; }
+    .sidebar-collapsed .nav-item { justify-content: center; padding: 0.75rem; }
     .nav { display: flex; flex-direction: column; gap: 0.35rem; }
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
     .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
@@ -57,21 +65,24 @@
   </style>
 </head>
 <body>
-  <div class="layout">
+  <div class="layout" id="layout">
     <aside class="sidebar">
-      <div class="logo">🩸 BloodLink Staff</div>
+      <div class="sidebar-header">
+        <div class="logo"><span>🩸</span> <span>BloodLink Staff</span></div>
+        <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+      </div>
       <nav class="nav">
-        <a class="nav-item active" href="./dashboard.html">🏠 Dashboard</a>
-        <a class="nav-item" href="./staff-management.html">👥 Staff Management</a>
-        <a class="nav-item" href="./staff-donor-management.html">🩸 Donor Management</a>
-        <a class="nav-item" href="pages/staff-profile.html">👤 Profile</a>
-        <a class="nav-item" href="../shared-pages/inventory.html">📦 Inventory</a>
-        <a class="nav-item" href="../shared-pages/donors.html">🧑 Donors</a>
-        <a class="nav-item" href="../shared-pages/events.html">📅 Events</a>
-        <a class="nav-item" href="../shared-pages/reports.html">📊 Reports</a>
-        <a class="nav-item" href="../shared-pages/requests.html">🩸 Requests</a>
-        <a class="nav-item" href="../shared-pages/settings.html">⚙️ Settings</a>
-        <a class="nav-item" href="../shared-pages/notifications.html">🔔 Notifications</a>
+        <a class="nav-item active" href="./dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+        <a class="nav-item" href="./staff-management.html"><span>👥</span> <span>Staff Management</span></a>
+        <a class="nav-item" href="./staff-donor-management.html"><span>🩸</span> <span>Donor Management</span></a>
+        <a class="nav-item" href="pages/staff-profile.html"><span>👤</span> <span>Profile</span></a>
+        <a class="nav-item" href="../shared-pages/inventory.html"><span>📦</span> <span>Inventory</span></a>
+        <a class="nav-item" href="../shared-pages/donors.html"><span>🧑</span> <span>Donors</span></a>
+        <a class="nav-item" href="../shared-pages/events.html"><span>📅</span> <span>Events</span></a>
+        <a class="nav-item" href="../shared-pages/reports.html"><span>📊</span> <span>Reports</span></a>
+        <a class="nav-item" href="../shared-pages/requests.html"><span>🩸</span> <span>Requests</span></a>
+        <a class="nav-item" href="../shared-pages/settings.html"><span>⚙️</span> <span>Settings</span></a>
+        <a class="nav-item" href="../shared-pages/notifications.html"><span>🔔</span> <span>Notifications</span></a>
       </nav>
     </aside>
 
@@ -180,6 +191,18 @@
   </div>
 
   <script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      const layout = document.getElementById('layout');
+      layout.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', layout.classList.contains('sidebar-collapsed'));
+    }
+
+    // Restore sidebar state
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.getElementById('layout').classList.add('sidebar-collapsed');
+    }
+
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');

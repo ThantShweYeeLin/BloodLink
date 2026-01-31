@@ -203,6 +203,18 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
+    const REQUEST_TIMEOUT_MS = 8000;
+
+    async function fetchWithTimeout(url, options = {}) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
@@ -222,7 +234,7 @@
     // Fetch dashboard statistics
     async function fetchStats() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
+        const response = await fetchWithTimeout(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -249,7 +261,7 @@
     // Fetch recent requests
     async function fetchRecentRequests() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
+        const response = await fetchWithTimeout(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -279,7 +291,10 @@
         `).join('');
       } catch (error) {
         console.error('Error fetching requests:', error);
-        document.getElementById('recentRequests').innerHTML = '<div class="alert alert-error">Failed to load requests.</div>';
+        const message = error.name === 'AbortError'
+          ? 'Requests took too long to load. Please try again.'
+          : 'Failed to load requests.';
+        document.getElementById('recentRequests').innerHTML = `<div class="alert alert-error">${message}</div>`;
       }
     }
 

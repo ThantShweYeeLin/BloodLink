@@ -232,6 +232,7 @@
 
   <script>
     const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    const REQUEST_TIMEOUT_MS = 8000;
     let currentDonorData = null;
 
     function checkAuth() {
@@ -251,17 +252,33 @@
     }
 
     async function apiCall(endpoint, method = 'GET', body = null) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
-        const options = { method, headers: getAuthHeader() };
+        const options = { method, headers: getAuthHeader(), signal: controller.signal };
         if (body) options.body = JSON.stringify(body);
         const response = await fetch(`${API_URL}${endpoint}`, options);
-        const data = await response.json();
-        if (!response.ok && response.status === 401) {
+        clearTimeout(timeoutId);
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = { success: false, message: 'Invalid server response' };
+        }
+        if (response.status === 401) {
           localStorage.clear();
           window.location.href = '../login-donor.html';
+          return { success: false, message: 'Unauthorized' };
+        }
+        if (!response.ok) {
+          return { success: false, message: data.message || 'Request failed' };
         }
         return data;
       } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          return { success: false, message: 'Request timed out' };
+        }
         console.error('API Error:', error);
         return { success: false, message: 'Network error' };
       }

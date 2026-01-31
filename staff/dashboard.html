@@ -203,6 +203,18 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
+    const REQUEST_TIMEOUT_MS = 8000;
+
+    async function fetchWithTimeout(url, options = {}) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
@@ -223,7 +235,7 @@
     async function fetchStats() {
       try {
         // Fetch total donors
-        const donorsResponse = await fetch('https://bloodlink-backend.onrender.com/donors', {
+        const donorsResponse = await fetchWithTimeout('https://bloodlink-backend.onrender.com/donors', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (donorsResponse.ok) {
@@ -232,7 +244,7 @@
         }
 
         // Fetch monthly donations
-        const donationsResponse = await fetch('https://bloodlink-backend.onrender.com/donations', {
+        const donationsResponse = await fetchWithTimeout('https://bloodlink-backend.onrender.com/donations', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (donationsResponse.ok) {
@@ -243,7 +255,7 @@
         }
 
         // Fetch inventory
-        const inventoryResponse = await fetch('https://bloodlink-backend.onrender.com/inventory', {
+        const inventoryResponse = await fetchWithTimeout('https://bloodlink-backend.onrender.com/inventory', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (inventoryResponse.ok) {
@@ -253,7 +265,7 @@
         }
 
         // Fetch events
-        const eventsResponse = await fetch('https://bloodlink-backend.onrender.com/events/upcoming', {
+        const eventsResponse = await fetchWithTimeout('https://bloodlink-backend.onrender.com/events/upcoming', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (eventsResponse.ok) {
@@ -268,7 +280,7 @@
     // Fetch blood inventory
     async function fetchBloodInventory() {
       try {
-        const response = await fetch('https://bloodlink-backend.onrender.com/inventory', {
+        const response = await fetchWithTimeout('https://bloodlink-backend.onrender.com/inventory', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -300,7 +312,10 @@
         }).join('') + '</div>';
       } catch (error) {
         console.error('Error fetching inventory:', error);
-        document.getElementById('bloodInventory').innerHTML = '<div class="alert alert-error">Failed to load inventory.</div>';
+        const message = error.name === 'AbortError'
+          ? 'Inventory took too long to load. Please try again.'
+          : 'Failed to load inventory.';
+        document.getElementById('bloodInventory').innerHTML = `<div class="alert alert-error">${message}</div>`;
       }
     }
 

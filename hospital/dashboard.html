@@ -203,13 +203,18 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
-    const REQUEST_TIMEOUT_MS = 8000;
+    const REQUEST_TIMEOUT_MS = 20000;
 
-    async function fetchWithTimeout(url, options = {}) {
+    async function fetchWithTimeout(url, options = {}, retries = 1) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
         return await fetch(url, { ...options, signal: controller.signal });
+      } catch (error) {
+        if (retries > 0 && error.name === 'AbortError') {
+          return fetchWithTimeout(url, options, retries - 1);
+        }
+        throw error;
       } finally {
         clearTimeout(timeoutId);
       }

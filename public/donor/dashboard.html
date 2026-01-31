@@ -201,7 +201,7 @@
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
-    const donorId = localStorage.getItem('donorId');
+    const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
     if (!token || userType !== 'donor' || !donorId) {
       window.location.href = 'login-donor.html';
     }
@@ -211,6 +211,7 @@
       localStorage.removeItem('token');
       localStorage.removeItem('userType');
       localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
       window.location.href = 'login-donor.html';
     }
 

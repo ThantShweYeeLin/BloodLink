@@ -218,7 +218,7 @@
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
-    const hospitalId = localStorage.getItem('hospitalId');
+    const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
     if (!token || userType !== 'hospital' || !hospitalId) {
       window.location.href = 'login-hospital.html';
     }
@@ -228,6 +228,7 @@
       localStorage.removeItem('token');
       localStorage.removeItem('userType');
       localStorage.removeItem('hospitalId');
+      localStorage.removeItem('userId');
       window.location.href = 'login-hospital.html';
     }
 

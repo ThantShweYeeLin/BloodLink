@@ -232,7 +232,7 @@
 
   <script>
     const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
-    const REQUEST_TIMEOUT_MS = 8000;
+    const REQUEST_TIMEOUT_MS = 20000;
     let currentDonorData = null;
 
     function checkAuth() {
@@ -251,7 +251,7 @@
       };
     }
 
-    async function apiCall(endpoint, method = 'GET', body = null) {
+    async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
@@ -276,6 +276,9 @@
         return data;
       } catch (error) {
         clearTimeout(timeoutId);
+        if (error.name === 'AbortError' && retries > 0) {
+          return apiCall(endpoint, method, body, retries - 1);
+        }
         if (error.name === 'AbortError') {
           return { success: false, message: 'Request timed out' };
         }

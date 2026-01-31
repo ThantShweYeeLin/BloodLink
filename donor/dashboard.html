@@ -189,8 +189,8 @@
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    if (!token || userType !== 'donor') {
+    const donorId = localStorage.getItem('donorId');
+    if (!token || userType !== 'donor' || !donorId) {
       window.location.href = 'login-donor.html';
     }
 
@@ -198,14 +198,14 @@
     function logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('userType');
-      localStorage.removeItem('userId');
+      localStorage.removeItem('donorId');
       window.location.href = 'login-donor.html';
     }
 
     // Fetch donation statistics
     async function fetchDonationStats() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/donations/donor/${userId}`, {
+        const response = await fetch(`https://bloodlink-backend.onrender.com/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -250,7 +250,7 @@
     // Fetch donation history
     async function fetchDonationHistory() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/donations/donor/${userId}`, {
+        const response = await fetch(`https://bloodlink-backend.onrender.com/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         

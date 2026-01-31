@@ -206,8 +206,8 @@
     // Check authentication
     const userType = localStorage.getItem('userType');
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    if (!token || userType !== 'hospital') {
+    const hospitalId = localStorage.getItem('hospitalId');
+    if (!token || userType !== 'hospital' || !hospitalId) {
       window.location.href = 'login-hospital.html';
     }
 
@@ -215,14 +215,14 @@
     function logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('userType');
-      localStorage.removeItem('userId');
+      localStorage.removeItem('hospitalId');
       window.location.href = 'login-hospital.html';
     }
 
     // Fetch dashboard statistics
     async function fetchStats() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${userId}`, {
+        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -249,7 +249,7 @@
     // Fetch recent requests
     async function fetchRecentRequests() {
       try {
-        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${userId}`, {
+        const response = await fetch(`https://bloodlink-backend.onrender.com/requests/hospital/${hospitalId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 

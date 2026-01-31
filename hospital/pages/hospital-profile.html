@@ -289,12 +289,26 @@
     }
 
     async function loadProfile() {
-      const hospitalId = localStorage.getItem('hospitalId');
-      const data = await apiCall(`/hospital/profile/${hospitalId}`);
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        showAlert('Missing hospital ID. Please log in again.', 'error');
+        return;
+      }
 
-      if (!data.success) return showAlert('Failed to load profile', 'error');
+      let data = await apiCall(`/hospital/profile/${hospitalId}`);
+
+      if (!data.success) {
+        const cached = localStorage.getItem('cachedHospitalProfile');
+        if (cached) {
+          data = { success: true, data: JSON.parse(cached) };
+          showAlert('Showing cached profile data. Refresh to try again.', 'error');
+        } else {
+          return showAlert('Failed to load profile', 'error');
+        }
+      }
 
       currentHospitalData = data.data;
+      localStorage.setItem('cachedHospitalProfile', JSON.stringify(data.data));
 
       // Update header
       const initial = data.data.hospital_name.substring(0, 2).toUpperCase();

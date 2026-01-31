@@ -285,12 +285,25 @@
     }
 
     async function loadProfile() {
-      const donorId = localStorage.getItem('donorId');
-      const data = await apiCall(`/donor/profile/${donorId}`);
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        showAlert('Missing donor ID. Please log in again.', 'error');
+        return;
+      }
 
-      if (!data.success) return showAlert('Failed to load profile', 'error');
+      let data = await apiCall(`/donor/profile/${donorId}`);
+      if (!data.success) {
+        const cached = localStorage.getItem('cachedDonorProfile');
+        if (cached) {
+          data = { success: true, data: JSON.parse(cached) };
+          showAlert('Showing cached profile data. Refresh to try again.', 'error');
+        } else {
+          return showAlert('Failed to load profile', 'error');
+        }
+      }
 
       currentDonorData = data.data;
+      localStorage.setItem('cachedDonorProfile', JSON.stringify(data.data));
 
       // Update header
       const initial = data.data.full_name.charAt(0).toUpperCase();

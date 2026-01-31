@@ -268,15 +268,27 @@
     }
 
     async function loadProfile() {
-      const staffId = localStorage.getItem('staffId');
-      const data = await apiCall(`/staff/profile/${staffId}`);
-
-      if (!data.success) {
-        showAlert(data.message || 'Failed to load profile', 'error');
+      const staffId = localStorage.getItem('staffId') || localStorage.getItem('userId');
+      if (!staffId) {
+        showAlert('Missing staff ID. Please log in again.', 'error');
         return;
       }
 
+      let data = await apiCall(`/staff/profile/${staffId}`);
+
+      if (!data.success) {
+        const cached = localStorage.getItem('cachedStaffProfile');
+        if (cached) {
+          data = { success: true, data: JSON.parse(cached) };
+          showAlert('Showing cached profile data. Refresh to try again.', 'error');
+        } else {
+          showAlert(data.message || 'Failed to load profile', 'error');
+          return;
+        }
+      }
+
       currentStaffData = data.data;
+      localStorage.setItem('cachedStaffProfile', JSON.stringify(data.data));
 
       // Update header
       const initial = (data.data.full_name || 'S').charAt(0).toUpperCase();

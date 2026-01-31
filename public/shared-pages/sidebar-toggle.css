@@ -1,0 +1,63 @@
+/* Shared sidebar toggle styles */
+.layout { transition: grid-template-columns 0.3s ease; }
+.layout.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+
+body.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+
+.sidebar {
+  width: 260px;
+  overflow: hidden;
+  transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+.layout.sidebar-collapsed .sidebar,
+body.sidebar-collapsed .sidebar {
+  width: 80px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sidebar-header .logo,
+.sidebar-header .sidebar-logo {
+  margin-bottom: 0;
+}
+
+.toggle-btn {
+  background: #f3f4f6;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+  background: #e5e7eb;
+}
+
+.layout.sidebar-collapsed .sidebar .nav-item,
+body.sidebar-collapsed .sidebar .nav-item {
+  justify-content: center;
+  gap: 0;
+  white-space: nowrap;
+}
+
+.layout.sidebar-collapsed .sidebar .nav-item span,
+body.sidebar-collapsed .sidebar .nav-item span {
+  display: none;
+}

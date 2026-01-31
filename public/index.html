@@ -26,41 +26,171 @@
     })();
   </script>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
       color: #1a1a1a;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+      background: #f5f5f5;
       min-height: 100vh;
     }
     
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 1rem;
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+      transition: grid-template-columns 0.3s ease;
+    }
+    
+    .layout.sidebar-collapsed {
+      grid-template-columns: 80px 1fr;
+    }
+    
+    .sidebar {
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: all 0.3s ease;
+      width: 260px;
+      overflow: hidden;
+    }
+    
+    .sidebar-collapsed .sidebar {
+      width: 80px;
+      padding: 1.5rem 0.5rem;
+    }
+    
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    
+    .logo {
+      font-weight: 800;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #b91c1c;
+    }
+    
+    .toggle-btn {
+      background: #f3f4f6;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .toggle-btn:hover {
+      background: #e5e7eb;
+    }
+    
+    .sidebar-collapsed .logo span {
+      display: none;
+    }
+    
+    .sidebar-collapsed .nav-item span {
+      display: none;
+    }
+    
+    .sidebar-collapsed .nav-item {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+    
+    .sidebar-collapsed .sign-in-btn {
+      padding: 0.75rem;
+      font-size: 1.5rem;
+    }
+    
+    .sidebar-collapsed .sign-in-btn span {
+      display: none;
+    }
+    
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      color: #1f2937;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s ease, color 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+    
+    .nav-item:hover {
+      background: #f3f4f6;
+      color: #b91c1c;
+    }
+    
+    .nav-item.active {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-left-color: #b91c1c;
+    }
+    
+    .sign-in-btn {
+      display: block;
+      background: #b91c1c;
+      color: white;
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .sign-in-btn:hover {
+      background: #991b1b;
     }
     
     .hero {
       text-align: center;
-      padding: 4rem 2rem;
+      padding: 3rem 2rem;
+      background: white;
+      border-radius: 16px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     
-    .logo {
+    .hero-icon {
       font-size: 4rem;
       margin-bottom: 1rem;
     }
     
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
       margin: 0 0 1rem;
       color: #111827;
       font-weight: 900;
     }
     
     .lead {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       color: #6b7280;
       margin: 0 0 2rem;
     }
@@ -88,7 +218,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
-      margin: 3rem 0;
+      margin: 2rem 0;
     }
     
     .card {
@@ -123,6 +253,22 @@
       line-height: 1.5;
     }
     
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: relative;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      .main {
+        padding: 1rem;
+      }
+    }
+    
     @media (max-width: 768px) {
       .features {
         grid-template-columns: 1fr;
@@ -130,16 +276,36 @@
       .hero {
         padding: 2rem 1.5rem;
       }
-      .container {
-        padding: 1rem;
+      h1 {
+        font-size: 2rem;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="layout" id="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><span>🩸</span> <span>BloodLink</span></div>
+        <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+      </div>
+      <nav class="nav">
+        <a class="nav-item active" href="index.html"><span>🏠</span> <span>Home</span></a>
+        <a class="nav-item" href="#all-requests"><span>📋</span> <span>All Requests</span></a>
+        <a class="nav-item" href="#all-donors"><span>👥</span> <span>All Donors</span></a>
+        <a class="nav-item" href="#blogs"><span>📝</span> <span>Blogs</span></a>
+        <a class="nav-item" href="#blood-test"><span>🩺</span> <span>Blood Test</span></a>
+        <a class="nav-item" href="#about"><span>ℹ️</span> <span>About</span></a>
+      </nav>
+      <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+        <a href="donor/register-donor.html" class="sign-in-btn"><span>🔑 Sign In</span></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="container">
     <header class="hero" role="banner">
-      <div class="logo">🩸</div>
+      <div class="hero-icon">🩸</div>
       <h1>BloodLink</h1>
       <p class="lead">Blood Management — Simple, Secure and Connected</p>
       <a href="donor/register-donor.html" class="cta">Get Started</a>
@@ -168,5 +334,21 @@
       </div>
     </section>
   </div>
+    </main>
+  </div>
+  
+  <script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      const layout = document.getElementById('layout');
+      layout.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', layout.classList.contains('sidebar-collapsed'));
+    }
+
+    // Restore sidebar state
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.getElementById('layout').classList.add('sidebar-collapsed');
+    }
+  </script>
 </body>
 </html>

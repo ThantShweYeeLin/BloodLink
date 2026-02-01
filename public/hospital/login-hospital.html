@@ -214,6 +214,31 @@
       }
     });
 
+    // Wait for API base to be initialized
+    function getApiBase() {
+      return window.LIFELINK_API_BASE || 'http://localhost:3000';
+    }
+
+    async function waitForApiBase() {
+      let attempts = 0;
+      while (!window.LIFELINK_API_BASE && attempts < 50) {
+        await new Promise(r => setTimeout(r, 10));
+        attempts++;
+      }
+      return getApiBase();
+    }
+
+    // Check if user is already logged in
+    document.addEventListener('DOMContentLoaded', async () => {
+      await waitForApiBase();
+      const token = localStorage.getItem('token');
+      const hospitalId = localStorage.getItem('hospitalId');
+      if (token && hospitalId) {
+        console.log('[Login] Already logged in, redirecting to dashboard');
+        window.location.href = 'dashboard.html';
+      }
+    });
+
     async function handleLogin(event) {
       event.preventDefault();
       
@@ -228,12 +253,12 @@
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
       
-      const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
-      console.log('Attempting login with API_BASE:', API_BASE);
+      const API_BASE = await waitForApiBase();
+      console.log('[handleLogin] Attempting login with API_BASE:', API_BASE);
       
       try {
         const url = `${API_BASE}/api/login/hospital`;
-        console.log('Login URL:', url);
+        console.log('[handleLogin] Login URL:', url);
         
         const response = await fetch(url, {
           method: 'POST',
@@ -243,9 +268,9 @@
           body: JSON.stringify({ email, password })
         });
         
-        console.log('Response status:', response.status);
+        console.log('[handleLogin] Response status:', response.status);
         const result = await response.json();
-        console.log('Response data:', result);
+        console.log('[handleLogin] Response data:', result);
         
         if (result.success) {
           // Store token and user info in localStorage
@@ -254,10 +279,14 @@
           localStorage.setItem('hospitalId', result.hospitalId);
           localStorage.setItem('userName', result.hospitalName);
           
+          console.log('[handleLogin] Login successful, stored credentials');
+          
           successMsg.textContent = '✓ Login successful! Redirecting to dashboard...';
           successMsg.style.display = 'block';
           
+          console.log('[handleLogin] Scheduling redirect to dashboard.html in 1500ms');
           setTimeout(() => {
+            console.log('[handleLogin] Executing redirect now');
             window.location.href = 'dashboard.html';
           }, 1500);
         } else {
@@ -267,8 +296,8 @@
           loginBtn.textContent = 'Login';
         }
       } catch (error) {
-        console.error('Login error:', error);
-        errorMsg.textContent = '✗ Login failed: ' + error.message + '. Please make sure the server is running on ' + (window.LIFELINK_API_BASE || 'http://localhost:3000');
+        console.error('[handleLogin] Login error:', error);
+        errorMsg.textContent = '✗ Login failed: ' + error.message + '. Please make sure the server is running on ' + getApiBase();
         errorMsg.style.display = 'block';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';

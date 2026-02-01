@@ -190,6 +190,7 @@
     </main>
   </div>
 
+  <script src="../shared-pages/warm-backend.js" type="module"></script>
   <script>
     // Sidebar toggle functionality
     function toggleSidebar() {
@@ -203,21 +204,36 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
-    const REQUEST_TIMEOUT_MS = 20000;
+    const REQUEST_TIMEOUT_MS = 120000;
+    const BACKEND_BASE = 'https://bloodlink-backend.onrender.com';
+    let backendWarmed = false;
 
-    async function fetchWithTimeout(url, options = {}, retries = 1) {
+    async function fetchWithTimeout(url, options = {}, retries = 1, skipWarm = false) {
+      if (!skipWarm && url.startsWith(BACKEND_BASE)) {
+        await warmBackend();
+      }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
         return await fetch(url, { ...options, signal: controller.signal });
       } catch (error) {
         if (retries > 0 && error.name === 'AbortError') {
-          return fetchWithTimeout(url, options, retries - 1);
+          return fetchWithTimeout(url, options, retries - 1, skipWarm);
         }
         throw error;
       } finally {
         clearTimeout(timeoutId);
       }
+    }
+
+    async function warmBackend() {
+      if (backendWarmed) return;
+      try {
+        await fetchWithTimeout(`${BACKEND_BASE}/`, { mode: 'no-cors' }, 0, true);
+      } catch (e) {
+        // Ignore warm-up errors
+      }
+      backendWarmed = true;
     }
 
     // Check authentication

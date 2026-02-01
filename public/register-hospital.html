@@ -131,7 +131,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <a href="../../" class="back-btn">← Back</a>
+      <a href="hospital/login-hospital.html" class="back-btn">← Back to Login</a>
       <div class="icon">🏥</div>
       <h1>Register as Hospital</h1>
     </div>
@@ -190,7 +190,7 @@
     </div>
   </div>
 
-  <script src="../shared-pages/api-base.js"></script>
+  <script src="./shared-pages/api-base.js"></script>
   <script>
     async function handleSubmit(event, role) {
       event.preventDefault();
@@ -236,7 +236,7 @@
           form.reset();
           
           // Redirect after 2 seconds
-          setTimeout(() => window.location.href = 'login-hospital.html', 2000);
+          setTimeout(() => window.location.href = 'register.html', 2000);
         } else {
           alert('Error: ' + result.message);
           submitButton.disabled = false;

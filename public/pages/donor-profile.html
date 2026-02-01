@@ -83,14 +83,13 @@
       .profile-header { flex-direction: column; text-align: center; }
     }
   </style>
-  <link rel="stylesheet" href="../../shared-pages/sidebar-toggle.css" />
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar">
       <div class="logo">🩸 BloodLink Donor</div>
       <nav class="nav">
-        <a class="nav-item" href="../dashboard.html">🏠 Dashboard</a>
+        <a class="nav-item" href="../dashboards/donor-dashboard.html">🏠 Dashboard</a>
         <a class="nav-item active" href="./donor-profile.html">👤 Profile</a>
         <a class="nav-item" href="./donor-donation-history.html">🧾 Donation History</a>
         <a class="nav-item" href="./donor-eligibility.html">✅ Eligibility</a>
@@ -230,11 +229,8 @@
     </main>
   </div>
 
-  <script src="../../shared-pages/api-base.js"></script>
   <script>
-    const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
-    const API_URL = `${API_BASE}/api`;
-    const REQUEST_TIMEOUT_MS = 15000;
+    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
     let currentDonorData = null;
 
     function checkAuth() {
@@ -253,62 +249,30 @@
       };
     }
 
-    async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    async function apiCall(endpoint, method = 'GET', body = null) {
       try {
-        const options = { method, headers: getAuthHeader(), signal: controller.signal };
+        const options = { method, headers: getAuthHeader() };
         if (body) options.body = JSON.stringify(body);
         const response = await fetch(`${API_URL}${endpoint}`, options);
-        clearTimeout(timeoutId);
-        let data;
-        try {
-          data = await response.json();
-        } catch (e) {
-          data = { success: false, message: 'Invalid server response' };
-        }
-        if (response.status === 401) {
+        const data = await response.json();
+        if (!response.ok && response.status === 401) {
           localStorage.clear();
           window.location.href = '../login-donor.html';
-          return { success: false, message: 'Unauthorized' };
-        }
-        if (!response.ok) {
-          return { success: false, message: data.message || 'Request failed' };
         }
         return data;
       } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError' && retries > 0) {
-          return apiCall(endpoint, method, body, retries - 1);
-        }
-        if (error.name === 'AbortError') {
-          return { success: false, message: 'Request timed out' };
-        }
         console.error('API Error:', error);
         return { success: false, message: 'Network error' };
       }
     }
 
     async function loadProfile() {
-      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
-      if (!donorId) {
-        showAlert('Missing donor ID. Please log in again.', 'error');
-        return;
-      }
+      const donorId = localStorage.getItem('donorId');
+      const data = await apiCall(`/donor/profile/${donorId}`);
 
-      let data = await apiCall(`/donor/profile/${donorId}`);
-      if (!data.success) {
-        const cached = localStorage.getItem('cachedDonorProfile');
-        if (cached) {
-          data = { success: true, data: JSON.parse(cached) };
-          showAlert('Showing cached profile data. Refresh to try again.', 'error');
-        } else {
-          return showAlert('Failed to load profile', 'error');
-        }
-      }
+      if (!data.success) return showAlert('Failed to load profile', 'error');
 
       currentDonorData = data.data;
-      localStorage.setItem('cachedDonorProfile', JSON.stringify(data.data));
 
       // Update header
       const initial = data.data.full_name.charAt(0).toUpperCase();
@@ -498,6 +462,5 @@
       loadProfile();
     }
   </script>
-  <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>
 </html>

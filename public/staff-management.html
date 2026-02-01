@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff Management — BloodLink</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+      color: #111827;
+    }
+
+    .container { display: flex; min-height: 100vh; }
+    
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem 0;
+      position: fixed;
+      height: 100vh;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar-header { text-align: center; margin-bottom: 2rem; }
+    .sidebar-header h2 { margin: 0; font-size: 1.2rem; }
+    .sidebar-header p { margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.85rem; }
+
+    .sidebar-nav { list-style: none; margin: 0; padding: 0; }
+    .sidebar-nav li { margin: 0; }
+    .sidebar-nav a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+    }
+    .sidebar-nav a:hover { background: rgba(255,255,255,0.1); border-left-color: white; }
+    .sidebar-nav a.active { background: rgba(255,255,255,0.2); border-left-color: white; font-weight: 600; }
+
+    .main { margin-left: 260px; flex: 1; }
+    
+    .header {
+      background: white;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header h1 { margin: 0; font-size: 1.5rem; }
+    .logout-btn { background: #dc2626; color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: #b91c1c; }
+
+    .content { padding: 2rem; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .page-title { font-size: 2rem; margin-bottom: 2rem; color: #111827; }
+
+    /* Stats Cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stat-card h3 { margin: 0; color: #6b7280; font-size: 0.9rem; text-transform: uppercase; }
+    .stat-value { font-size: 2.5rem; font-weight: 700; color: #667eea; margin: 0.5rem 0 0; }
+
+    /* Tables */
+    .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f3f4f6; padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 1rem; border-bottom: 1px solid #e5e7eb; }
+    tr:hover { background: #f9fafb; }
+
+    /* Forms */
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+    input, select, textarea { width: 100%; padding: 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    button.btn { background: #667eea; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+    button.btn:hover { background: #5568d3; }
+    button.btn-secondary { background: #6b7280; }
+    button.btn-secondary:hover { background: #4b5563; }
+    button.btn-danger { background: #dc2626; }
+    button.btn-danger:hover { background: #b91c1c; }
+
+    /* Modals */
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+    .modal-footer { display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+
+    /* Alerts */
+    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #86efac; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde047; }
+
+    /* Actions */
+    .action-btns { display: flex; gap: 0.5rem; }
+    .action-btns button { padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+    /* Search */
+    .search-box { margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+    .search-box input { flex: 1; }
+    .search-box button { width: 150px; }
+
+    .loading { text-align: center; color: #6b7280; padding: 2rem; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .no-data { text-align: center; padding: 3rem; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>🩸 BloodLink</h2>
+        <p>Staff Portal</p>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a class="nav-link active" data-page="dashboard">📊 Dashboard</a></li>
+        <li><a class="nav-link" data-page="donors">👥 Donor Management</a></li>
+        <li><a class="nav-link" data-page="donations">🩹 Record Donation</a></li>
+        <li><a class="nav-link" data-page="inventory">📦 Blood Inventory</a></li>
+        <li><a class="nav-link" data-page="requests">🏥 Hospital Requests</a></li>
+        <li><a class="nav-link" data-page="events">📅 Events</a></li>
+        <li><a class="nav-link" data-page="reports">📊 Reports</a></li>
+        <li><a class="nav-link" data-page="audit">📋 Audit Logs</a></li>
+        <li><a class="nav-link" data-page="profile">👤 My Profile</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <div class="header">
+        <h1 id="pageTitle">Dashboard</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="content">
+        <!-- Dashboard -->
+        <div id="dashboard" class="section active">
+          <h2 class="page-title">Dashboard</h2>
+          <div class="stats-grid" id="statsContainer">
+            <div class="loading"><div class="spinner"></div>Loading statistics...</div>
+          </div>
+          <div id="dashboardAlert"></div>
+        </div>
+
+        <!-- Donor Management -->
+        <div id="donors" class="section">
+          <h2 class="page-title">Donor Management</h2>
+          <div class="search-box">
+            <input type="text" id="donorSearch" placeholder="Search donors...">
+            <button class="btn" onclick="addDonorModal()">+ Add Donor</button>
+          </div>
+          <div id="donorAlert"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Blood Type</th>
+                  <th>Phone</th>
+                  <th>Last Donation</th>
+                  <th>Eligible</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="donorTable">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading donors...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Record Donation -->
+        <div id="donations" class="section">
+          <h2 class="page-title">Record Donation</h2>
+          <div id="donationAlert"></div>
+          <form class="form-group" style="background: white; padding: 2rem; border-radius: 12px;">
+            <h3>New Donation Record</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label>Select Donor *</label>
+                <select id="donorSelect" required></select>
+              </div>
+              <div class="form-group">
+                <label>Blood Type *</label>
+                <select id="bloodType" required>
+                  <option value="">-- Select Type --</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Quantity (ml) *</label>
+                <input type="number" id="quantity" min="200" max="500" value="450" required>
+              </div>
+              <div class="form-group">
+                <label>Donation Date *</label>
+                <input type="date" id="donationDate" required>
+              </div>
+            </div>
+            <div id="eligibilityAlert" style="display: none;"></div>
+            <button type="submit" class="btn" onclick="recordDonation(event)">Record Donation</button>
+          </form>
+        </div>
+
+        <!-- Blood Inventory -->
+        <div id="inventory" class="section">
+          <h2 class="page-title">Blood Inventory</h2>
+          <div class="stats-grid" id="inventoryStats"></div>
+          <div id="inventoryAlert"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Blood Type</th>
+                  <th>Quantity (ml)</th>
+                  <th>Status</th>
+                  <th>Expiry Date</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTable">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading inventory...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Hospital Requests -->
+        <div id="requests" class="section">
+          <h2 class="page-title">Hospital Requests</h2>
+          <div id="requestAlert"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hospital</th>
+                  <th>Blood Type</th>
+                  <th>Qty (ml)</th>
+                  <th>Status</th>
+                  <th>Urgency</th>
+                  <th>Required By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="requestTable">
+                <tr><td colspan="7" class="loading"><div class="spinner"></div>Loading requests...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Events -->
+        <div id="events" class="section">
+          <h2 class="page-title">Donation Events</h2>
+          <div class="search-box">
+            <input type="text" id="eventSearch" placeholder="Search events...">
+            <button class="btn" onclick="createEventModal()">+ Create Event</button>
+          </div>
+          <div id="eventAlert"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Location</th>
+                  <th>Expected</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="eventTable">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading events...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Reports -->
+        <div id="reports" class="section">
+          <h2 class="page-title">Reports & Analytics</h2>
+          <div class="stats-grid" id="reportsStats"></div>
+          <div id="reportsAlert"></div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div id="audit" class="section">
+          <h2 class="page-title">Audit & Logs</h2>
+          <div id="auditAlert"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Entity ID</th>
+                  <th>Changes</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="auditTable">
+                <tr><td colspan="5" class="loading"><div class="spinner"></div>Loading logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div id="profile" class="section">
+          <h2 class="page-title">My Profile</h2>
+          <form class="form-group" style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px;">
+            <h3>Profile Information</h3>
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profileName">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="profileEmail" readonly style="background: #f3f4f6;">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="profilePhone">
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <input type="text" id="profileAddress">
+            </div>
+            <button type="button" class="btn" onclick="updateProfile()">Update Profile</button>
+            
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;">
+            
+            <h3>Change Password</h3>
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="currentPassword">
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="newPassword">
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input type="password" id="confirmPassword">
+            </div>
+            <button type="button" class="btn" onclick="changePassword()">Change Password</button>
+          </form>
+          <div id="profileAlert"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Donor Modal -->
+  <div id="donorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Add New Donor</div>
+      <form id="donorForm">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="modalDonorName" required>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="modalDonorEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="modalDonorPhone">
+        </div>
+        <div class="form-group">
+          <label>Blood Type *</label>
+          <select id="modalDonorBlood" required>
+            <option value="">-- Select --</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth *</label>
+          <input type="date" id="modalDonorDOB" required>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="modalDonorCity">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeDonorModal()">Cancel</button>
+          <button type="submit" class="btn">Save Donor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Create Event</div>
+      <form id="eventForm">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" id="modalEventTitle" required>
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="modalEventDate" required>
+        </div>
+        <div class="form-group">
+          <label>Start Time *</label>
+          <input type="time" id="modalEventStartTime" required>
+        </div>
+        <div class="form-group">
+          <label>End Time *</label>
+          <input type="time" id="modalEventEndTime" required>
+        </div>
+        <div class="form-group">
+          <label>Location *</label>
+          <input type="text" id="modalEventLocation" required>
+        </div>
+        <div class="form-group">
+          <label>Expected Donors</label>
+          <input type="number" id="modalEventExpected" min="1">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="modalEventNotes" style="height: 100px;"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+          <button type="submit" class="btn">Create Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    let currentPage = 'dashboard';
+    let allDonors = [];
+    let allInventory = [];
+    let allRequests = [];
+    let allEvents = [];
+
+    // Auth check
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      const staffId = localStorage.getItem('staffId');
+      if (!token || !staffId) {
+        window.location.href = 'login-staff.html';
+        return false;
+      }
+      return true;
+    }
+
+    // Get auth token
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    // API calls
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      try {
+        const options = {
+          method,
+          headers: getAuthHeader()
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+
+        if (!response.ok && response.status === 401) {
+          localStorage.clear();
+          window.location.href = 'login-staff.html';
+          return null;
+        }
+
+        return data;
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        
+        const page = link.dataset.page;
+        currentPage = page;
+        
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(page).classList.add('active');
+        
+        const titles = {
+          dashboard: 'Dashboard',
+          donors: 'Donor Management',
+          donations: 'Record Donation',
+          inventory: 'Blood Inventory',
+          requests: 'Hospital Requests',
+          events: 'Donation Events',
+          reports: 'Reports & Analytics',
+          audit: 'Audit & Logs',
+          profile: 'My Profile'
+        };
+        document.getElementById('pageTitle').textContent = titles[page] || page;
+
+        // Load page data
+        if (page === 'dashboard') loadDashboard();
+        else if (page === 'donors') loadDonors();
+        else if (page === 'inventory') loadInventory();
+        else if (page === 'requests') loadRequests();
+        else if (page === 'events') loadEvents();
+        else if (page === 'reports') loadReports();
+        else if (page === 'audit') loadAuditLogs();
+        else if (page === 'profile') loadProfile();
+      });
+    });
+
+    // Dashboard
+    async function loadDashboard() {
+      const staffId = localStorage.getItem('staffId');
+      const data = await apiCall(`/dashboard/stats/staff/${staffId}`);
+      
+      if (!data.success) return showAlert('dashboardAlert', 'Failed to load statistics', 'error');
+
+      const stats = data.data;
+      document.getElementById('statsContainer').innerHTML = `
+        <div class="stat-card">
+          <h3>Total Inventory</h3>
+          <div class="stat-value">${stats.totalInventoryMl || 0}</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">ml available</div>
+        </div>
+        <div class="stat-card">
+          <h3>Recent Collections</h3>
+          <div class="stat-value">${stats.recentCollections || 0}</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">last 30 days</div>
+        </div>
+        <div class="stat-card">
+          <h3>Pending Requests</h3>
+          <div class="stat-value">${stats.pendingRequests || 0}</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">awaiting fulfillment</div>
+        </div>
+        <div class="stat-card">
+          <h3>Fulfilled Requests</h3>
+          <div class="stat-value">${stats.fulfilledRequests || 0}</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">this month</div>
+        </div>
+      `;
+    }
+
+    // Donors
+    async function loadDonors() {
+      const data = await apiCall('/staff/donors');
+      if (!data.success) return showAlert('donorAlert', 'Failed to load donors', 'error');
+
+      allDonors = data.data;
+      displayDonors(allDonors);
+      populateDonorSelect();
+    }
+
+    function displayDonors(donors) {
+      const html = donors.map(d => `
+        <tr>
+          <td><strong>${d.full_name}</strong></td>
+          <td>${d.blood_type}</td>
+          <td>${d.phone || 'N/A'}</td>
+          <td>${d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString() : 'Never'}</td>
+          <td><span class="badge ${d.isEligible ? 'badge-success' : 'badge-warning'}">${d.isEligible ? 'Yes' : `${d.daysUntilEligible}d`}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="viewDonorHistory('${d.id}')">History</button>
+              <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="editDonor('${d.id}')">Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('donorTable').innerHTML = html || '<tr><td colspan="6" class="no-data">No donors found</td></tr>';
+    }
+
+    function populateDonorSelect() {
+      const select = document.getElementById('donorSelect');
+      const eligible = allDonors.filter(d => d.isEligible);
+      select.innerHTML = '<option value="">-- Select Donor --</option>' + 
+        eligible.map(d => `<option value="${d.id}">${d.full_name} (${d.blood_type})</option>`).join('');
+    }
+
+    // Add Donor Modal
+    function addDonorModal() {
+      document.getElementById('donorModal').querySelector('.modal-header').textContent = 'Add New Donor';
+      document.getElementById('donorForm').reset();
+      document.getElementById('donorForm').onsubmit = saveDonor;
+      document.getElementById('donorModal').classList.add('active');
+    }
+
+    function closeDonorModal() {
+      document.getElementById('donorModal').classList.remove('active');
+    }
+
+    async function saveDonor(e) {
+      e.preventDefault();
+      const data = {
+        full_name: document.getElementById('modalDonorName').value,
+        email: document.getElementById('modalDonorEmail').value,
+        phone: document.getElementById('modalDonorPhone').value,
+        blood_type: document.getElementById('modalDonorBlood').value,
+        date_of_birth: document.getElementById('modalDonorDOB').value,
+        city: document.getElementById('modalDonorCity').value,
+        password: 'DefaultPass123'
+      };
+
+      const result = await apiCall('/staff/donors', 'POST', data);
+      if (result.success) {
+        showAlert('donorAlert', 'Donor added successfully', 'success');
+        closeDonorModal();
+        loadDonors();
+      } else {
+        showAlert('donorAlert', result.message || 'Failed to add donor', 'error');
+      }
+    }
+
+    // Donations
+    async function recordDonation(e) {
+      e.preventDefault();
+      const donorId = document.getElementById('donorSelect').value;
+      const bloodType = document.getElementById('bloodType').value;
+      const quantity = parseInt(document.getElementById('quantity').value);
+      const donationDate = document.getElementById('donationDate').value;
+
+      if (!donorId) return showAlert('donationAlert', 'Please select a donor', 'error');
+
+      const data = {
+        donor_id: donorId,
+        blood_type: bloodType,
+        quantity_ml: quantity,
+        donation_date: donationDate
+      };
+
+      const result = await apiCall('/staff/donations', 'POST', data);
+      if (result.success) {
+        showAlert('donationAlert', 'Donation recorded successfully', 'success');
+        document.querySelector('form').reset();
+        loadDonors();
+      } else {
+        showAlert('donationAlert', result.message || 'Failed to record donation', 'error');
+      }
+    }
+
+    // Inventory
+    async function loadInventory() {
+      const data = await apiCall('/staff/inventory');
+      if (!data.success) return showAlert('inventoryAlert', 'Failed to load inventory', 'error');
+
+      allInventory = data.data.all;
+      const byType = data.data.byType;
+
+      const statsHtml = Object.entries(byType).map(([type, stats]) => `
+        <div class="stat-card">
+          <h3>${type}</h3>
+          <div class="stat-value">${stats.available}</div>
+          <div style="font-size: 0.85rem; color: #6b7280;">ml available</div>
+        </div>
+      `).join('');
+      document.getElementById('inventoryStats').innerHTML = statsHtml;
+
+      const html = allInventory.map(item => `
+        <tr>
+          <td>${item.blood_type}</td>
+          <td>${item.quantity_ml} ml</td>
+          <td><span class="badge badge-info">${item.status}</span></td>
+          <td>${item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : 'N/A'}</td>
+          <td><span class="badge ${item.expiryDays >= 7 ? 'badge-success' : (item.expiryDays >= 0 ? 'badge-warning' : 'badge-danger')}">${item.expiryDays || 'Expired'}</span></td>
+          <td>
+            <select onchange="updateInventoryStatus('${item.id}', this.value)" style="padding: 0.4rem;">
+              <option value="">Change...</option>
+              <option value="available">Available</option>
+              <option value="used">Used</option>
+              <option value="expired">Expired</option>
+              <option value="damaged">Damaged</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('inventoryTable').innerHTML = html || '<tr><td colspan="6" class="no-data">No inventory items</td></tr>';
+    }
+
+    async function updateInventoryStatus(id, status) {
+      if (!status) return;
+      const result = await apiCall(`/staff/inventory/${id}`, 'PUT', { status });
+      if (result.success) {
+        showAlert('inventoryAlert', 'Inventory updated', 'success');
+        loadInventory();
+      }
+    }
+
+    // Requests
+    async function loadRequests() {
+      const data = await apiCall('/staff/requests');
+      if (!data.success) return showAlert('requestAlert', 'Failed to load requests', 'error');
+
+      allRequests = data.data;
+      const html = allRequests.map(r => `
+        <tr>
+          <td>${r.hospital_name}</td>
+          <td>${r.blood_type}</td>
+          <td>${r.quantity_required} ml</td>
+          <td><span class="badge badge-info">${r.status}</span></td>
+          <td><span class="badge ${r.urgency === 'emergency' ? 'badge-danger' : (r.urgency === 'urgent' ? 'badge-warning' : 'badge-success')}">${r.urgency}</span></td>
+          <td>${r.required_by ? new Date(r.required_by).toLocaleDateString() : 'ASAP'}</td>
+          <td>
+            ${r.status === 'pending' ? `<button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="fulfillRequest('${r.id}')">Fulfill</button>` : '-'}
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('requestTable').innerHTML = html || '<tr><td colspan="7" class="no-data">No requests</td></tr>';
+    }
+
+    async function fulfillRequest(id) {
+      const quantity = prompt('Enter quantity to fulfill (ml):');
+      if (!quantity) return;
+
+      const result = await apiCall(`/staff/requests/${id}/fulfill`, 'PUT', { quantity_fulfilled: parseInt(quantity) });
+      if (result.success) {
+        showAlert('requestAlert', 'Request fulfilled', 'success');
+        loadRequests();
+      } else {
+        showAlert('requestAlert', result.message || 'Failed to fulfill request', 'error');
+      }
+    }
+
+    // Events
+    async function loadEvents() {
+      const data = await apiCall('/staff/events');
+      if (!data.success) return showAlert('eventAlert', 'Failed to load events', 'error');
+
+      allEvents = data.data;
+      const html = allEvents.map(e => `
+        <tr>
+          <td>${e.title}</td>
+          <td>${new Date(e.date).toLocaleDateString()}</td>
+          <td>${e.start_time} - ${e.end_time}</td>
+          <td>${e.location}</td>
+          <td>${e.expected || 0}</td>
+          <td><button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="editEvent('${e.id}')">Edit</button></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('eventTable').innerHTML = html || '<tr><td colspan="6" class="no-data">No events</td></tr>';
+    }
+
+    function createEventModal() {
+      document.getElementById('eventModal').querySelector('.modal-header').textContent = 'Create Event';
+      document.getElementById('eventForm').reset();
+      document.getElementById('eventForm').onsubmit = saveEvent;
+      document.getElementById('eventModal').classList.add('active');
+    }
+
+    function closeEventModal() {
+      document.getElementById('eventModal').classList.remove('active');
+    }
+
+    async function saveEvent(e) {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('modalEventTitle').value,
+        date: document.getElementById('modalEventDate').value,
+        start_time: document.getElementById('modalEventStartTime').value,
+        end_time: document.getElementById('modalEventEndTime').value,
+        location: document.getElementById('modalEventLocation').value,
+        expected: parseInt(document.getElementById('modalEventExpected').value) || 0,
+        notes: document.getElementById('modalEventNotes').value
+      };
+
+      const result = await apiCall('/events', 'POST', data);
+      if (result.success) {
+        showAlert('eventAlert', 'Event created successfully', 'success');
+        closeEventModal();
+        loadEvents();
+      } else {
+        showAlert('eventAlert', result.message || 'Failed to create event', 'error');
+      }
+    }
+
+    // Reports
+    async function loadReports() {
+      const data = await apiCall('/staff/reports');
+      if (!data.success) return showAlert('reportsAlert', 'Failed to load reports', 'error');
+
+      const reports = data.data;
+      const html = `
+        <div class="stat-card">
+          <h3>Total Active Donors</h3>
+          <div class="stat-value">${reports.totalDonors}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Recent Donations (30d)</h3>
+          <div class="stat-value">${reports.recentDonations}</div>
+        </div>
+        <div class="stat-card">
+          <h3>Total Inventory</h3>
+          <div class="stat-value">${reports.totalInventory} ml</div>
+        </div>
+        <div class="stat-card">
+          <h3>Fulfilled Requests</h3>
+          <div class="stat-value">${reports.requestsByStatus?.fulfilled || 0}</div>
+        </div>
+      `;
+      document.getElementById('reportsStats').innerHTML = html;
+    }
+
+    // Audit Logs
+    async function loadAuditLogs() {
+      const data = await apiCall('/staff/audit-logs');
+      if (!data.success) return showAlert('auditAlert', 'Failed to load audit logs', 'error');
+
+      const html = data.data.map(log => `
+        <tr>
+          <td>${log.action}</td>
+          <td>${log.entity_type}</td>
+          <td>${log.entity_id}</td>
+          <td>${log.changes}</td>
+          <td>${new Date(log.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('auditTable').innerHTML = html || '<tr><td colspan="5" class="no-data">No logs</td></tr>';
+    }
+
+    // Profile
+    async function loadProfile() {
+      const staffId = localStorage.getItem('staffId');
+      const data = await apiCall(`/staff/profile/${staffId}`);
+      if (!data.success) return;
+
+      const staff = data.data;
+      document.getElementById('profileName').value = staff.full_name;
+      document.getElementById('profileEmail').value = staff.email;
+      document.getElementById('profilePhone').value = staff.phone || '';
+      document.getElementById('profileAddress').value = staff.address || '';
+    }
+
+    async function updateProfile() {
+      const staffId = localStorage.getItem('staffId');
+      const data = {
+        full_name: document.getElementById('profileName').value,
+        phone: document.getElementById('profilePhone').value,
+        address: document.getElementById('profileAddress').value
+      };
+
+      const result = await apiCall(`/staff/${staffId}`, 'PUT', data);
+      if (result.success) {
+        showAlert('profileAlert', 'Profile updated successfully', 'success');
+      } else {
+        showAlert('profileAlert', result.message || 'Failed to update profile', 'error');
+      }
+    }
+
+    async function changePassword() {
+      const staffId = localStorage.getItem('staffId');
+      const current = document.getElementById('currentPassword').value;
+      const newPass = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+
+      if (!current || !newPass || !confirm) {
+        return showAlert('profileAlert', 'All fields required', 'error');
+      }
+
+      if (newPass !== confirm) {
+        return showAlert('profileAlert', 'Passwords do not match', 'error');
+      }
+
+      if (newPass.length < 6) {
+        return showAlert('profileAlert', 'Password must be at least 6 characters', 'error');
+      }
+
+      const result = await apiCall(`/staff/${staffId}/password`, 'PUT', {
+        currentPassword: current,
+        newPassword: newPass
+      });
+
+      if (result.success) {
+        showAlert('profileAlert', 'Password changed successfully', 'success');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } else {
+        showAlert('profileAlert', result.message || 'Failed to change password', 'error');
+      }
+    }
+
+    // Utility functions
+    function showAlert(elementId, message, type) {
+      const alert = document.getElementById(elementId);
+      alert.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => { alert.innerHTML = ''; }, 5000);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login-staff.html';
+    }
+
+    // Initialize
+    if (checkAuth()) {
+      document.getElementById('donationDate').valueAsDate = new Date();
+      loadDashboard();
+    }
+  </script>
+</body>
+</html>

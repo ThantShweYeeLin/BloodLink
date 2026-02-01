@@ -30,6 +30,8 @@
     .header-content { display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-size: 2rem; margin: 0; }
     .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .api-toggle { background: rgba(255,255,255,0.2); }
     .logout-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
     
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
@@ -97,7 +99,10 @@
               <h1>Donor Dashboard</h1>
               <p style="margin-top: 0.5rem; opacity: 0.9;">Welcome back! Track your donation journey and make an impact.</p>
             </div>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <div class="header-actions">
+              <button class="logout-btn api-toggle" id="apiToggle" onclick="toggleApiBase()">API: Local</button>
+              <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
           </div>
         </div>
 
@@ -173,7 +178,7 @@
     </main>
   </div>
 
-  <script src="../shared-pages/warm-backend.js" type="module"></script>
+  <script src="../shared-pages/api-base.js"></script>
   <script>
     // Sidebar toggle functionality
     function toggleSidebar() {
@@ -187,9 +192,7 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
-    const REQUEST_TIMEOUT_MS = 120000;
-    const BACKEND_BASE = 'https://bloodlink-backend.onrender.com';
-    let backendWarmed = false;
+    const REQUEST_TIMEOUT_MS = 15000;
 
     async function fetchWithTimeout(url, options = {}, retries = 1) {
       const controller = new AbortController();
@@ -206,39 +209,30 @@
       }
     }
 
-    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-    async function warmBackend() {
-      if (backendWarmed) return;
-      try {
-        await fetchWithTimeout(`${BACKEND_BASE}/`, { mode: 'no-cors' }, 0);
-      } catch (e) {
-        // Ignore warm-up errors
+    async function fetchJsonWithRetry(url, options = {}) {
+      const response = await fetchWithTimeout(url, options, 1);
+      if (!response.ok) {
+        return { ok: false, status: response.status, data: null };
       }
-      backendWarmed = true;
+      const data = await response.json();
+      return { ok: true, status: response.status, data };
     }
 
-    async function fetchJsonWithRetry(url, options = {}, retries = 2) {
-      await warmBackend();
-      try {
-        const response = await fetchWithTimeout(url, options, 1);
-        if (!response.ok) {
-          if (retries > 0 && [502, 503, 504].includes(response.status)) {
-            await sleep(1500);
-            return fetchJsonWithRetry(url, options, retries - 1);
-          }
-          return { ok: false, status: response.status, data: null };
-        }
-        const data = await response.json();
-        return { ok: true, status: response.status, data };
-      } catch (error) {
-        if (retries > 0) {
-          await sleep(1500);
-          return fetchJsonWithRetry(url, options, retries - 1);
-        }
-        throw error;
+    const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
+
+    function updateApiToggleLabel() {
+      const btn = document.getElementById('apiToggle');
+      if (!btn) return;
+      btn.textContent = API_BASE.includes('localhost') ? 'API: Local' : 'API: Render';
+    }
+
+    function toggleApiBase() {
+      if (window.BloodLinkApi?.toggle) {
+        window.BloodLinkApi.toggle();
       }
     }
+
+    updateApiToggleLabel();
 
     // Check authentication
     const userType = localStorage.getItem('userType');
@@ -260,7 +254,7 @@
     // Fetch donation statistics
     async function fetchDonationStats() {
       try {
-        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/donations/donor/${donorId}`, {
+        const result = await fetchJsonWithRetry(`${API_BASE}/api/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -312,7 +306,7 @@
     // Fetch donation history
     async function fetchDonationHistory() {
       try {
-        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/donations/donor/${donorId}`, {
+        const result = await fetchJsonWithRetry(`${API_BASE}/api/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -369,7 +363,7 @@
     // Fetch upcoming events
     async function fetchUpcomingEvents() {
       try {
-        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/events/upcoming`, {
+        const result = await fetchJsonWithRetry(`${API_BASE}/api/events/upcoming`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         

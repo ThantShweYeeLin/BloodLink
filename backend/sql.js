@@ -1,38 +1,45 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Load environment variables from .env or .env.production
-if (process.env.NODE_ENV === 'production') {
-  dotenv.config({ path: path.join(__dirname, '.env.production') });
-} else {
-  dotenv.config();
-}
+dotenv.config();
 
 const { Pool } = pg;
 
-// Fix environment variables if they appear to be truncated or wrong from Render dashboard
-
-// Try to use DATABASE_URL if available (Render provides this), otherwise use individual env vars
-const poolConfig = process.env.DATABASE_URL 
-  ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
-  : {
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT || '5432'),
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'bloodlink_db',
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    };
+const {
+  DATABASE_URL,
+  DB_HOST = 'localhost',
+  DB_PORT = '5432',
+  DB_USER = 'postgres',
+  DB_PASSWORD = '',
+  DB_NAME = 'bloodlink_db',
+  NODE_ENV,
+} = process.env;
 
 let pool;
 
 export function getPool() {
   if (!pool) {
-    pool = new Pool(poolConfig);
+    const config = DATABASE_URL
+      ? {
+          connectionString: DATABASE_URL,
+          ssl: { rejectUnauthorized: false },
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
+        }
+      : {
+          host: DB_HOST,
+          port: Number(DB_PORT),
+          user: DB_USER,
+          password: DB_PASSWORD,
+          database: DB_NAME,
+          ssl: NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
+        };
+
+    pool = new Pool(config);
     
     pool.on('error', (err) => {
       console.error('Unexpected error on idle PostgreSQL client', err);
@@ -50,13 +57,8 @@ function convertPlaceholders(sql, params) {
 
 export async function query(sql, params = []) {
   const { sql: convertedSql, params: convertedParams } = convertPlaceholders(sql, params);
-  try {
-    const result = await getPool().query(convertedSql, convertedParams);
-    return result.rows;
-  } catch (err) {
-    console.error('❌ Query failed:', err.message);
-    throw err;
-  }
+  const result = await getPool().query(convertedSql, convertedParams);
+  return result.rows;
 }
 
 export async function transaction(fn) {

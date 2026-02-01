@@ -173,7 +173,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <a href="../donor/" class="back-btn">← Back</a>
+      <a href="index.html" class="back-btn">← Back</a>
       <div class="icon">👩‍⚕️</div>
       <h1>Staff Login</h1>
       <p class="subtitle">Access your staff dashboard</p>
@@ -203,14 +203,13 @@
     </div>
   </div>
 
-  <script src="../shared-pages/api-base.js"></script>
   <script>
     // Redirect if already logged in
     window.addEventListener('DOMContentLoaded', () => {
       const token = localStorage.getItem('token');
       const staffId = localStorage.getItem('staffId');
       if (token && staffId) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'dashboards/staff-dashboard.html';
       }
     });
 
@@ -228,10 +227,8 @@
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
       
-      const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
-      
       try {
-        const response = await fetch(`${API_BASE}/api/login/staff`, {
+        const response = await fetch('https://bloodlink-mbvw.onrender.com/api/login/staff', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -252,7 +249,7 @@
           successMsg.style.display = 'block';
           
           setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'dashboards/staff-dashboard.html';
           }, 1500);
         } else {
           errorMsg.textContent = '✗ ' + result.message;

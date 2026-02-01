@@ -453,6 +453,94 @@ app.get('/api/donors/blood-type/:type', async (req, res) => {
 
 // ==================== DASHBOARD ENDPOINTS ====================
 
+// Get donor donation history (SQL)
+app.get('/api/donations/donor/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const donations = await query(
+      'SELECT id, donation_date AS date, blood_type, quantity_ml, location, notes FROM donation_history WHERE donor_id = ? ORDER BY donation_date DESC',
+      [req.params.id]
+    );
+
+    res.json(donations);
+  } catch (error) {
+    console.error('Error fetching donor donations (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch donations' });
+  }
+});
+
+// Get all donations (staff)
+app.get('/api/donations', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const donations = await query(
+      'SELECT id, donor_id, donation_date AS date, blood_type, quantity_ml, location, staff_id FROM donation_history ORDER BY donation_date DESC'
+    );
+
+    res.json(donations);
+  } catch (error) {
+    console.error('Error fetching donations (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch donations' });
+  }
+});
+
+// Get upcoming events (SQL)
+app.get('/api/events/upcoming', authenticateToken, async (req, res) => {
+  try {
+    const events = await query(
+      'SELECT id, title AS name, date, start_time, end_time, location, expected, notes, created_by_name FROM events WHERE date >= CURRENT_DATE ORDER BY date ASC'
+    );
+
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching upcoming events (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch events' });
+  }
+});
+
+// Get blood inventory summary (SQL)
+app.get('/api/inventory', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const inventory = await query(
+      'SELECT blood_type, COALESCE(SUM(quantity_ml), 0) AS units FROM blood_inventory GROUP BY blood_type ORDER BY blood_type ASC'
+    );
+
+    res.json(inventory);
+  } catch (error) {
+    console.error('Error fetching inventory (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch inventory' });
+  }
+});
+
+// Get hospital requests (SQL)
+app.get('/api/requests/hospital/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'hospital' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const requests = await query(
+      'SELECT id, blood_type, quantity_ml AS units, urgency AS priority, status, request_date AS date FROM blood_requests WHERE hospital_id = ? ORDER BY request_date DESC',
+      [req.params.id]
+    );
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching hospital requests (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch requests' });
+  }
+});
+
 // Get donor profile (SQL)
 app.get('/api/donor/profile/:id', authenticateToken, async (req, res) => {
   try {

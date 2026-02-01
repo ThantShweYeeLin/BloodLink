@@ -7,13 +7,21 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
-    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; }
-    .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 0.5rem; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: grid-template-columns 0.3s ease; }
+    .layout.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; transition: all 0.3s ease; width: 260px; overflow: hidden; }
+    .sidebar-collapsed .sidebar { width: 80px; padding: 1.5rem 0.5rem; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
+    .sidebar-collapsed .logo span { display: none; }
+    .sidebar-collapsed .nav-item span { display: none; }
+    .sidebar-collapsed .nav-item { justify-content: center; padding: 0.75rem; }
     .nav { display: flex; flex-direction: column; gap: 0.35rem; }
-    .nav-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; }
-    .nav-item:hover { background: #f3f4f6; }
-    .nav-item.active { background: #fef2f2; color: #b91c1c; border: 1px solid #fde8e8; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
+    .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
     .main { padding: 1.5rem 2rem; }
     @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
     .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
@@ -79,21 +87,39 @@
       .profile-header { flex-direction: column; text-align: center; }
     }
   </style>
-  <link rel="stylesheet" href="../../shared-pages/sidebar-toggle.css" />
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="logo">🩸 Life Link</div>
-      <nav class="nav">
-        <a class="nav-item" href="../dashboard.html">🏠 Dashboard</a>
-        <a class="nav-item" href="./hospital-submit-request.html">📝 Submit Request</a>
-        <a class="nav-item" href="./hospital-request-status.html">📊 Request Status</a>
-        <a class="nav-item" href="./hospital-emergency-request.html">🚨 Emergency</a>
-        <a class="nav-item" href="./hospital-request-history.html">🕑 History & Reports</a>
-        <a class="nav-item" href="./hospital-notifications.html">🔔 Notifications</a>
-        <a class="nav-item active" href="./hospital-profile.html">👤 Profile</a>
-        <a class="nav-item" href="./hospital-analytics.html">📈 Analytics</a>
+  <script>
+    function toggleSidebar() {
+      const layout = document.getElementById('layout');
+      if (layout) {
+        layout.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('hospitalSidebarCollapsed', layout.classList.contains('sidebar-collapsed'));
+      }
+    }
+
+    if (localStorage.getItem('hospitalSidebarCollapsed') === 'true') {
+      document.addEventListener('DOMContentLoaded', () => {
+        const layout = document.getElementById('layout');
+        if (layout) layout.classList.add('sidebar-collapsed');
+      });
+    }
+  </script>
+  <div class=\"layout\" id=\"layout\">
+    <aside class=\"sidebar\">
+      <div class=\"sidebar-header\">
+        <div class=\"logo\"><span>🩸</span> <span>Life Link Hospital</span></div>
+        <button class=\"toggle-btn\" onclick=\"toggleSidebar()\" title=\"Toggle sidebar\">☰</button>
+      </div>
+      <nav class=\"nav\">
+        <a class=\"nav-item\" href=\"../dashboard.html\"><span>🏠</span> <span>Dashboard</span></a>
+        <a class=\"nav-item active\" href=\"./hospital-profile.html\"><span>🏥</span> <span>Profile</span></a>
+        <a class=\"nav-item\" href=\"./hospital-submit-request.html\"><span>📝</span> <span>Submit Request</span></a>
+        <a class=\"nav-item\" href=\"./hospital-request-status.html\"><span>📊</span> <span>Request Status</span></a>
+        <a class=\"nav-item\" href=\"./hospital-emergency-request.html\"><span>🚨</span> <span>Emergency</span></a>
+        <a class=\"nav-item\" href=\"./hospital-request-history.html\"><span>🕑</span> <span>History & Reports</span></a>
+        <a class=\"nav-item\" href=\"./hospital-notifications.html\"><span>🔔</span> <span>Notifications</span></a>
+        <a class=\"nav-item\" href=\"./hospital-analytics.html\"><span>📈</span> <span>Analytics</span></a>
       </nav>
     </aside>
     <main class="main">

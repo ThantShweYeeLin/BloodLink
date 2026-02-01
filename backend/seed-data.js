@@ -20,7 +20,7 @@ async function seed() {
   if (staffCount === 0) {
     await query(
       'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
-      ['Taylor Staff', 'EMP-001', 'Certified Phlebotomist', 'staff@bloodlink.com', '5557778888', 'BloodLink Central', 'collection', '789 Pine Rd', passwordHash]
+      ['Taylor Staff', 'EMP-001', 'Certified Phlebotomist', 'staff@bloodlink.com', '5557778888', 'Life Link Central', 'collection', '789 Pine Rd', passwordHash]
     );
   }
 
@@ -48,7 +48,7 @@ async function seed() {
   if (donationCount === 0) {
     await query(
       'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
-      [1, '2026-01-15', 'O+', 450, 'BloodLink Center', 1, 'Routine donation']
+      [1, '2026-01-15', 'O+', 450, 'Life Link Center', 1, 'Routine donation']
     );
     await query(
       'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
@@ -60,11 +60,11 @@ async function seed() {
   if (inventoryCount === 0) {
     await query(
       'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, donor_id, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      ['O+', 900, 'BloodLink Central', '2026-03-15', 1, '2026-01-15', 'available']
+      ['O+', 900, 'Life Link Central', '2026-03-15', 1, '2026-01-15', 'available']
     );
     await query(
       'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, donor_id, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      ['A-', 450, 'BloodLink Central', '2026-03-20', 2, '2026-01-20', 'available']
+      ['A-', 450, 'Life Link Central', '2026-03-20', 2, '2026-01-20', 'available']
     );
   }
 

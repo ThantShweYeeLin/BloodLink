@@ -1,7 +1,7 @@
 # SQL Compatibility Fixes Applied
 
 ## Issue Summary
-The BloodLink system was using MySQL-specific SQL syntax that was incompatible with PostgreSQL. This caused errors in login functions and donor dashboard operations.
+The Life Link system was using MySQL-specific SQL syntax that was incompatible with PostgreSQL. This caused errors in login functions and donor dashboard operations.
 
 ## Fixes Applied (January 19, 2026)
 

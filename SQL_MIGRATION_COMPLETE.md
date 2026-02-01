@@ -1,7 +1,7 @@
 # SQL Migration Complete ✅
 
 ## What Changed
-Your BloodLink backend now uses **MySQL for core entities** (donors, hospitals, staff, events) and keeps MongoDB for inventory/requests (for now).
+Your Life Link backend now uses **MySQL for core entities** (donors, hospitals, staff, events) and keeps MongoDB for inventory/requests (for now).
 
 ### Migrated to SQL
 - ✅ **Authentication**: Login for donors, hospitals, and staff

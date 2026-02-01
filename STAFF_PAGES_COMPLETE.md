@@ -1,7 +1,7 @@
-# BloodLink Staff Management System - Complete Documentation
+# Life Link Staff Management System - Complete Documentation
 
 ## 🎯 Project Overview
-BloodLink is a comprehensive blood bank management system built with PostgreSQL backend and modern HTML/CSS/JavaScript frontend. The system provides complete CRUD operations for managing blood donations, hospital requests, inventory, events, and staff operations.
+Life Link is a comprehensive blood bank management system built with PostgreSQL backend and modern HTML/CSS/JavaScript frontend. The system provides complete CRUD operations for managing blood donations, hospital requests, inventory, events, and staff operations.
 
 ---
 

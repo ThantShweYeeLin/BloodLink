@@ -1,4 +1,4 @@
-# BloodLink Database - Entity Relationship Diagram
+# Life Link Database - Entity Relationship Diagram
 
 ## ER Diagram
 

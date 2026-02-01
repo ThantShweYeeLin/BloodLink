@@ -1,4 +1,4 @@
-# 📖 BloodLink - Complete Setup Guide for Team
+# 📋 Life Link - Complete Setup Guide for Team
 
 This document summarizes all setup resources available for your team members.
 
@@ -13,7 +13,7 @@ For a thorough step-by-step walkthrough:
 - **[INSTALLATION.md](INSTALLATION.md)** - Detailed installation with screenshots and troubleshooting
 
 ### 🎯 Project Overview
-For understanding what BloodLink does:
+For understanding what Life Link does:
 - **[README.md](README.md)** - Features and project description
 
 ---
@@ -24,7 +24,7 @@ For understanding what BloodLink does:
 
 #### **Step 1: Create the Database**
 ```bash
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 ```
 
 #### **Step 2: Configure Environment**
@@ -93,10 +93,10 @@ After running `pnpm run seed`, your database will have:
 
 ## 🐛 Common Issues & Solutions
 
-### Issue: "Database BloodLink does not exist"
+### Issue: "Database Life Link does not exist"
 ```bash
 # Solution:
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 pnpm run seed
 ```
 
@@ -148,14 +148,14 @@ pnpm start
 # Should show: [BACKEND] ✓ Database connected successfully
 
 # 2. Can login
-# Visit: http://localhost:5173/BloodLink/
+# Visit: http://localhost:5173/Life Link/
 # Login with: alex@donor.com / Test123!
 
 # 3. Data loads
 # Should see donation history and events on dashboard
 
 # 4. Can view data in pgAdmin
-# Open pgAdmin → BloodLink → donors → View/Edit Data
+# Open pgAdmin → Life Link → donors → View/Edit Data
 # Should see 2 donor records
 ```
 
@@ -255,7 +255,7 @@ After setup, learn more about the project:
 
 Once you complete all setup steps, you'll have:
 
-✅ Working BloodLink application
+✅ Working Life Link application
 ✅ Local PostgreSQL database with sample data
 ✅ Ability to login and see dashboards
 ✅ Complete API backend

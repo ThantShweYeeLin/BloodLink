@@ -1,8 +1,8 @@
-# 🩸 BloodLink Setup Complete!
+# 🩸 Life Link Setup Complete!
 
 ## ✅ What's Been Built
 
-Your BloodLink application is now fully set up with:
+Your Life Link application is now fully set up with:
 
 ### 1. **Database Layer** 
 - ✅ Complete SQL schema with 7 tables
@@ -67,7 +67,7 @@ exit;
 
 **Option A (Easiest):**
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link
 ./start.sh              # macOS/Linux
 # OR
 start.bat              # Windows
@@ -77,7 +77,7 @@ start.bat              # Windows
 
 Terminal 1 - Backend:
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/backend
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link/backend
 npm install
 npm run dev
 # Should see: ✓ Database connected successfully
@@ -86,7 +86,7 @@ npm run dev
 
 Terminal 2 - Frontend:
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link
 npm install
 npm run dev
 # Should see: ➜  Local:   http://localhost:5173/
@@ -150,7 +150,7 @@ Go to: **http://localhost:5173**
 ## 📁 File Structure Created
 
 ```
-BloodLink/
+Life Link/
 ├── backend/
 │   ├── server.js                 ← All API endpoints
 │   ├── db.js                     ← Database connection
@@ -328,7 +328,7 @@ audit_log (id, table_name, action, user_type, changes, timestamp)
 
 ## 🎉 You're All Set!
 
-Your BloodLink application has:
+Your Life Link application has:
 - ✅ Complete backend with all endpoints
 - ✅ Role-based authentication
 - ✅ Three separate dashboards

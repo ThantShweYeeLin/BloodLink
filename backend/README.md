@@ -1,4 +1,4 @@
-# BloodLink Backend Setup Instructions
+# Life Link Backend Setup Instructions
 
 ## Prerequisites
 - Node.js (v16 or higher)

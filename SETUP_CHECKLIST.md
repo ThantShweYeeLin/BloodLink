@@ -1,6 +1,6 @@
-# BloodLink - Quick Setup Checklist
+# Life Link - Quick Setup Checklist
 
-Use this checklist when setting up BloodLink on your machine.
+Use this checklist when setting up Life Link on your machine.
 
 ## ✅ Pre-Installation
 
@@ -14,7 +14,7 @@ Use this checklist when setting up BloodLink on your machine.
 ```bash
 # Clone the repo
 git clone <url>
-cd BloodLink
+cd Life Link
 
 # Install dependencies
 pnpm install
@@ -29,24 +29,24 @@ pnpm install
 
 ### Method 1: Command Line (Easiest)
 ```bash
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 ```
 
 ### Method 2: psql
 ```bash
 psql -h localhost -U postgres
-CREATE DATABASE BloodLink;
+CREATE DATABASE Life Link;
 \q
 ```
 
 ### Method 3: pgAdmin GUI
 1. Open pgAdmin
 2. Right-click Databases → Create → Database
-3. Name: `BloodLink`
+3. Name: `Life Link`
 4. Save
 
-- [ ] Database `BloodLink` created
-- [ ] Can connect: `psql -h localhost -U postgres -d BloodLink`
+- [ ] Database `Life Link` created
+- [ ] Can connect: `psql -h localhost -U postgres -d Life Link`
 
 ## ✅ Configure Environment
 
@@ -90,7 +90,7 @@ Wait for both servers to start:
 [BACKEND] ✓ Database connected successfully
 [BACKEND] Server running on: http://localhost:3000
 
-[FRONTEND] ➜  Local:   http://localhost:5173/BloodLink/
+[FRONTEND] ➜  Local:   http://localhost:5173/Life Link/
 ```
 
 - [ ] Backend server running on port 3000
@@ -98,7 +98,7 @@ Wait for both servers to start:
 
 ## ✅ Test Login
 
-1. Open browser: http://localhost:5173/BloodLink/
+1. Open browser: http://localhost:5173/Life Link/
 2. Click a role card (e.g., "For Donors")
 3. Login with test credentials:
    - **Email:** alex@donor.com
@@ -118,7 +118,7 @@ Wait for both servers to start:
 | `EADDRINUSE: address already in use :::3000` | `lsof -ti :3000 \| xargs kill -9` |
 | `Database connection refused` | Check PostgreSQL is running: `brew services start postgresql@15` |
 | `FATAL: Ident authentication failed` | Check DB password in `.env` matches your PostgreSQL password |
-| `Database does not exist` | Run: `createdb -h localhost -U postgres BloodLink` |
+| `Database does not exist` | Run: `createdb -h localhost -U postgres Life Link` |
 | Login hangs | Kill old processes: `pkill -9 node` then restart |
 
 ---
@@ -134,14 +134,14 @@ For detailed instructions, see:
 
 ## 🎉 You're Ready!
 
-Once all checkboxes are checked, BloodLink is ready to use!
+Once all checkboxes are checked, Life Link is ready to use!
 
 **Helpful commands:**
 ```bash
 pnpm start          # Start both servers
 Ctrl+C              # Stop servers
 pnpm run seed       # Reseed database
-psql -d BloodLink   # Connect to database
+psql -d Life Link   # Connect to database
 ```
 
 **Need help?** Check [INSTALLATION.md](INSTALLATION.md) Troubleshooting section

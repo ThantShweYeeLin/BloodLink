@@ -1,4 +1,4 @@
-# BloodLink Complete Setup Guide
+# Life Link Complete Setup Guide
 
 ## Prerequisites
 
@@ -51,7 +51,7 @@ exit;
 mysql -u root -p < /path/to/database/schema.sql
 ```
 
-Replace `/path/to/` with the actual path to your BloodLink project.
+Replace `/path/to/` with the actual path to your Life Link project.
 
 ### Verify Database Created
 ```bash
@@ -66,7 +66,7 @@ exit;
 
 Navigate to the backend folder:
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/backend
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link/backend
 ```
 
 Create a `.env` file (if it doesn't exist):
@@ -96,7 +96,7 @@ JWT_SECRET=bloodlink_secret_key_change_in_production
 ## Step 3: Install Dependencies
 
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/backend
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link/backend
 npm install
 ```
 
@@ -109,7 +109,7 @@ npm run dev
 You should see:
 ```
 ✓ Database connected successfully
-🩸 BloodLink API Server
+🩸 Life Link API Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Server running on: http://localhost:3000
 ```
@@ -121,7 +121,7 @@ Server running on: http://localhost:3000
 Open a new terminal window and navigate to the project root:
 
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link
 npm run dev
 ```
 
@@ -220,7 +220,7 @@ Open your browser and go to: **http://localhost:5173**
 ## File Structure
 
 ```
-BloodLink/
+Life Link/
 ├── backend/
 │   ├── .env                  # Database credentials (don't commit!)
 │   ├── server.js             # Main API server

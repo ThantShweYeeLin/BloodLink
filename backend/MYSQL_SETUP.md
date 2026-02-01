@@ -1,4 +1,4 @@
-# MySQL Setup Guide for BloodLink
+# MySQL Setup Guide for Life Link
 
 ## Prerequisites
 
@@ -39,10 +39,10 @@ CREATE DATABASE IF NOT EXISTS bloodlink_db;
 USE bloodlink_db;
 
 # 3. Exit and load the schema
-SOURCE /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database/schema.sql;
+SOURCE /Users/thantshweyeelin/Desktop/Life Link/Life Link/database/schema.sql;
 
 # Or in one command:
-mysql -u root -p bloodlink_db < /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database/schema.sql
+mysql -u root -p bloodlink_db < /Users/thantshweyeelin/Desktop/Life Link/Life Link/database/schema.sql
 ```
 
 ### Option 3: If MySQL command is not found

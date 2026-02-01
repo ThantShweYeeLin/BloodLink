@@ -1,4 +1,4 @@
-# BloodLink Setup Instructions
+# Life Link Setup Instructions
 
 ## Prerequisites
 - Node.js (v18 or higher)
@@ -10,7 +10,7 @@
 ### 1. Clone the repository
 ```bash
 git clone <your-repo-url>
-cd BloodLink
+cd Life Link
 ```
 
 ### 2. Install dependencies
@@ -21,11 +21,11 @@ pnpm install
 ### 3. Set up PostgreSQL database
 ```bash
 # Create the database
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 
 # Or using psql:
 psql -h localhost -U postgres
-CREATE DATABASE BloodLink;
+CREATE DATABASE Life Link;
 \q
 ```
 
@@ -44,13 +44,13 @@ pnpm run seed
 
 ### 6. Start the application
 ```bash
-# From the root BloodLink directory
+# From the root Life Link directory
 pnpm start
 ```
 
 This will start:
 - **Backend**: http://localhost:3000
-- **Frontend**: http://localhost:5173/BloodLink/
+- **Frontend**: http://localhost:5173/Life Link/
 
 ## Test Credentials
 
@@ -90,7 +90,7 @@ lsof -ti :3000 | xargs kill -9
 **Database connection failed:**
 - Verify PostgreSQL is running: `brew services list` (Mac) or `service postgresql status` (Linux)
 - Check your credentials in `.env` file
-- Ensure the BloodLink database exists
+- Ensure the Life Link database exists
 
 ## API Endpoints
 

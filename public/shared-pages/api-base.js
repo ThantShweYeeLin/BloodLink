@@ -5,8 +5,8 @@
   const stored = localStorage.getItem('apiBase');
   const apiBase = stored || (isLocalHost ? LOCAL_BASE : RENDER_BASE);
 
-  window.BLOODLINK_API_BASE = apiBase;
-  window.BloodLinkApi = {
+  window.LIFELINK_API_BASE = apiBase;
+  window.LifeLinkApi = {
     getBase: () => apiBase,
     toggle: () => {
       const next = apiBase === LOCAL_BASE ? RENDER_BASE : LOCAL_BASE;

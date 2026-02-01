@@ -1,4 +1,4 @@
-# 🩸 BloodLink - Complete System Built! 
+# 🩸 Life Link - Complete System Built! 
 
 ## Summary of Everything Created
 
@@ -371,7 +371,7 @@ Before you're done:
 **Just copy and paste this:**
 
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link
 ./start.sh
 # or on Windows: start.bat
 ```
@@ -392,7 +392,7 @@ Then go to: **http://localhost:5173**
 
 ---
 
-## 🩸 BloodLink Ready!
+## 🩸 Life Link Ready!
 
 Your complete blood donation management system is built and ready to use.
 
@@ -409,4 +409,4 @@ start.bat     # Windows
 
 ---
 
-**Thank you for building with BloodLink! 🩸**
+**Thank you for building with Life Link! 🩸**

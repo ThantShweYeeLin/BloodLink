@@ -1,4 +1,4 @@
-# 📚 BloodLink - Complete File Reference
+# 📚 Life Link - Complete File Reference
 
 ## 🎯 Files You Need to Know About
 
@@ -12,7 +12,7 @@
 ## 📁 Complete Project Structure
 
 ```
-BloodLink/
+Life Link/
 │
 ├── 📖 DOCUMENTATION (Read these first)
 │   ├── BUILD_SUMMARY.md                    ← What was built
@@ -524,4 +524,4 @@ Ready to:
 
 ---
 
-**This is your complete reference guide to BloodLink!** 🩸
+**This is your complete reference guide to Life Link!** 🩸

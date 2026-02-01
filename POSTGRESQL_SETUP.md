@@ -1,4 +1,4 @@
-# PostgreSQL + pgAdmin Setup Guide for BloodLink
+# PostgreSQL + pgAdmin Setup Guide for Life Link
 
 ## Step 1: Install PostgreSQL
 
@@ -39,7 +39,7 @@ CREATE DATABASE bloodlink_db;
 \c bloodlink_db
 
 # Load the schema
-\i /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database/schema-postgresql.sql
+\i /Users/thantshweyeelin/Desktop/Life Link/Life Link/database/schema-postgresql.sql
 
 # Verify tables were created
 \dt
@@ -53,7 +53,7 @@ CREATE DATABASE bloodlink_db;
 ```bash
 # Create database and load schema in one go
 psql postgres -c "CREATE DATABASE bloodlink_db;"
-psql bloodlink_db -f /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database/schema-postgresql.sql
+psql bloodlink_db -f /Users/thantshweyeelin/Desktop/Life Link/Life Link/database/schema-postgresql.sql
 ```
 
 ## Step 3: Install and Configure pgAdmin
@@ -72,7 +72,7 @@ psql bloodlink_db -f /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database
    - Right-click "Servers" → "Register" → "Server"
 
 3. **General Tab:**
-   - Name: `BloodLink Local`
+   - Name: `Life Link Local`
 
 4. **Connection Tab:**
    - Host: `localhost`
@@ -85,7 +85,7 @@ psql bloodlink_db -f /Users/thantshweyeelin/Desktop/BloodLink/BloodLink/database
 5. Click **Save**
 
 6. **Navigate to Your Database:**
-   - Servers → BloodLink Local → Databases → bloodlink_db → Schemas → public → Tables
+   - Servers → Life Link Local → Databases → bloodlink_db → Schemas → public → Tables
 
 7. **You should see all 9 tables:**
    - ✓ donors
@@ -123,7 +123,7 @@ pnpm run dev
 
 Expected output:
 ```
-🩸 BloodLink API Server
+🩸 Life Link API Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Server running on: http://localhost:3000
 Environment: development
@@ -134,7 +134,7 @@ Database: PostgreSQL
 
 ### View Data
 
-1. Navigate to: Servers → BloodLink Local → bloodlink_db → Schemas → public → Tables
+1. Navigate to: Servers → Life Link Local → bloodlink_db → Schemas → public → Tables
 2. Right-click any table → "View/Edit Data" → "All Rows"
 
 ### Run Queries

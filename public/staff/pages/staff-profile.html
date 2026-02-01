@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Staff Profile — BloodLink</title>
+  <title>Staff Profile — Life Link</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
@@ -75,7 +75,7 @@
 </head>
 <body>
   <aside class="sidebar">
-    <div class="sidebar-logo">🩸 BloodLink</div>
+    <div class="sidebar-logo">🩸 Life Link</div>
     <nav class="nav">
       <a href="../dashboard.html" class="nav-item">🏠 Dashboard</a>
       <a href="./donor-management.html" class="nav-item">👥 Donor Mgmt</a>
@@ -215,7 +215,7 @@
 
   <script src="../../shared-pages/api-base.js"></script>
   <script>
-    const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
+      const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
     const API_URL = `${API_BASE}/api`;
     const REQUEST_TIMEOUT_MS = 15000;
     let currentStaffData = null;

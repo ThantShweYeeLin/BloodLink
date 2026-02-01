@@ -1,8 +1,8 @@
-# 🚀 How to Run BloodLink
+# 🚀 How to Run Life Link
 
 ## ⭐ EASIEST WAY (ONE COMMAND)
 
-Just run this in the **root BloodLink folder**:
+Just run this in the **root Life Link folder**:
 
 ```bash
 pnpm start
@@ -21,7 +21,7 @@ When you run `pnpm start`, it:
 
 You'll see output like:
 ```
-[BACKEND]  🩸 BloodLink API Server running on port 3000
+[BACKEND]  🩸 Life Link API Server running on port 3000
 [FRONTEND] Vite dev server running at http://localhost:5175
 ```
 

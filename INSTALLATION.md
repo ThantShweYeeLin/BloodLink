@@ -1,6 +1,6 @@
-# BloodLink - Detailed Installation Guide for Team Members
+# Life Link - Detailed Installation Guide for Team Members
 
-This guide walks through setting up BloodLink on your local machine after cloning the repository.
+This guide walks through setting up Life Link on your local machine after cloning the repository.
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ sudo service postgresql start
 git clone <your-github-url>
 
 # Navigate to project
-cd BloodLink
+cd Life Link
 ```
 
 ### Step 2: Install Node Dependencies
@@ -82,20 +82,20 @@ sudo pnpm install
 **Mac/Linux:**
 ```bash
 # Create the database
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 
 # Verify it was created
-psql -h localhost -U postgres -l | grep BloodLink
+psql -h localhost -U postgres -l | grep Life Link
 ```
 
 **Windows (PowerShell):**
 ```bash
 # Open PowerShell as Administrator
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 
 # Or use psql directly:
 psql -h localhost -U postgres
-# Then type: CREATE DATABASE BloodLink;
+# Then type: CREATE DATABASE Life Link;
 # Then type: \q
 ```
 
@@ -103,7 +103,7 @@ psql -h localhost -U postgres
 
 1. Open pgAdmin 4
 2. Right-click on "Databases" → "Create" → "Database"
-3. Enter name: `BloodLink`
+3. Enter name: `Life Link`
 4. Click "Save"
 
 ---
@@ -145,7 +145,7 @@ Find these lines in your `.env` file and update them:
 DB_HOST=localhost
 DB_USER=postgres
 DB_PASSWORD=your_password_here          # ← Update this!
-DB_NAME=BloodLink
+DB_NAME=Life Link
 DB_PORT=5432
 
 # Server Configuration
@@ -160,7 +160,7 @@ JWT_SECRET=your_jwt_secret_key_here_change_in_production
 
 **For JWT_SECRET**, you can use any random string:
 ```
-JWT_SECRET=mySecureBloodLinkSecret2024!@#
+JWT_SECRET=mySecureLife LinkSecret2024!@#
 ```
 
 **Save the file:**
@@ -207,7 +207,7 @@ taskkill /PID <PID> /F
 #### Option A: Using pgAdmin
 
 1. Open pgAdmin 4
-2. Navigate to: `Servers` → `PostgreSQL` → `Databases` → `BloodLink` → `Schemas` → `public` → `Tables`
+2. Navigate to: `Servers` → `PostgreSQL` → `Databases` → `Life Link` → `Schemas` → `public` → `Tables`
 3. Right-click on `donors` → "View/Edit Data" → "All Rows"
 4. You should see 2 donors: `alex@donor.com` and `jamie@donor.com`
 
@@ -215,7 +215,7 @@ taskkill /PID <PID> /F
 
 ```bash
 # Connect to the database
-psql -h localhost -U postgres -d BloodLink
+psql -h localhost -U postgres -d Life Link
 
 # Run these queries:
 SELECT COUNT(*) FROM donors;           # Should show: 2
@@ -233,7 +233,7 @@ SELECT COUNT(*) FROM hospitals;        # Should show: 1
 ## Step 7: Start the Application
 
 ```bash
-# From the root BloodLink directory (not backend)
+# From the root Life Link directory (not backend)
 cd ..  # if you're still in backend/
 pnpm start
 ```
@@ -243,14 +243,14 @@ pnpm start
 [BACKEND] ✓ Database connected successfully
 [BACKEND] Server running on: http://localhost:3000
 
-[FRONTEND] ➜  Local:   http://localhost:5173/BloodLink/
+[FRONTEND] ➜  Local:   http://localhost:5173/Life Link/
 ```
 
 ---
 
 ## Step 8: Test the Login
 
-1. Open your browser: `http://localhost:5173/BloodLink/`
+1. Open your browser: `http://localhost:5173/Life Link/`
 2. Click on a role card (e.g., "For Donors")
 3. You'll be redirected to login page
 4. Enter test credentials:
@@ -314,14 +314,14 @@ sudo service postgresql start
    ```
 3. Update the password in `.env`
 
-### "Database BloodLink does not exist"
+### "Database Life Link does not exist"
 
 **Problem:** The database wasn't created
 
 **Solution:**
 ```bash
 # Recreate it
-createdb -h localhost -U postgres BloodLink
+createdb -h localhost -U postgres Life Link
 
 # Then run seed again
 pnpm run seed
@@ -355,7 +355,7 @@ pnpm start
 After installation, your project should look like:
 
 ```
-BloodLink/
+Life Link/
 ├── public/                 # Frontend HTML/CSS/JS
 │   ├── donor/
 │   │   ├── login-donor.html
@@ -434,7 +434,7 @@ Ctrl+C
 cd backend && pnpm run seed
 
 # Connect to database directly
-psql -h localhost -U postgres -d BloodLink
+psql -h localhost -U postgres -d Life Link
 
 # Install a new package
 pnpm add package-name
@@ -445,4 +445,4 @@ pnpm update
 
 ---
 
-**You're all set! Enjoy using BloodLink! 🩸**
+**You're all set! Enjoy using Life Link! 🩸**

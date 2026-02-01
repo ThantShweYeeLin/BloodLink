@@ -1,10 +1,10 @@
-# Deploy BloodLink to GitHub Pages
+# Deploy Life Link to GitHub Pages
 
 ## Setup (One-time)
 
 1. **Initialize git repository** (if not already done):
 ```bash
-cd /Users/thantshweyeelin/Desktop/BloodLink/BloodLink
+cd /Users/thantshweyeelin/Desktop/Life Link/Life Link
 git init
 git add .
 git commit -m "Initial commit"
@@ -12,13 +12,13 @@ git commit -m "Initial commit"
 
 2. **Create GitHub repository**:
 - Go to https://github.com/new
-- Repository name: `BloodLink`
+- Repository name: `Life Link`
 - Make it public
 - Don't initialize with README (we already have files)
 
 3. **Connect and push**:
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/BloodLink.git
+git remote add origin https://github.com/YOUR_USERNAME/Life Link.git
 git branch -M main
 git push -u origin main
 ```
@@ -34,7 +34,7 @@ pnpm run deploy
 This will:
 - Build your project
 - Push the built files to the `gh-pages` branch
-- Make your site live at: `https://YOUR_USERNAME.github.io/BloodLink/`
+- Make your site live at: `https://YOUR_USERNAME.github.io/Life Link/`
 
 ## Enable GitHub Pages
 
@@ -44,7 +44,7 @@ After first deploy:
 3. Source: Deploy from a branch
 4. Branch: `gh-pages` → `/ (root)` → Save
 
-Your site will be live at: `https://YOUR_USERNAME.github.io/BloodLink/`
+Your site will be live at: `https://YOUR_USERNAME.github.io/Life Link/`
 
 ## Note
 

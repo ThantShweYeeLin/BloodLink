@@ -1,4 +1,4 @@
-# 🩸 BloodLink - Blood Donation Management System
+# 🩸 Life Link - Blood Donation Management System
 
 A comprehensive web application for managing blood donations, connecting donors with hospitals and blood banks through an intelligent matching system.
 
@@ -27,27 +27,29 @@ A comprehensive web application for managing blood donations, connecting donors 
 
 ## 🚀 Quick Start
 
+### For First-Time Setup
+
+**See detailed instructions in [INSTALLATION.md](INSTALLATION.md)**
+
+Quick summary:
+1. **Install dependencies:** `pnpm install`
+2. **Create database:** `createdb -h localhost -U postgres Life Link`
+3. **Configure credentials:** `cp backend/.env.example backend/.env` (add your DB password)
+4. **Seed sample data:** `cd backend && pnpm run seed`
+5. **Start the app:** `pnpm start`
+6. **Login:** Visit http://localhost:5173/Life Link/
+
 ### Prerequisites
-- **Node.js** v16+ ([Download](https://nodejs.org/))
-- **MySQL** v8.0+ ([Download](https://dev.mysql.com/downloads/mysql/))
+- **Node.js** v18+ ([Download](https://nodejs.org/))
+- **PostgreSQL** v14+ ([Download](https://www.postgresql.org/))
+- **pnpm** (run: `npm install -g pnpm`)
 
-### Option 1: Automated Startup (Recommended)
-
-**macOS/Linux:**
-```bash
-chmod +x start.sh
-./start.sh
+### Test Credentials
 ```
-
-**Windows:**
-```cmd
-start.bat
+Donor:    alex@donor.com / Test123!
+Staff:    staff@bloodlink.com / Test123!
+Hospital: hospital@bloodlink.com / Test123!
 ```
-
-### Option 2: Manual Setup
-
-**1. Set up the database:**
-```bash
 mysql -u root
 CREATE DATABASE bloodlink_db;
 USE bloodlink_db;
@@ -66,7 +68,7 @@ npm run dev
 
 **3. Start frontend (new terminal):**
 ```bash
-cd /path/to/BloodLink
+cd /path/to/Life Link
 npm install
 npm run dev
 ```
@@ -124,7 +126,7 @@ GET    /api/hospital/:id/available-donors/:bloodType
 ## 📁 Project Structure
 
 ```
-BloodLink/
+Life Link/
 ├── backend/                      # Node.js/Express API
 │   ├── server.js                # Main API server
 │   ├── db.js                    # Database connection
@@ -222,7 +224,7 @@ See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions.
 
 ---
 
-**🩸 BloodLink - Connecting Donors with Lives**
+**🩸 Life Link - Connecting Donors with Lives**
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 

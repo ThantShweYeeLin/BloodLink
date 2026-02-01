@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hospital Login — BloodLink</title>
+  <title>Hospital Login — Life Link</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -228,7 +228,7 @@
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
       
-      const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
+      const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
       
       try {
         const response = await fetch(`${API_BASE}/api/login/hospital`, {

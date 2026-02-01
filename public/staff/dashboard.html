@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Staff Dashboard — BloodLink</title>
+  <title>Staff Dashboard — Life Link</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
@@ -70,7 +70,7 @@
   <div class="layout" id="layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo"><span>🩸</span> <span>BloodLink Staff</span></div>
+        <div class="logo"><span>🩸</span> <span>Life Link Staff</span></div>
         <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
       </div>
       <nav class="nav">
@@ -226,7 +226,7 @@
       }
     }
 
-    const API_BASE = window.BLOODLINK_API_BASE || 'http://localhost:3000';
+const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
 
     function updateApiToggleLabel() {
       const btn = document.getElementById('apiToggle');
@@ -235,8 +235,8 @@
     }
 
     function toggleApiBase() {
-      if (window.BloodLinkApi?.toggle) {
-        window.BloodLinkApi.toggle();
+        if (window.LifeLinkApi?.toggle) {
+          window.LifeLinkApi.toggle();
       }
     }
 

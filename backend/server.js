@@ -66,7 +66,7 @@ function authenticateToken(req, res, next) {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'BloodLink API is running',
+    message: 'Life Link API is running',
     timestamp: new Date().toISOString()
   });
 });
@@ -1481,7 +1481,7 @@ app.use((err, req, res, next) => {
 // Start server
 async function startServer() {
   // Test database connection first
-  console.log('\n🩸 BloodLink API Server');
+  console.log('\n🩸 Life Link API Server');
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log('Connecting to database...');
   

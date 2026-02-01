@@ -1,6 +1,6 @@
 # Test Data Successfully Loaded! 🎉
 
-Your BloodLink PostgreSQL database is now populated with comprehensive test data for quick testing.
+Your Life Link PostgreSQL database is now populated with comprehensive test data for quick testing.
 
 ## Database Summary
 
@@ -94,7 +94,7 @@ curl -X POST http://localhost:3000/api/login/donor \
 ### 3. View Data in pgAdmin
 
 1. Open pgAdmin
-2. Navigate to: Servers → BloodLink → Databases → bloodlink_db → Schemas → public → Tables
+2. Navigate to: Servers → Life Link → Databases → bloodlink_db → Schemas → public → Tables
 3. Right-click any table → "View/Edit Data" → "All Rows"
 4. See all your test data instantly!
 
@@ -153,4 +153,4 @@ psql postgresql://postgres:292005thantshweyeelin@localhost:5432/bloodlink_db -f 
 
 **Your system is ready for testing!** 🚀
 
-All test data has been loaded into PostgreSQL. Use the credentials above to login and test the BloodLink application.
+All test data has been loaded into PostgreSQL. Use the credentials above to login and test the Life Link application.

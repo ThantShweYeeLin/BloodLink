@@ -229,9 +229,13 @@
       loginBtn.textContent = 'Logging in...';
       
       const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+      console.log('Attempting login with API_BASE:', API_BASE);
       
       try {
-        const response = await fetch(`${API_BASE}/api/login/hospital`, {
+        const url = `${API_BASE}/api/login/hospital`;
+        console.log('Login URL:', url);
+        
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -239,7 +243,9 @@
           body: JSON.stringify({ email, password })
         });
         
+        console.log('Response status:', response.status);
         const result = await response.json();
+        console.log('Response data:', result);
         
         if (result.success) {
           // Store token and user info in localStorage
@@ -255,14 +261,14 @@
             window.location.href = 'dashboard.html';
           }, 1500);
         } else {
-          errorMsg.textContent = '✗ ' + result.message;
+          errorMsg.textContent = '✗ ' + (result.message || 'Login failed');
           errorMsg.style.display = 'block';
           loginBtn.disabled = false;
           loginBtn.textContent = 'Login';
         }
       } catch (error) {
         console.error('Login error:', error);
-        errorMsg.textContent = '✗ Login failed. Please make sure the server is running.';
+        errorMsg.textContent = '✗ Login failed: ' + error.message + '. Please make sure the server is running on ' + (window.LIFELINK_API_BASE || 'http://localhost:3000');
         errorMsg.style.display = 'block';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';

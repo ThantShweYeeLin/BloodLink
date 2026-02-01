@@ -3,13 +3,15 @@
   const RENDER_BASE = 'https://bloodlink-backend.onrender.com';
   const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const stored = localStorage.getItem('apiBase');
-  const apiBase = stored || (isLocalHost ? LOCAL_BASE : RENDER_BASE);
+  let apiBase = stored || (isLocalHost ? LOCAL_BASE : RENDER_BASE);
 
   window.LIFELINK_API_BASE = apiBase;
+  console.log('[API Base Init] Setting API_BASE to:', window.LIFELINK_API_BASE);
+  
   window.LifeLinkApi = {
-    getBase: () => apiBase,
+    getBase: () => window.LIFELINK_API_BASE,
     toggle: () => {
-      const next = apiBase === LOCAL_BASE ? RENDER_BASE : LOCAL_BASE;
+      const next = window.LIFELINK_API_BASE === LOCAL_BASE ? RENDER_BASE : LOCAL_BASE;
       localStorage.setItem('apiBase', next);
       location.reload();
     }

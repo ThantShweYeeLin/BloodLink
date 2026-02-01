@@ -1,0 +1,1 @@
+(function(){const o="https://bloodlink-backend.onrender.com",t="backendWarmedAt",e=Date.now(),n=Number(localStorage.getItem(t)||0);e-n<300*1e3||(localStorage.setItem(t,String(e)),fetch(`${o}/`,{mode:"no-cors"}).catch(()=>{}))})();

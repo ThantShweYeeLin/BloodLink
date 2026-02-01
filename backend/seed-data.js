@@ -134,6 +134,41 @@ async function seed() {
       'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
       ['Campus Donation Day', '2026-03-01', '10:00', '16:00', 'State University', 200, 'Student donors', 'staff', 1, 'Taylor Staff']
     );
+    await query(
+      'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['Corporate Blood Drive - TechCorp', '2026-02-20', '08:00', '12:00', 'TechCorp Headquarters', 80, 'Employee donation', 'staff', 2, 'Jordan Smith']
+    );
+    await query(
+      'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['Community Health Fair', '2026-03-10', '10:00', '17:00', 'City Park', 150, 'Free screening & donation', 'staff', 1, 'Taylor Staff']
+    );
+    await query(
+      'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['High School Blood Drive', '2026-02-25', '14:00', '18:00', 'Jefferson High School', 100, '16+ years old welcome', 'staff', 3, 'Casey Martinez']
+    );
+  } else if (eventCount < 5) {
+    // Add additional events if we have fewer than 5
+    const [{ exists: ev3 }] = await query('SELECT EXISTS(SELECT 1 FROM events WHERE title = ?) AS exists', ['Corporate Blood Drive - TechCorp']);
+    if (!ev3) {
+      await query(
+        'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['Corporate Blood Drive - TechCorp', '2026-02-20', '08:00', '12:00', 'TechCorp Headquarters', 80, 'Employee donation', 'staff', 2, 'Jordan Smith']
+      );
+    }
+    const [{ exists: ev4 }] = await query('SELECT EXISTS(SELECT 1 FROM events WHERE title = ?) AS exists', ['Community Health Fair']);
+    if (!ev4) {
+      await query(
+        'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['Community Health Fair', '2026-03-10', '10:00', '17:00', 'City Park', 150, 'Free screening & donation', 'staff', 1, 'Taylor Staff']
+      );
+    }
+    const [{ exists: ev5 }] = await query('SELECT EXISTS(SELECT 1 FROM events WHERE title = ?) AS exists', ['High School Blood Drive']);
+    if (!ev5) {
+      await query(
+        'INSERT INTO events (title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['High School Blood Drive', '2026-02-25', '14:00', '18:00', 'Jefferson High School', 100, '16+ years old welcome', 'staff', 3, 'Casey Martinez']
+      );
+    }
   }
 
   const [{ count: donationCount }] = await query('SELECT COUNT(*)::int AS count FROM donation_history');
@@ -146,6 +181,30 @@ async function seed() {
       'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
       [2, '2026-01-20', 'A-', 450, 'Campus Drive', 1, 'First-time donor']
     );
+    await query(
+      'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+      [1, '2026-01-08', 'O+', 450, 'Life Link Center', 3, 'Regular donor']
+    );
+    await query(
+      'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+      [2, '2025-12-28', 'A-', 450, 'Mobile Unit', 4, 'Community drive']
+    );
+  } else if (donationCount < 4) {
+    // Add more donations if we have fewer than 4
+    const [{ count: existingDonations }] = await query('SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = 1 AND donation_date = $1', ['2026-01-08']);
+    if (existingDonations === 0) {
+      await query(
+        'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+        [1, '2026-01-08', 'O+', 450, 'Life Link Center', 3, 'Regular donor']
+      );
+    }
+    const [{ count: existingDonations2 }] = await query('SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = 2 AND donation_date = $1', ['2025-12-28']);
+    if (existingDonations2 === 0) {
+      await query(
+        'INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, location, staff_id, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+        [2, '2025-12-28', 'A-', 450, 'Mobile Unit', 4, 'Community drive']
+      );
+    }
   }
 
   const [{ count: inventoryCount }] = await query('SELECT COUNT(*)::int AS count FROM blood_inventory');
@@ -158,6 +217,52 @@ async function seed() {
       'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, donor_id, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
       ['A-', 450, 'Life Link Central', '2026-03-20', 2, '2026-01-20', 'available']
     );
+    await query(
+      'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['B+', 1350, 'Life Link Central', '2026-03-10', '2026-01-10', 'available']
+    );
+    await query(
+      'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['AB-', 225, 'Life Link West Branch', '2026-02-28', '2026-01-05', 'available']
+    );
+    await query(
+      'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['O-', 675, 'Life Link Central', '2026-02-15', '2026-01-12', 'available']
+    );
+    await query(
+      'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      ['A+', 450, 'Life Link West Branch', '2026-03-25', '2026-01-18', 'available']
+    );
+  } else if (inventoryCount < 6) {
+    // Add more inventory items if we have fewer than 6
+    const [{ exists: b_plus }] = await query('SELECT EXISTS(SELECT 1 FROM blood_inventory WHERE blood_type = ?) AS exists', ['B+']);
+    if (!b_plus) {
+      await query(
+        'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['B+', 1350, 'Life Link Central', '2026-03-10', '2026-01-10', 'available']
+      );
+    }
+    const [{ exists: ab_minus }] = await query('SELECT EXISTS(SELECT 1 FROM blood_inventory WHERE blood_type = ? AND location = ?) AS exists', ['AB-', 'Life Link West Branch']);
+    if (!ab_minus) {
+      await query(
+        'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['AB-', 225, 'Life Link West Branch', '2026-02-28', '2026-01-05', 'available']
+      );
+    }
+    const [{ exists: o_minus }] = await query('SELECT EXISTS(SELECT 1 FROM blood_inventory WHERE blood_type = ? AND quantity_ml > ?) AS exists', ['O-', 600]);
+    if (!o_minus) {
+      await query(
+        'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['O-', 675, 'Life Link Central', '2026-02-15', '2026-01-12', 'available']
+      );
+    }
+    const [{ exists: a_plus }] = await query('SELECT EXISTS(SELECT 1 FROM blood_inventory WHERE blood_type = ? AND location = ?) AS exists', ['A+', 'Life Link West Branch']);
+    if (!a_plus) {
+      await query(
+        'INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, collection_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+        ['A+', 450, 'Life Link West Branch', '2026-03-25', '2026-01-18', 'available']
+      );
+    }
   }
 
   const [{ count: requestCount }] = await query('SELECT COUNT(*)::int AS count FROM blood_requests');
@@ -166,6 +271,52 @@ async function seed() {
       'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
       [1, 'O+', 900, 'urgent', 'pending', '2026-02-10', 'Need for surgery']
     );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [2, 'A-', 450, 'routine', 'approved', '2026-02-01', 'Inventory replenishment']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [3, 'B+', 1350, 'emergency', 'pending', '2026-02-02', 'Multiple trauma patients']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [4, 'O-', 225, 'urgent', 'fulfilled', '2026-01-28', 'Pediatric transfusion']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [5, 'AB+', 675, 'routine', 'pending', '2026-02-05', 'Scheduled surgical procedures']
+    );
+  } else if (requestCount < 5) {
+    // Add more requests if we have fewer than 5
+    const [{ exists: req2 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 2 AND blood_type = ?) AS exists', ['A-']);
+    if (!req2) {
+      await query(
+        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+        [2, 'A-', 450, 'routine', 'approved', '2026-02-01', 'Inventory replenishment']
+      );
+    }
+    const [{ exists: req3 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 3 AND blood_type = ?) AS exists', ['B+']);
+    if (!req3) {
+      await query(
+        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+        [3, 'B+', 1350, 'emergency', 'pending', '2026-02-02', 'Multiple trauma patients']
+      );
+    }
+    const [{ exists: req4 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 4 AND blood_type = ?) AS exists', ['O-']);
+    if (!req4) {
+      await query(
+        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+        [4, 'O-', 225, 'urgent', 'fulfilled', '2026-01-28', 'Pediatric transfusion']
+      );
+    }
+    const [{ exists: req5 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 5 AND blood_type = ?) AS exists', ['AB+']);
+    if (!req5) {
+      await query(
+        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+        [5, 'AB+', 675, 'routine', 'pending', '2026-02-05', 'Scheduled surgical procedures']
+      );
+    }
   }
 
   console.log('✅ Seed data completed');

@@ -169,7 +169,49 @@ JWT_SECRET=mySecureLife LinkSecret2024!@#
 
 ---
 
-### Step 5: Seed the Database with Sample Data
+### Step 5: Create Database Tables
+
+**IMPORTANT: You must create the tables before seeding data!**
+
+#### Option A: Using Command Line (Recommended)
+
+```bash
+# Navigate to project root
+cd /path/to/Life Link
+
+# Run the schema file
+psql -h localhost -U postgres -d Life Link -f database/schema-postgresql.sql
+```
+
+#### Option B: Using pgAdmin (GUI)
+
+1. Open pgAdmin 4
+2. Navigate to: `Servers` → `PostgreSQL` → `Databases` → `Life Link`
+3. Click on "Query Tool" (icon at top)
+4. Open the file: `database/schema-postgresql.sql`
+5. Click "Execute" (▶️ button)
+6. You should see "Query returned successfully"
+
+#### Verify Tables Were Created
+
+```bash
+# Connect to database
+psql -h localhost -U postgres -d Life Link
+
+# List all tables
+\dt
+
+# You should see 8 tables:
+# donors, hospitals, staff, donation_history, blood_inventory, 
+# blood_requests, events, audit_logs
+
+# Exit
+\q
+```
+
+---
+
+### Step 6: Seed the Database with Sample Data
 
 ```bash
 # Make sure you're in the backend directory
@@ -184,9 +226,12 @@ pnpm run seed
 ✅ Seed data completed
 ```
 
-**If you get an error:**
+**If you get errors:**
 
 ```bash
+# Error: "relation 'donors' does not exist"
+# Solution: You skipped Step 5! Run the schema-postgresql.sql file first
+
 # Error: "Database connection failed"
 # Solution: Check your .env credentials
 
@@ -202,7 +247,7 @@ taskkill /PID <PID> /F
 
 ---
 
-### Step 6: Verify the Database is Populated
+### Step 7: Verify the Database is Populated
 
 #### Option A: Using pgAdmin
 
@@ -230,7 +275,7 @@ SELECT COUNT(*) FROM hospitals;        # Should show: 1
 
 ---
 
-## Step 7: Start the Application
+## Step 8: Start the Application
 
 ```bash
 # From the root Life Link directory (not backend)
@@ -248,7 +293,7 @@ pnpm start
 
 ---
 
-## Step 8: Test the Login
+## Step 9: Test the Login
 
 1. Open your browser: `http://localhost:5173/Life Link/`
 2. Click on a role card (e.g., "For Donors")

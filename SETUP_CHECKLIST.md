@@ -67,16 +67,39 @@ nano .env  # or use your editor
 - [ ] DB_PASSWORD updated with your credentials
 - [ ] JWT_SECRET filled in
 
+## ✅ Create Database Tables
+
+**CRITICAL STEP - Don't skip!**
+
+```bash
+cd ..  # back to root
+psql -h localhost -U postgres -d Life Link -f database/schema-postgresql.sql
+```
+
+Or use pgAdmin:
+1. Open Query Tool
+2. Load `database/schema-postgresql.sql`
+3. Execute
+
+Verify:
+```bash
+psql -h localhost -U postgres -d Life Link -c "\dt"
+```
+
+- [ ] Schema file executed successfully
+- [ ] 8 tables created (donors, hospitals, staff, donation_history, blood_inventory, blood_requests, events, audit_logs)
+
 ## ✅ Seed Database
 
 ```bash
+cd backend  # if not already there
 pnpm run seed
 ```
 
 Expected output: ✅ Seed data completed
 
 - [ ] Seed completed successfully
-- [ ] No connection errors
+- [ ] No "relation does not exist" errors
 
 ## ✅ Start Application
 
@@ -115,6 +138,7 @@ Wait for both servers to start:
 
 | Problem | Solution |
 |---------|----------|
+| **`relation "donors" does not exist`** | **You forgot to create tables! Run:** `psql -h localhost -U postgres -d Life Link -f database/schema-postgresql.sql` |
 | `EADDRINUSE: address already in use :::3000` | `lsof -ti :3000 \| xargs kill -9` |
 | `Database connection refused` | Check PostgreSQL is running: `brew services start postgresql@15` |
 | `FATAL: Ident authentication failed` | Check DB password in `.env` matches your PostgreSQL password |

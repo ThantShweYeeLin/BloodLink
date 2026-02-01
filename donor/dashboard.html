@@ -186,7 +186,9 @@
       document.getElementById('layout').classList.add('sidebar-collapsed');
     }
 
-    const REQUEST_TIMEOUT_MS = 20000;
+    const REQUEST_TIMEOUT_MS = 60000;
+    const BACKEND_BASE = 'https://bloodlink-backend.onrender.com';
+    let backendWarmed = false;
 
     async function fetchWithTimeout(url, options = {}, retries = 1) {
       const controller = new AbortController();
@@ -200,6 +202,40 @@
         throw error;
       } finally {
         clearTimeout(timeoutId);
+      }
+    }
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    async function warmBackend() {
+      if (backendWarmed) return;
+      try {
+        await fetchWithTimeout(`${BACKEND_BASE}/`, { mode: 'no-cors' }, 0);
+      } catch (e) {
+        // Ignore warm-up errors
+      }
+      backendWarmed = true;
+    }
+
+    async function fetchJsonWithRetry(url, options = {}, retries = 2) {
+      await warmBackend();
+      try {
+        const response = await fetchWithTimeout(url, options, 1);
+        if (!response.ok) {
+          if (retries > 0 && [502, 503, 504].includes(response.status)) {
+            await sleep(1500);
+            return fetchJsonWithRetry(url, options, retries - 1);
+          }
+          return { ok: false, status: response.status, data: null };
+        }
+        const data = await response.json();
+        return { ok: true, status: response.status, data };
+      } catch (error) {
+        if (retries > 0) {
+          await sleep(1500);
+          return fetchJsonWithRetry(url, options, retries - 1);
+        }
+        throw error;
       }
     }
 
@@ -223,13 +259,13 @@
     // Fetch donation statistics
     async function fetchDonationStats() {
       try {
-        const response = await fetchWithTimeout(`https://bloodlink-backend.onrender.com/donations/donor/${donorId}`, {
+        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!response.ok) throw new Error('Failed to fetch donation stats');
+        if (!result.ok) throw new Error('Failed to fetch donation stats');
         
-        const donations = await response.json();
+        const donations = result.data;
         localStorage.setItem('cachedDonorDonations', JSON.stringify(donations));
         const totalDonations = donations.length;
         
@@ -275,13 +311,13 @@
     // Fetch donation history
     async function fetchDonationHistory() {
       try {
-        const response = await fetchWithTimeout(`https://bloodlink-backend.onrender.com/donations/donor/${donorId}`, {
+        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/donations/donor/${donorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!response.ok) throw new Error('Failed to fetch donations');
+        if (!result.ok) throw new Error('Failed to fetch donations');
         
-        const donations = await response.json();
+        const donations = result.data;
         localStorage.setItem('cachedDonorDonations', JSON.stringify(donations));
         const historyDiv = document.getElementById('donationHistory');
         
@@ -332,13 +368,13 @@
     // Fetch upcoming events
     async function fetchUpcomingEvents() {
       try {
-        const response = await fetchWithTimeout('https://bloodlink-backend.onrender.com/events/upcoming', {
+        const result = await fetchJsonWithRetry(`${BACKEND_BASE}/events/upcoming`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!response.ok) throw new Error('Failed to fetch events');
+        if (!result.ok) throw new Error('Failed to fetch events');
         
-        const events = await response.json();
+        const events = result.data;
         localStorage.setItem('cachedUpcomingEvents', JSON.stringify(events));
         const eventsDiv = document.getElementById('upcomingEvents');
         

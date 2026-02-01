@@ -22,6 +22,52 @@ async function seed() {
       'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
       ['Taylor Staff', 'EMP-001', 'Certified Phlebotomist', 'staff@bloodlink.com', '5557778888', 'Life Link Central', 'collection', '789 Pine Rd', passwordHash]
     );
+    await query(
+      'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Jordan Smith', 'EMP-002', 'Medical Laboratory Technician', 'jordan.smith@lifelink.com', '5558881111', 'Life Link Central', 'testing', '234 Elm St', passwordHash]
+    );
+    await query(
+      'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Casey Martinez', 'EMP-003', 'Blood Bank Manager', 'casey.martinez@lifelink.com', '5552223333', 'Life Link Central', 'admin', '567 Maple Ave', passwordHash]
+    );
+    await query(
+      'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Riley Johnson', 'EMP-004', 'Certified Phlebotomist', 'riley.johnson@lifelink.com', '5554445555', 'Life Link West Branch', 'collection', '890 Oak Blvd', passwordHash]
+    );
+    await query(
+      'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Sam Lee', 'EMP-005', 'Quality Assurance Specialist', 'sam.lee@lifelink.com', '5556667777', 'Life Link Central', 'processing', '123 Cedar Ln', passwordHash]
+    );
+  } else if (staffCount < 5) {
+    // Add additional staff if we have fewer than 5
+    const [{ exists: emp002 }] = await query('SELECT EXISTS(SELECT 1 FROM staff WHERE employee_id = ?) AS exists', ['EMP-002']);
+    if (!emp002) {
+      await query(
+        'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Jordan Smith', 'EMP-002', 'Medical Laboratory Technician', 'jordan.smith@lifelink.com', '5558881111', 'Life Link Central', 'testing', '234 Elm St', passwordHash]
+      );
+    }
+    const [{ exists: emp003 }] = await query('SELECT EXISTS(SELECT 1 FROM staff WHERE employee_id = ?) AS exists', ['EMP-003']);
+    if (!emp003) {
+      await query(
+        'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Casey Martinez', 'EMP-003', 'Blood Bank Manager', 'casey.martinez@lifelink.com', '5552223333', 'Life Link Central', 'admin', '567 Maple Ave', passwordHash]
+      );
+    }
+    const [{ exists: emp004 }] = await query('SELECT EXISTS(SELECT 1 FROM staff WHERE employee_id = ?) AS exists', ['EMP-004']);
+    if (!emp004) {
+      await query(
+        'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Riley Johnson', 'EMP-004', 'Certified Phlebotomist', 'riley.johnson@lifelink.com', '5554445555', 'Life Link West Branch', 'collection', '890 Oak Blvd', passwordHash]
+      );
+    }
+    const [{ exists: emp005 }] = await query('SELECT EXISTS(SELECT 1 FROM staff WHERE employee_id = ?) AS exists', ['EMP-005']);
+    if (!emp005) {
+      await query(
+        'INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Sam Lee', 'EMP-005', 'Quality Assurance Specialist', 'sam.lee@lifelink.com', '5556667777', 'Life Link Central', 'processing', '123 Cedar Ln', passwordHash]
+      );
+    }
   }
 
   const [{ count: hospitalCount }] = await query('SELECT COUNT(*)::int AS count FROM hospitals');
@@ -30,6 +76,52 @@ async function seed() {
       'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
       ['City General Hospital', 'LIC-12345', 'Dr. Morgan', 'hospital@bloodlink.com', '5559990000', '100 Medical Way', 'Richmond', 250, passwordHash]
     );
+    await query(
+      'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['St. Mary\'s Medical Center', 'LIC-23456', 'Dr. Sarah Chen', 'contact@stmarys.com', '5551234567', '250 Healthcare Dr', 'Norfolk', 400, passwordHash]
+    );
+    await query(
+      'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Memorial Hospital', 'LIC-34567', 'Dr. James Rodriguez', 'info@memorial.org', '5559876543', '500 Memorial Blvd', 'Virginia Beach', 300, passwordHash]
+    );
+    await query(
+      'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['County Children\'s Hospital', 'LIC-45678', 'Dr. Emily Watson', 'admin@childrens.org', '5552468135', '75 Pediatric Way', 'Chesapeake', 150, passwordHash]
+    );
+    await query(
+      'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+      ['Regional Trauma Center', 'LIC-56789', 'Dr. Michael Thompson', 'emergency@traumacenter.com', '5557891234', '1000 Emergency Ave', 'Newport News', 500, passwordHash]
+    );
+  } else if (hospitalCount < 5) {
+    // Add additional hospitals if we have fewer than 5
+    const [{ exists: lic23456 }] = await query('SELECT EXISTS(SELECT 1 FROM hospitals WHERE license_number = ?) AS exists', ['LIC-23456']);
+    if (!lic23456) {
+      await query(
+        'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['St. Mary\'s Medical Center', 'LIC-23456', 'Dr. Sarah Chen', 'contact@stmarys.com', '5551234567', '250 Healthcare Dr', 'Norfolk', 400, passwordHash]
+      );
+    }
+    const [{ exists: lic34567 }] = await query('SELECT EXISTS(SELECT 1 FROM hospitals WHERE license_number = ?) AS exists', ['LIC-34567']);
+    if (!lic34567) {
+      await query(
+        'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Memorial Hospital', 'LIC-34567', 'Dr. James Rodriguez', 'info@memorial.org', '5559876543', '500 Memorial Blvd', 'Virginia Beach', 300, passwordHash]
+      );
+    }
+    const [{ exists: lic45678 }] = await query('SELECT EXISTS(SELECT 1 FROM hospitals WHERE license_number = ?) AS exists', ['LIC-45678']);
+    if (!lic45678) {
+      await query(
+        'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['County Children\'s Hospital', 'LIC-45678', 'Dr. Emily Watson', 'admin@childrens.org', '5552468135', '75 Pediatric Way', 'Chesapeake', 150, passwordHash]
+      );
+    }
+    const [{ exists: lic56789 }] = await query('SELECT EXISTS(SELECT 1 FROM hospitals WHERE license_number = ?) AS exists', ['LIC-56789']);
+    if (!lic56789) {
+      await query(
+        'INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash, registration_date, is_verified, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), TRUE, TRUE)',
+        ['Regional Trauma Center', 'LIC-56789', 'Dr. Michael Thompson', 'emergency@traumacenter.com', '5557891234', '1000 Emergency Ave', 'Newport News', 500, passwordHash]
+      );
+    }
   }
 
   const [{ count: eventCount }] = await query('SELECT COUNT(*)::int AS count FROM events');

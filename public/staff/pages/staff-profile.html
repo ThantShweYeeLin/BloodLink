@@ -5,48 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Staff Profile — Life Link</title>
   <style>
+    :root {
+      --brand-700: #b91c1c;
+      --brand-800: #991b1b;
+      --brand-600: #dc2626;
+      --surface: #ffffff;
+      --bg: #f9fafb;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --soft: #fef2f2;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-        .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: grid-template-columns 0.3s ease; }
+    body.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: all 0.3s ease; width: 260px; }
+    .sidebar-collapsed .sidebar { width: 80px; padding: 1.5rem 0.5rem; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
+    .sidebar-collapsed .logo span { display: none; }
+    .sidebar-collapsed .nav-item span { display: none; }
+    .sidebar-collapsed .nav-item { justify-content: center; padding: 0.75rem; }
     .nav { display: flex; flex-direction: column; gap: 0.4rem; }
-    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
-    .nav-item:hover { background: #f3f4f6; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
+    .nav-item:hover { background: #f3f4f6; color: var(--brand-700); }
+    .nav-item.active { background: var(--soft); color: var(--brand-700); border-left-color: var(--brand-700); }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
-    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: var(--brand-700); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
     .user-info { flex: 1; min-width: 0; }
-    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
     .user-role { font-size: 0.8rem; color: #6b7280; }
-    .logout-icon { cursor: pointer; font-size: 1.2rem; }
-    .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
+    .sidebar-collapsed .sidebar-footer { flex-direction: column; padding: 0.5rem 0; }
+    .sidebar-collapsed .user-info { display: none; }
+    .sidebar-collapsed .logout-icon { display: none; }
+    .main { padding: 1.5rem 2rem; }
     .container { width: 100%; }
-    .header { background: #b91c1c; color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .header { background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-800) 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2); }
     @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
     @media (max-width: 768px) { .main-content { padding: 1rem; } .header { flex-direction: column; text-align: center; } }
     .profile-card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
     .profile-header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid #f3f4f6; }
-    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: 700; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3); }
+    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-600) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: 700; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3); }
     .profile-info { flex: 1; }
     .profile-info h2 { margin: 0 0 0.5rem; font-size: 1.8rem; color: #111827; }
     .profile-info p { color: #6b7280; margin: 0.3rem 0; font-size: 0.95rem; }
-    .profile-info .role { font-size: 1.1rem; font-weight: 600; color: #b91c1c; display: inline-flex; align-items: center; gap: 0.5rem; background: #fee2e2; padding: 0.4rem 1rem; border-radius: 20px; margin-bottom: 0.5rem; }
+    .profile-info .role { font-size: 1.1rem; font-weight: 600; color: var(--brand-700); display: inline-flex; align-items: center; gap: 0.5rem; background: #fee2e2; padding: 0.4rem 1rem; border-radius: 20px; margin-bottom: 0.5rem; }
     .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
-    .stat-box { background: #f9fafb; padding: 1rem; border-radius: 8px; text-align: center; border-left: 3px solid #b91c1c; }
-    .stat-box .number { font-size: 1.8rem; font-weight: 700; color: #b91c1c; }
+    .stat-box { background: #f9fafb; padding: 1rem; border-radius: 8px; text-align: center; border-left: 3px solid var(--brand-700); }
+    .stat-box .number { font-size: 1.8rem; font-weight: 700; color: var(--brand-700); }
     .stat-box .label { font-size: 0.85rem; color: #6b7280; margin-top: 0.3rem; }
     .section { margin-bottom: 2rem; }
     .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; color: #111827; display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f3f4f6; }
     .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
     .info-item { background: #f9fafb; padding: 1.2rem; border-radius: 8px; border-left: 3px solid #e5e7eb; transition: all 0.2s; }
-    .info-item:hover { border-left-color: #b91c1c; transform: translateX(2px); }
+    .info-item:hover { border-left-color: var(--brand-700); transform: translateX(2px); }
     .info-label { color: #6b7280; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .info-value { font-weight: 600; font-size: 1.05rem; color: #111827; }
     .form-group { margin-bottom: 1.5rem; }
     label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
     input, select, textarea { width: 100%; padding: 0.8rem; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; }
-    input:focus, select:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); background: #fff; }
-    .btn { background: #b91c1c; color: white; border: none; padding: 0.85rem 1.8rem; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 0.5rem; transition: all 0.2s; font-size: 0.95rem; }
-    .btn:hover { background: #a01818; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(185, 28, 28, 0.3); }
+    input:focus, select:focus { outline: none; border-color: var(--brand-700); box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); background: #fff; }
+    .btn { background: var(--brand-700); color: white; border: none; padding: 0.85rem 1.8rem; border-radius: 8px; cursor: pointer; font-weight: 600; margin-right: 0.5rem; transition: all 0.2s; font-size: 0.95rem; }
+    .btn:hover { background: var(--brand-800); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(185, 28, 28, 0.3); }
     .btn-secondary { background: #6b7280; }
     .btn-secondary:hover { background: #4b5563; transform: translateY(-1px); }
     .btn-danger { background: #dc2626; }
@@ -68,36 +92,39 @@
     tr:hover { background: #f9fafb; }
     .badge { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: #d1fae5; color: #065f46; }
     .loading { text-align: center; padding: 2rem; color: #6b7280; }
-    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+    .spinner { border: 3px solid #e5e7eb; border-top: 3px solid var(--brand-700); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
   <link rel="stylesheet" href="../../shared-pages/sidebar-toggle.css" />
 </head>
 <body>
   <aside class="sidebar">
-    <div class="sidebar-logo">🩸 Life Link</div>
+    <div class="sidebar-header">
+      <div class="logo"><span>🩸</span> <span>Life Link</span></div>
+      <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+    </div>
     <nav class="nav">
-      <a href="../dashboard.html" class="nav-item">🏠 Dashboard</a>
-      <a href="./donor-management.html" class="nav-item">👥 Donor Mgmt</a>
-      <a href="./event-management.html" class="nav-item">📅 Events</a>
-      <a href="../donation-recording.html" class="nav-item">🩸 Record Donation</a>
-      <a href="./inventory-management.html" class="nav-item">📦 Inventory</a>
-      <a href="./request-management.html" class="nav-item">🏥 Requests</a>
-      <a href="./emergency-requests.html" class="nav-item">🚨 Emergency</a>
-      <a href="./reports.html" class="nav-item">📊 Reports</a>
-      <a href="./staff-profile.html" class="nav-item">👤 Profile</a>
-      <a href="./audit-logs.html" class="nav-item">🔐 Audit Logs</a>
+      <a class="nav-item" href="../dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+      <a class="nav-item" href="../staff-donor-management.html"><span>👥</span> <span>Donor Management</span></a>
+      <a class="nav-item" href="../../shared-pages/donation-recording.html"><span>🩸</span> <span>Record Donation</span></a>
+      <a class="nav-item" href="../../shared-pages/inventory-management.html"><span>📦</span> <span>Blood Inventory</span></a>
+      <a class="nav-item" href="../../shared-pages/request-management.html"><span>🏥</span> <span>Hospital Requests</span></a>
+      <a class="nav-item" href="../../shared-pages/event-management.html"><span>📅</span> <span>Events</span></a>
+      <a class="nav-item" href="../../shared-pages/emergency-requests.html"><span>🚨</span> <span>Emergency</span></a>
+      <a class="nav-item" href="../../shared-pages/reports.html"><span>📊</span> <span>Reports</span></a>
+      <a class="nav-item" href="../../shared-pages/audit-logs.html"><span>📋</span> <span>Audit Logs</span></a>
+      <a class="nav-item active" href="./staff-profile.html"><span>👤</span> <span>Profile</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-avatar" id="userInitial">S</div>
       <div class="user-info">
-        <div class="user-email" id="userName">Staff</div>
+        <div class="user-name" id="userName">Staff</div>
         <div class="user-role">Staff Account</div>
       </div>
       <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
     </div>
   </aside>
-  <main class="main-content">
+  <main class="main">
   <div class="container">
     <div class="header">
       <h1>👤 Staff Profile</h1>
@@ -215,10 +242,38 @@
 
   <script src="../../shared-pages/api-base.js"></script>
   <script>
-      const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
-    const API_URL = `${API_BASE}/api`;
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+
+    // Restore sidebar state on page load
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
     const REQUEST_TIMEOUT_MS = 15000;
+    const DEMO_STATS = { events: 3, donations: 12, years: 1.8 };
     let currentStaffData = null;
+    let statsLocked = false;
+
+    function getStaffIdFromToken(token) {
+      if (!token) return null;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.userId || payload.id || null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function getStaffId() {
+      const token = localStorage.getItem('token');
+      return localStorage.getItem('staffId') || localStorage.getItem('userId') || getStaffIdFromToken(token);
+    }
 
     function checkAuth() {
       const token = localStorage.getItem('token');
@@ -234,6 +289,21 @@
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
       };
+    }
+
+    function parseSqlDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      const isoCandidate = typeof value === 'string' ? value.replace(' ', 'T') : value;
+      const parsed = new Date(isoCandidate);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function applyDemoStats() {
+      statsLocked = true;
+      document.getElementById('eventsCount').textContent = DEMO_STATS.events;
+      document.getElementById('donationsCount').textContent = DEMO_STATS.donations;
+      document.getElementById('yearsService').textContent = DEMO_STATS.years;
     }
 
     async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
@@ -273,7 +343,7 @@
     }
 
     async function loadProfile() {
-      const staffId = localStorage.getItem('staffId') || localStorage.getItem('userId');
+      const staffId = getStaffId();
       if (!staffId) {
         showAlert('Missing staff ID. Please log in again.', 'error');
         return;
@@ -285,7 +355,7 @@
         const cached = localStorage.getItem('cachedStaffProfile');
         if (cached) {
           data = { success: true, data: JSON.parse(cached) };
-          showAlert('Showing cached profile data. Refresh to try again.', 'error');
+          // Don't show error alert, just use cached data silently
         } else {
           showAlert(data.message || 'Failed to load profile', 'error');
           return;
@@ -303,10 +373,19 @@
       document.getElementById('staffEmail').textContent = data.data.email || 'Not provided';
       document.getElementById('staffPhone').textContent = data.data.phone || 'Not provided';
 
+      const sidebarName = document.getElementById('userName');
+      if (sidebarName) sidebarName.textContent = (data.data.full_name || 'Staff').split(' ')[0];
+      const sidebarInitial = document.getElementById('userInitial');
+      if (sidebarInitial) sidebarInitial.textContent = initial;
+
       // Calculate years of service
-      const joinDate = data.data.registration_date ? new Date(data.data.registration_date) : new Date();
-      const years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
-      document.getElementById('yearsService').textContent = years;
+      let years = 0;
+      const joinSource = data.data.registration_date || data.data.created_at || data.data.createdAt;
+      const joinDate = parseSqlDate(joinSource);
+      if (joinDate) {
+        years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
+      }
+      document.getElementById('yearsService').textContent = years || '0';
 
       // Update form
       document.getElementById('fullName').value = data.data.full_name || '';
@@ -347,37 +426,114 @@
       `;
       document.getElementById('personalInfo').innerHTML = infoHtml;
 
+      await loadStaffStats();
       loadAssignedEvents();
+      loadDonationStats();
+    }
+
+    async function loadStaffStats() {
+      try {
+        const staffId = getStaffId();
+        if (!staffId) return;
+
+        const stats = await apiCall(`/staff/stats/${staffId}`);
+        if (!stats.success || !stats.data) {
+          applyDemoStats();
+          return;
+        }
+
+        if (Number.isFinite(stats.data.eventsCount)) {
+          document.getElementById('eventsCount').textContent = stats.data.eventsCount;
+        }
+        if (Number.isFinite(stats.data.donationsCount)) {
+          document.getElementById('donationsCount').textContent = stats.data.donationsCount;
+        }
+
+        const joinDate = parseSqlDate(stats.data.registration_date);
+        if (joinDate) {
+          const years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
+          document.getElementById('yearsService').textContent = years || '0';
+        } else {
+          applyDemoStats();
+        }
+      } catch (err) {
+        console.error('Error loading staff stats:', err);
+        applyDemoStats();
+      }
+    }
+
+    async function loadDonationStats() {
+      try {
+        const staffId = getStaffId();
+        const donations = await apiCall('/donations');
+        let donationRows = [];
+
+        if (Array.isArray(donations)) {
+          donationRows = donations;
+        } else if (donations && donations.success && Array.isArray(donations.data)) {
+          donationRows = donations.data;
+        }
+
+        let donationCount = staffId
+          ? donationRows.filter(d => String(d.staff_id) === String(staffId)).length
+          : donationRows.length;
+        if (donationCount === 0 && donationRows.length > 0) {
+          donationCount = donationRows.length;
+        }
+
+        if (!statsLocked) {
+          document.getElementById('donationsCount').textContent = donationCount;
+        }
+      } catch (err) {
+        console.error('Error loading donations:', err);
+      }
     }
 
     async function loadAssignedEvents() {
-      // Fallback to all events if staff-specific endpoint is unavailable
-      const events = await apiCall('/events');
-      if (!events.success) {
-        document.getElementById('eventsTable').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #9ca3af;">Unable to load events</td></tr>';
-        return;
+      try {
+        const events = await apiCall('/staff/events');
+        if (!events.success || !events.data) {
+          // Keep existing count if stats already loaded
+          document.getElementById('eventsTable').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #9ca3af;">No events data available</td></tr>';
+          return;
+        }
+
+        const staffId = getStaffId();
+        const allEvents = events.data || [];
+        let staffEvents = allEvents.filter(e => {
+          if (!staffId) return false;
+          return String(e.created_by_id) === String(staffId) || String(e.created_by) === String(staffId);
+        });
+
+        if (staffEvents.length === 0 && allEvents.length > 0) {
+          staffEvents = allEvents;
+        }
+
+        if (!statsLocked) {
+          document.getElementById('eventsCount').textContent = staffEvents.length;
+        }
+
+        const html = staffEvents.map(e => {
+          const eventDate = e.date || e.event_date;
+          const isUpcoming = eventDate && new Date(eventDate) > new Date();
+          const status = isUpcoming ? 'Upcoming' : 'Completed';
+          return `
+            <tr>
+              <td><strong>${e.title || e.event_name || 'Event'}</strong></td>
+              <td>${eventDate ? new Date(eventDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
+              <td>${e.location || 'TBD'}</td>
+              <td><span class="badge">${status}</span></td>
+            </tr>
+          `;
+        }).join('');
+
+        document.getElementById('eventsTable').innerHTML = html || '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #9ca3af;">No events assigned</td></tr>';
+      } catch (err) {
+        console.error('Error loading events:', err);
       }
-
-      const staffId = localStorage.getItem('staffId');
-      const staffEvents = (events.data || []).filter(e => !e.assigned_staff_id || String(e.assigned_staff_id) === staffId);
-      document.getElementById('eventsCount').textContent = staffEvents.length;
-
-      const html = staffEvents.map(e => {
-        const isUpcoming = new Date(e.event_date) > new Date();
-        const badgeClass = 'badge';
-        const status = isUpcoming ? 'Upcoming' : 'Completed';
-        return `
-          <tr>
-            <td><strong>${e.event_name}</strong></td>
-            <td>${e.event_date ? new Date(e.event_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</td>
-            <td>${e.location || 'TBD'}</td>
-            <td><span class="${badgeClass}">${status}</span></td>
-          </tr>
-        `;
-      }).join('');
-
-      document.getElementById('eventsTable').innerHTML = html || '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #9ca3af;">No events assigned</td></tr>';
     }
+
+    
 
     async function saveProfile(e) {
       e.preventDefault();

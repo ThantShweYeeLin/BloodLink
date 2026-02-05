@@ -173,7 +173,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <a href="../donor/" class="back-btn">← Back</a>
+      <a href="../index.html" class="back-btn" id="backToLanding">← Back</a>
       <div class="icon">🏥</div>
       <h1>Hospital Login</h1>
       <p class="subtitle">Access your hospital dashboard</p>
@@ -205,6 +205,19 @@
 
   <script src="../shared-pages/api-base.js"></script>
   <script>
+    const backToLanding = document.getElementById('backToLanding');
+    if (backToLanding) {
+      backToLanding.addEventListener('click', (event) => {
+        event.preventDefault();
+        localStorage.removeItem('token');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('hospitalId');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        window.location.href = '../index.html';
+      });
+    }
+
     // Redirect if already logged in
     window.addEventListener('DOMContentLoaded', () => {
       const token = localStorage.getItem('token');

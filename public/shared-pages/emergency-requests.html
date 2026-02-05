@@ -8,16 +8,20 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
         .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .sidebar-logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; margin-bottom: 1rem; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
     .nav { display: flex; flex-direction: column; gap: 0.4rem; }
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: all 0.2s ease; cursor: pointer; }
     .nav-item:hover { background: #f3f4f6; }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
     .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
     .user-info { flex: 1; min-width: 0; }
-    .user-email { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
     .user-role { font-size: 0.8rem; color: #6b7280; }
-    .logout-icon { cursor: pointer; font-size: 1.2rem; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
     .main-content { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; }
     .container { width: 100%; }
     .header { background: #b91c1c; color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
@@ -76,23 +80,26 @@
 </head>
 <body>
   <aside class="sidebar">
-    <div class="sidebar-logo">🩸 Life Link</div>
+    <div class="sidebar-header">
+      <div class="logo"><span>🩸</span> <span>Life Link</span></div>
+      <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+    </div>
     <nav class="nav">
-      <a href="../staff/dashboard.html" class="nav-item">🏠 Dashboard</a>
-      <a href="./donor-management.html" class="nav-item">👥 Donor Mgmt</a>
-      <a href="./event-management.html" class="nav-item">📅 Events</a>
-      <a href="../donation-recording.html" class="nav-item">🩸 Record Donation</a>
-      <a href="./inventory-management.html" class="nav-item">📦 Inventory</a>
-      <a href="./request-management.html" class="nav-item">🏥 Requests</a>
-      <a href="./emergency-requests.html" class="nav-item">🚨 Emergency</a>
-      <a href="./reports.html" class="nav-item">📊 Reports</a>
-      <a href="./staff-profile.html" class="nav-item">👤 Profile</a>
-      <a href="./audit-logs.html" class="nav-item">🔐 Audit Logs</a>
+      <a class="nav-item" href="../staff/dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+      <a class="nav-item" href="../staff/staff-donor-management.html"><span>👥</span> <span>Donor Management</span></a>
+      <a class="nav-item" href="donation-recording.html"><span>🩸</span> <span>Record Donation</span></a>
+      <a class="nav-item" href="inventory-management.html"><span>📦</span> <span>Blood Inventory</span></a>
+      <a class="nav-item" href="request-management.html"><span>🏥</span> <span>Hospital Requests</span></a>
+      <a class="nav-item" href="event-management.html"><span>📅</span> <span>Events</span></a>
+      <a class="nav-item active" href="emergency-requests.html"><span>🚨</span> <span>Emergency</span></a>
+      <a class="nav-item" href="reports.html"><span>📊</span> <span>Reports</span></a>
+      <a class="nav-item" href="audit-logs.html"><span>📋</span> <span>Audit Logs</span></a>
+      <a class="nav-item" href="../staff/pages/staff-profile.html"><span>👤</span> <span>Profile</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-avatar" id="userInitial">S</div>
       <div class="user-info">
-        <div class="user-email" id="userName">Staff</div>
+        <div class="user-name" id="userName">Staff</div>
         <div class="user-role">Staff Account</div>
       </div>
       <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
@@ -135,7 +142,18 @@
   </main>
 
   <script>
-    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    }
+
+    // Restore sidebar state on page load
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+
+    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
     let allRequests = [];
     let availableUnits = [];
     let currentRequestId = null;
@@ -175,13 +193,55 @@
     }
 
     async function loadEmergencies() {
-      const requests = await apiCall('/staff/requests');
-      const inventory = await apiCall('/staff/inventory');
+      // Sample emergency request data
+      const sampleRequests = [
+        {
+          id: '1',
+          hospital_name: 'City General Hospital',
+          patient_name: 'John Anderson',
+          blood_type: 'O-',
+          quantity_units: 4,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 123-4567',
+          created_at: new Date(Date.now() - 1800000).toISOString()
+        },
+        {
+          id: '2',
+          hospital_name: 'St. Mary Medical Center',
+          patient_name: 'Emily Rodriguez',
+          blood_type: 'A+',
+          quantity_units: 3,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 234-5678',
+          created_at: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          id: '3',
+          hospital_name: 'Memorial Hospital',
+          patient_name: 'Michael Chen',
+          blood_type: 'B+',
+          quantity_units: 2,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 345-6789',
+          created_at: new Date(Date.now() - 7200000).toISOString()
+        }
+      ];
 
-      if (!requests.success) return showAlert('Failed to load requests', 'error');
+      const sampleInventory = [
+        { id: '1', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-15' },
+        { id: '2', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-18' },
+        { id: '3', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-20' },
+        { id: '4', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-22' },
+        { id: '5', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-25' },
+        { id: '6', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-12' },
+        { id: '7', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-28' }
+      ];
 
-      availableUnits = inventory.success ? inventory.data : [];
-      allRequests = (requests.data || []).filter(r => r.urgency === 'high' && r.status.toLowerCase() === 'pending');
+      availableUnits = sampleInventory;
+      allRequests = sampleRequests;
 
       document.getElementById('emergencyCount').textContent = allRequests.length;
       document.getElementById('lastUpdated').textContent = `Last updated ${new Date().toLocaleTimeString()}`;

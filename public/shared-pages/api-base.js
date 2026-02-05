@@ -1,7 +1,11 @@
 (function () {
   const LOCAL_BASE = 'http://localhost:3000';
   const RENDER_BASE = 'https://bloodlink-backend.onrender.com';
-  const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const isLocalHost =
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1' ||
+    location.hostname === '' ||
+    location.protocol === 'file:';
   const stored = localStorage.getItem('apiBase');
   let apiBase = stored || (isLocalHost ? LOCAL_BASE : RENDER_BASE);
 

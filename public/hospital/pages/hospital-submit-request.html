@@ -22,6 +22,16 @@
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
     .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
     .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
+    .sidebar-collapsed .sidebar-footer { flex-direction: column; padding: 0.5rem 0; }
+    .sidebar-collapsed .user-info { display: none; }
+    .sidebar-collapsed .logout-icon { display: none; }
     .main { padding: 1.5rem 2rem; }
     @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
     .container { max-width: 1100px; margin: 0 auto; padding: 0; }
@@ -63,19 +73,28 @@
   <div class="layout" id="layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo"><span>🩸</span> <span>Life Link Hospital</span></div>
+        <div class="logo"><span>🩸</span> <span>Life Link</span></div>
         <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
       </div>
       <nav class="nav">
         <a class="nav-item" href="../dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+        <a class="nav-item" href="./hospital-profile.html"><span>🏥</span> <span>Profile</span></a>
         <a class="nav-item active" href="./hospital-submit-request.html"><span>📝</span> <span>Submit Request</span></a>
         <a class="nav-item" href="./hospital-request-status.html"><span>📊</span> <span>Request Status</span></a>
         <a class="nav-item" href="./hospital-emergency-request.html"><span>🚨</span> <span>Emergency</span></a>
         <a class="nav-item" href="./hospital-request-history.html"><span>🕑</span> <span>History & Reports</span></a>
         <a class="nav-item" href="./hospital-notifications.html"><span>🔔</span> <span>Notifications</span></a>
-        <a class="nav-item" href="./hospital-profile.html"><span>🏥</span> <span>Profile</span></a>
+        <a class="nav-item" href="./hospital-inventory.html"><span>📦</span> <span>Inventory</span></a>
         <a class="nav-item" href="./hospital-analytics.html"><span>📈</span> <span>Analytics</span></a>
       </nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userInitial">H</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Hospital</div>
+          <div class="user-role">Hospital Account</div>
+        </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+      </div>
     </aside>
     <main class="main">
       <div class="container">
@@ -133,7 +152,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
 
     function showAlert(message, type = 'success') {
       const container = document.getElementById('alertContainer');
@@ -181,6 +200,11 @@
         console.error(err);
         showAlert('API not ready yet; request not saved. Hook this form to POST /api/hospital/requests.', 'error');
       }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '../login-hospital.html';
     }
   </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>

@@ -234,7 +234,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
     let currentHospitalData = null;
 
     function checkAuth() {

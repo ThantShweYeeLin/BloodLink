@@ -18,33 +18,42 @@
     
     .sidebar {
       width: 260px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 2rem 0;
-      position: fixed;
-      height: 100vh;
-      left: 0;
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 1.5rem;
+      position: sticky;
       top: 0;
+      height: 100vh;
       overflow-y: auto;
     }
 
-    .sidebar-header { text-align: center; margin-bottom: 2rem; }
-    .sidebar-header h2 { margin: 0; font-size: 1.2rem; }
-    .sidebar-header p { margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.85rem; }
+    .sidebar-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
 
     .sidebar-nav { list-style: none; margin: 0; padding: 0; }
     .sidebar-nav li { margin: 0; }
     .sidebar-nav a {
-      display: block;
-      padding: 1rem 1.5rem;
-      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      color: #1f2937;
       text-decoration: none;
-      transition: all 0.3s ease;
+      font-weight: 600;
+      transition: background 0.2s ease, color 0.2s ease;
       border-left: 3px solid transparent;
       cursor: pointer;
     }
-    .sidebar-nav a:hover { background: rgba(255,255,255,0.1); border-left-color: white; }
-    .sidebar-nav a.active { background: rgba(255,255,255,0.2); border-left-color: white; font-weight: 600; }
+    .sidebar-nav a:hover { background: #f3f4f6; color: #b91c1c; }
+    .sidebar-nav a.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
 
     .main { margin-left: 260px; flex: 1; }
     
@@ -136,20 +145,28 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h2>🩸 Life Link</h2>
-        <p>Staff Portal</p>
+        <div class="logo"><span>🩸</span> <span>Life Link</span></div>
       </div>
       <ul class="sidebar-nav">
-        <li><a class="nav-link active" data-page="dashboard">📊 Dashboard</a></li>
-        <li><a class="nav-link" data-page="donors">👥 Donor Management</a></li>
-        <li><a class="nav-link" data-page="donations">🩹 Record Donation</a></li>
-        <li><a class="nav-link" data-page="inventory">📦 Blood Inventory</a></li>
-        <li><a class="nav-link" data-page="requests">🏥 Hospital Requests</a></li>
-        <li><a class="nav-link" data-page="events">📅 Events</a></li>
-        <li><a class="nav-link" data-page="reports">📊 Reports</a></li>
-        <li><a class="nav-link" data-page="audit">📋 Audit Logs</a></li>
-        <li><a class="nav-link" data-page="profile">👤 My Profile</a></li>
+        <li><a href="./dashboard.html">🏠 Dashboard</a></li>
+        <li><a href="./staff-management.html" class="active">👥 Donor Mgmt</a></li>
+        <li><a href="../shared-pages/event-management.html">📅 Events</a></li>
+        <li><a href="../shared-pages/donation-recording.html">🩸 Record Donation</a></li>
+        <li><a href="../shared-pages/inventory-management.html">📦 Inventory</a></li>
+        <li><a href="../shared-pages/request-management.html">🏥 Requests</a></li>
+        <li><a href="../shared-pages/emergency-requests.html">🚨 Emergency</a></li>
+        <li><a href="../shared-pages/reports.html">📊 Reports</a></li>
+        <li><a href="./pages/staff-profile.html">👤 Profile</a></li>
+        <li><a href="../shared-pages/audit-logs.html">🔐 Audit Logs</a></li>
       </ul>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userInitial">S</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Staff</div>
+          <div class="user-role">Staff Account</div>
+        </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+      </div>
     </div>
 
     <!-- Main Content -->

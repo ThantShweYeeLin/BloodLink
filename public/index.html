@@ -10,7 +10,17 @@
       try {
         const token = localStorage.getItem('token');
         const userType = localStorage.getItem('userType');
-        if (token && userType) {
+        const userId = localStorage.getItem('userId');
+        const donorId = localStorage.getItem('donorId');
+        const hospitalId = localStorage.getItem('hospitalId');
+        const staffId = localStorage.getItem('staffId');
+
+        const hasRoleId =
+          (userType === 'donor' && (donorId || userId)) ||
+          (userType === 'hospital' && (hospitalId || userId)) ||
+          (userType === 'staff' && (staffId || userId));
+
+        if (token && userType && hasRoleId) {
           const redirectMap = {
             donor: 'donor/dashboard.html',
             staff: 'staff/dashboard.html',
@@ -33,18 +43,18 @@
       background: #f5f5f5;
       min-height: 100vh;
     }
-    
+
     .layout {
       display: grid;
       grid-template-columns: 260px 1fr;
       min-height: 100vh;
       transition: grid-template-columns 0.3s ease;
     }
-    
+
     .layout.sidebar-collapsed {
       grid-template-columns: 80px 1fr;
     }
-    
+
     .sidebar {
       background: #ffffff;
       border-right: 1px solid #e5e7eb;
@@ -59,19 +69,19 @@
       width: 260px;
       overflow: hidden;
     }
-    
+
     .sidebar-collapsed .sidebar {
       width: 80px;
       padding: 1.5rem 0.5rem;
     }
-    
+
     .sidebar-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 0.75rem;
     }
-    
+
     .logo {
       font-weight: 800;
       font-size: 1.2rem;
@@ -80,7 +90,7 @@
       gap: 0.5rem;
       color: #b91c1c;
     }
-    
+
     .toggle-btn {
       background: #f3f4f6;
       border: none;
@@ -95,39 +105,39 @@
       transition: all 0.2s;
       flex-shrink: 0;
     }
-    
+
     .toggle-btn:hover {
       background: #e5e7eb;
     }
-    
+
     .sidebar-collapsed .logo span {
       display: none;
     }
-    
+
     .sidebar-collapsed .nav-item span {
       display: none;
     }
-    
+
     .sidebar-collapsed .nav-item {
       justify-content: center;
       padding: 0.75rem;
     }
-    
+
     .sidebar-collapsed .sign-in-btn {
       padding: 0.75rem;
       font-size: 1.5rem;
     }
-    
+
     .sidebar-collapsed .sign-in-btn span {
       display: none;
     }
-    
+
     .nav {
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
     }
-    
+
     .nav-item {
       display: flex;
       align-items: center;
@@ -140,18 +150,18 @@
       transition: background 0.2s ease, color 0.2s ease;
       border-left: 3px solid transparent;
     }
-    
+
     .nav-item:hover {
       background: #f3f4f6;
       color: #b91c1c;
     }
-    
+
     .nav-item.active {
       background: #fef2f2;
       color: #b91c1c;
       border-left-color: #b91c1c;
     }
-    
+
     .sign-in-btn {
       display: block;
       background: #b91c1c;
@@ -163,11 +173,11 @@
       font-weight: 600;
       transition: all 0.2s;
     }
-    
+
     .sign-in-btn:hover {
       background: #991b1b;
     }
-    
+
     .hero {
       text-align: center;
       padding: 3rem 2rem;
@@ -176,25 +186,25 @@
       margin-bottom: 2rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
-    
+
     .hero-icon {
       font-size: 4rem;
       margin-bottom: 1rem;
     }
-    
+
     h1 {
       font-size: 2.5rem;
       margin: 0 0 1rem;
       color: #111827;
       font-weight: 900;
     }
-    
+
     .lead {
       font-size: 1.1rem;
       color: #6b7280;
       margin: 0 0 2rem;
     }
-    
+
     .cta {
       display: inline-block;
       background: #b91c1c;
@@ -207,20 +217,20 @@
       transition: all 0.3s ease;
       box-shadow: 0 8px 18px rgba(185, 28, 28, 0.25);
     }
-    
+
     .cta:hover {
       background: #991b1b;
       box-shadow: 0 10px 25px rgba(185, 28, 28, 0.35);
       transform: translateY(-2px);
     }
-    
+
     .features {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
       margin: 2rem 0;
     }
-    
+
     .card {
       background: white;
       border-radius: 14px;
@@ -229,30 +239,30 @@
       transition: all 0.3s ease;
       text-align: center;
     }
-    
+
     .card:hover {
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       transform: translateY(-4px);
     }
-    
+
     .card-icon {
       font-size: clamp(2rem, 5vw, 3.5rem);
       margin-bottom: 1rem;
     }
-    
+
     .card h3 {
       margin: 0.5rem 0;
       font-size: clamp(1.1rem, 3vw, 1.5rem);
       font-weight: 600;
     }
-    
+
     .card p {
       color: #6b7280;
       margin: 0.5rem 0;
       font-size: clamp(0.9rem, 2vw, 1rem);
       line-height: 1.5;
     }
-    
+
     @media (max-width: 1024px) {
       .layout {
         grid-template-columns: 1fr;
@@ -268,7 +278,7 @@
         padding: 1rem;
       }
     }
-    
+
     @media (max-width: 768px) {
       .features {
         grid-template-columns: 1fr;
@@ -313,31 +323,94 @@
 
     <section class="features" aria-label="Key features">
       <div class="card">
-        <div class="card-icon">🩸</div>
+        <div class="card-icon demo-login-icon" onclick="autoDemoLogin('donor', 'alex@donor.com', 'Test123!')" style="cursor: pointer; transition: transform 0.2s; user-select: none;" title="Click for demo login">🩸</div>
         <h3>For Donors</h3>
         <p>View profile, donation history and eligibility information.</p>
-        <a href="donor/login-donor.html" style="color: #c62828; text-decoration: none; font-weight: 600;">Login as Donor →</a>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <a href="donor/login-donor.html" style="flex: 1; color: #c62828; text-decoration: none; font-weight: 600; text-align: center;">Login →</a>
+          <button onclick="autoDemoLogin('donor', 'alex@donor.com', 'Test123!')" style="flex: 1; padding: 0.5rem; background: #fef2f2; border: 2px solid #c62828; color: #c62828; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#c62828'; this.style.color='white';" onmouseout="this.style.background='#fef2f2'; this.style.color='#c62828';">Demo</button>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-icon">🏥</div>
+        <div class="card-icon demo-login-icon" onclick="autoDemoLogin('hospital', 'hospital@bloodlink.com', 'Test123!')" style="cursor: pointer; transition: transform 0.2s; user-select: none;" title="Click for demo login">🏥</div>
         <h3>For Hospitals</h3>
         <p>Submit and track blood requests, view inventory status.</p>
-        <a href="hospital/login-hospital.html" style="color: #0369a1; text-decoration: none; font-weight: 600;">Login as Hospital →</a>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <a href="hospital/login-hospital.html" style="flex: 1; color: #0369a1; text-decoration: none; font-weight: 600; text-align: center;">Login →</a>
+          <button onclick="autoDemoLogin('hospital', 'hospital@bloodlink.com', 'Test123!')" style="flex: 1; padding: 0.5rem; background: #f0f9ff; border: 2px solid #0369a1; color: #0369a1; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#0369a1'; this.style.color='white';" onmouseout="this.style.background='#f0f9ff'; this.style.color='#0369a1';">Demo</button>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-icon">👩‍⚕️</div>
+        <div class="card-icon demo-login-icon" onclick="autoDemoLogin('staff', 'staff@bloodlink.com', 'Test123!')" style="cursor: pointer; transition: transform 0.2s; user-select: none;" title="Click for demo login">👩‍⚕️</div>
         <h3>For Blood Bank Staff</h3>
         <p>Manage donors, inventory and hospital requests.</p>
-        <a href="staff/login-staff.html" style="color: #7c3aed; text-decoration: none; font-weight: 600;">Login as Staff →</a>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <a href="staff/login-staff.html" style="flex: 1; color: #7c3aed; text-decoration: none; font-weight: 600; text-align: center;">Login →</a>
+          <button onclick="autoDemoLogin('staff', 'staff@bloodlink.com', 'Test123!')" style="flex: 1; padding: 0.5rem; background: #faf5ff; border: 2px solid #7c3aed; color: #7c3aed; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#7c3aed'; this.style.color='white';" onmouseout="this.style.background='#faf5ff'; this.style.color='#7c3aed';">Demo</button>
+        </div>
       </div>
     </section>
   </div>
     </main>
   </div>
   
+  <script src="shared-pages/api-base.js"></script>
   <script>
+    function getApiBase() {
+      return window.LIFELINK_API_BASE || 'http://localhost:3000';
+    }
+
+    async function waitForApiBase() {
+      let attempts = 0;
+      while (!window.LIFELINK_API_BASE && attempts < 50) {
+        await new Promise(r => setTimeout(r, 10));
+        attempts++;
+      }
+      return getApiBase();
+    }
+
+    // Auto demo login function
+    async function autoDemoLogin(userType, email, password) {
+      try {
+        const API_BASE = await waitForApiBase();
+        const response = await fetch(`${API_BASE}/api/login/${userType}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+        const token = data.token || data.accessToken || data.jwt;
+        const userId = data.userId || data.id || data.donorId || data.hospitalId || data.staffId || '';
+        const userName = data.userName || data.name || data.fullName || email;
+
+        if (response.ok && token && userId) {
+          localStorage.setItem('token', token);
+          localStorage.setItem('userType', userType);
+          localStorage.setItem('userId', userId);
+          localStorage.setItem('userName', userName);
+
+          if (userType === 'donor') localStorage.setItem('donorId', userId);
+          if (userType === 'hospital') localStorage.setItem('hospitalId', userId);
+          if (userType === 'staff') localStorage.setItem('staffId', userId);
+
+          const dashboards = {
+            donor: 'donor/dashboard.html',
+            hospital: 'hospital/dashboard.html',
+            staff: 'staff/dashboard.html'
+          };
+          window.location.href = dashboards[userType];
+        } else {
+          alert('Demo login failed. Please try the regular login.');
+        }
+      } catch (error) {
+        console.error('Auto-login error:', error);
+        alert('Connection error. Please try the regular login.');
+      }
+    }
+
     // Sidebar toggle functionality
     function toggleSidebar() {
       const layout = document.getElementById('layout');

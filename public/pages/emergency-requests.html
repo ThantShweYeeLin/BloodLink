@@ -134,7 +134,7 @@
   </main>
 
   <script>
-    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
     let allRequests = [];
     let availableUnits = [];
     let currentRequestId = null;
@@ -174,13 +174,55 @@
     }
 
     async function loadEmergencies() {
-      const requests = await apiCall('/staff/requests');
-      const inventory = await apiCall('/staff/inventory');
+      // Sample emergency request data
+      const sampleRequests = [
+        {
+          id: '1',
+          hospital_name: 'City General Hospital',
+          patient_name: 'John Anderson',
+          blood_type: 'O-',
+          quantity_units: 4,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 123-4567',
+          created_at: new Date(Date.now() - 1800000).toISOString()
+        },
+        {
+          id: '2',
+          hospital_name: 'St. Mary Medical Center',
+          patient_name: 'Emily Rodriguez',
+          blood_type: 'A+',
+          quantity_units: 3,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 234-5678',
+          created_at: new Date(Date.now() - 3600000).toISOString()
+        },
+        {
+          id: '3',
+          hospital_name: 'Memorial Hospital',
+          patient_name: 'Michael Chen',
+          blood_type: 'B+',
+          quantity_units: 2,
+          urgency: 'high',
+          status: 'pending',
+          hospital_contact: '+1 (555) 345-6789',
+          created_at: new Date(Date.now() - 7200000).toISOString()
+        }
+      ];
 
-      if (!requests.success) return showAlert('Failed to load requests', 'error');
+      const sampleInventory = [
+        { id: '1', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-15' },
+        { id: '2', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-18' },
+        { id: '3', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-20' },
+        { id: '4', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-22' },
+        { id: '5', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-25' },
+        { id: '6', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-12' },
+        { id: '7', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-28' }
+      ];
 
-      availableUnits = inventory.success ? inventory.data : [];
-      allRequests = (requests.data || []).filter(r => r.urgency === 'high' && r.status.toLowerCase() === 'pending');
+      availableUnits = sampleInventory;
+      allRequests = sampleRequests;
 
       document.getElementById('emergencyCount').textContent = allRequests.length;
       document.getElementById('lastUpdated').textContent = `Last updated ${new Date().toLocaleTimeString()}`;

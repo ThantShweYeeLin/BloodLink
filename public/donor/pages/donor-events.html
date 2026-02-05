@@ -14,6 +14,13 @@
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
     .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
     .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
     .main { padding: 1.5rem 2rem; }
     @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 0 2rem; }
@@ -28,13 +35,21 @@
     .tag { display: inline-block; background: #fef2f2; color: #b91c1c; padding: 0.35rem 0.7rem; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
     .card-actions { display: flex; gap: 0.6rem; }
     .btn.secondary { background: #6b7280; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+    .modal.active { display: flex; }
+    .modal-content { background: #fff; border-radius: 14px; padding: 1.5rem; width: min(520px, 92vw); box-shadow: 0 18px 30px rgba(0,0,0,0.2); }
+    .modal-header { font-weight: 800; font-size: 1.2rem; margin-bottom: 0.6rem; }
+    .modal-body { color: #374151; display: grid; gap: 0.5rem; }
+    .modal-footer { display: flex; gap: 0.6rem; justify-content: flex-end; margin-top: 1.1rem; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 0.75rem 1rem; border-radius: 10px; box-shadow: 0 8px 18px rgba(0,0,0,0.18); display: none; z-index: 1100; }
+    .toast.show { display: block; }
   </style>
   <link rel="stylesheet" href="../../shared-pages/sidebar-toggle.css" />
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">🩸 Life Link Donor</div>
+      <div class="logo">🩸 Life Link </div>
       <nav class="nav">
         <a class="nav-item" href="../dashboard.html">🏠 Dashboard</a>
         <a class="nav-item" href="./donor-profile.html">👤 Profile</a>
@@ -46,6 +61,14 @@
         <a class="nav-item" href="./donor-rewards.html">🎖️ Rewards</a>
         <a class="nav-item" href="./donor-faq.html">❓ FAQ</a>
       </nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userInitial">D</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Donor</div>
+          <div class="user-role">Donor Account</div>
+        </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+      </div>
     </aside>
     <main class="main">
       <div class="container">
@@ -82,43 +105,141 @@
         </div>
 
         <div class="card-grid">
-          <div class="card">
+          <div class="card event-card" data-title="City Hall Blood Drive" data-date="Feb 10, 2026" data-time="09:00 AM" data-location="123 Civic St, Main Hall" data-focus="All types" data-capacity="60">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h3>City Hall Blood Drive</h3>
               <span class="tag">Feb 10 • 9 AM</span>
             </div>
             <p style="color:#4b5563;">123 Civic St, Main Hall • Capacity: 60 donors</p>
             <div class="card-actions">
-              <button class="btn">View Details</button>
-              <button class="btn secondary">Register</button>
+              <button class="btn" data-action="details">View Details</button>
+              <button class="btn secondary" data-action="register">Register</button>
             </div>
           </div>
-          <div class="card">
+          <div class="card event-card" data-title="Community Hospital" data-date="Feb 22, 2026" data-time="01:00 PM" data-location="45 Wellness Ave" data-focus="O- / A+" data-capacity="50">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Community Hospital</h3>
               <span class="tag">Feb 22 • 1 PM</span>
             </div>
             <p style="color:#4b5563;">45 Wellness Ave • Focus: O- / A+</p>
             <div class="card-actions">
-              <button class="btn">View Details</button>
-              <button class="btn secondary">Register</button>
+              <button class="btn" data-action="details">View Details</button>
+              <button class="btn secondary" data-action="register">Register</button>
             </div>
           </div>
-          <div class="card">
+          <div class="card event-card" data-title="Campus Mobile Drive" data-date="Mar 05, 2026" data-time="11:00 AM" data-location="North Parking Lot" data-focus="All types" data-capacity="40">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h3>Campus Mobile Drive</h3>
               <span class="tag">Mar 05 • 11 AM</span>
             </div>
             <p style="color:#4b5563;">North Parking Lot • Capacity: 40 donors</p>
             <div class="card-actions">
-              <button class="btn">View Details</button>
-              <button class="btn secondary">Register</button>
+              <button class="btn" data-action="details">View Details</button>
+              <button class="btn secondary" data-action="register">Register</button>
             </div>
           </div>
         </div>
       </div>
     </main>
   </div>
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" id="modalTitle">Event Details</div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn secondary" onclick="closeEventModal()">Close</button>
+        <button class="btn" onclick="registerFromModal()">Register</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script>
+    let activeEvent = null;
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function getEventData(card) {
+      return {
+        title: card.dataset.title,
+        date: card.dataset.date,
+        time: card.dataset.time,
+        location: card.dataset.location,
+        focus: card.dataset.focus,
+        capacity: card.dataset.capacity
+      };
+    }
+
+    function openEventModal(eventData) {
+      activeEvent = eventData;
+      document.getElementById('modalTitle').textContent = eventData.title;
+      document.getElementById('modalBody').innerHTML = `
+        <div><strong>Date:</strong> ${eventData.date}</div>
+        <div><strong>Time:</strong> ${eventData.time}</div>
+        <div><strong>Location:</strong> ${eventData.location}</div>
+        <div><strong>Blood Type Focus:</strong> ${eventData.focus}</div>
+        <div><strong>Capacity:</strong> ${eventData.capacity} donors</div>
+      `;
+      document.getElementById('eventModal').classList.add('active');
+    }
+
+    function closeEventModal() {
+      document.getElementById('eventModal').classList.remove('active');
+      activeEvent = null;
+    }
+
+    function saveAppointment(eventData) {
+      const stored = JSON.parse(localStorage.getItem('donorAppointments') || '[]');
+      const exists = stored.some(item => item.title === eventData.title && item.date === eventData.date && item.time === eventData.time);
+      if (exists) {
+        showToast('You are already registered for this event.');
+        return false;
+      }
+      stored.unshift({
+        id: Date.now().toString(),
+        title: eventData.title,
+        date: eventData.date,
+        time: eventData.time,
+        location: eventData.location
+      });
+      localStorage.setItem('donorAppointments', JSON.stringify(stored));
+      return true;
+    }
+
+    function registerFromModal() {
+      if (!activeEvent) return;
+      const saved = saveAppointment(activeEvent);
+      if (saved) {
+        showToast('Registered! Added to your appointments.');
+        closeEventModal();
+      }
+    }
+
+    document.querySelectorAll('.event-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const action = e.target?.dataset?.action;
+        if (!action) return;
+        const eventData = getEventData(card);
+        if (action === 'details') {
+          openEventModal(eventData);
+        }
+        if (action === 'register') {
+          const saved = saveAppointment(eventData);
+          if (saved) {
+            showToast('Registered! Added to your appointments.');
+          }
+        }
+      });
+    });
+
+    document.getElementById('eventModal').addEventListener('click', (e) => {
+      if (e.target.id === 'eventModal') closeEventModal();
+    });
+  </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>
 </html>

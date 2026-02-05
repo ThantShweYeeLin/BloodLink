@@ -159,6 +159,53 @@
     .links a:hover {
       text-decoration: underline;
     }
+
+    .demo-accounts {
+      background: #fef3c7;
+      border: 2px dashed #d97706;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+    }
+
+    .demo-accounts h3 {
+      margin: 0 0 1rem;
+      color: #78350f;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .demo-buttons {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .demo-btn {
+      padding: 0.6rem;
+      background: #d97706;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .demo-btn:hover {
+      background: #b45309;
+      transform: translateY(-1px);
+    }
+
+    .demo-note {
+      font-size: 0.75rem;
+      color: #78350f;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
     
     @media (max-width: 768px) {
       .container {
@@ -200,9 +247,18 @@
       <div class="links">
         <p>Don't have an account? <a href="register-hospital.html">Register here</a></p>
       </div>
+
+      <div class="demo-accounts">
+        <h3>🎬 Demo Account</h3>
+        <div class="demo-buttons">
+          <button class="demo-btn" onclick="autofillDemo('hospital@bloodlink.com', 'Test123!')">City General Hospital (Demo)</button>
+        </div>
+        <p class="demo-note">Click to auto-fill demo credentials</p>
+      </div>
     </div>
   </div>
 
+  <script src="shared-pages/api-base.js"></script>
   <script>
     // Redirect if already logged in
     window.addEventListener('DOMContentLoaded', () => {
@@ -212,6 +268,12 @@
         window.location.href = 'dashboards/hospital-dashboard.html';
       }
     });
+
+    function autofillDemo(email, password) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = password;
+      document.getElementById('loginBtn').focus();
+    }
 
     async function handleLogin(event) {
       event.preventDefault();
@@ -228,7 +290,8 @@
       loginBtn.textContent = 'Logging in...';
       
       try {
-        const response = await fetch('https://bloodlink-mbvw.onrender.com/api/login/hospital', {
+        const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+        const response = await fetch(API_BASE + '/api/login/hospital', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Inventory - Life Link</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #111827; }
+    
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; color: #111827; }
+    .modal-footer { display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+    .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); }
+    
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: grid-template-columns 0.3s ease; }
+    .layout.sidebar-collapsed { grid-template-columns: 80px 1fr; }
+    .sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; position: sticky; top: 0; height: 100vh; transition: all 0.3s ease; width: 260px; overflow: hidden; }
+    .sidebar-collapsed .sidebar { width: 80px; padding: 1.5rem 0.5rem; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .sidebar-collapsed .logo span { display: none; }
+    .sidebar-collapsed .nav-item span { display: none; }
+    .sidebar-collapsed .nav-item { justify-content: center; padding: 0.75rem; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
+    
+    .nav { display: flex; flex-direction: column; gap: 0.35rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 700; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
+    .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
+    .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
+    .sidebar-collapsed .sidebar-footer { flex-direction: column; padding: 0.5rem 0; }
+    .sidebar-collapsed .user-info { display: none; }
+    .sidebar-collapsed .logout-icon { display: none; }
+    .main { padding: 1.5rem 2rem; }
+    @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 2rem; color: #111827; }
+    .logout-btn { background: #b91c1c; color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: #991b1b; }
+    
+    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .blood-card { background: white; padding: 1.5rem; border-radius: 12px; border: 2px solid #e5e7eb; transition: all 0.3s ease; position: relative; }
+    .blood-card:hover { border-color: #b91c1c; box-shadow: 0 4px 20px rgba(185, 28, 28, 0.1); }
+    
+    .blood-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
+    .blood-type { font-size: 2rem; font-weight: 800; color: #b91c1c; }
+    .status-badge { display: inline-block; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-full { background: #dcfce7; color: #166534; }
+    .status-medium { background: #fed7aa; color: #92400e; }
+    .status-low { background: #fee2e2; color: #991b1b; }
+    .status-critical { background: #fecaca; color: #7f1d1d; }
+    
+    .expiring-badge { display: inline-block; background: #dc2626; color: white; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-top: 0.25rem; }
+    
+    .blood-info { margin-bottom: 1rem; }
+    .info-label { color: #6b7280; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem; font-weight: 600; }
+    .info-value { font-size: 1.8rem; font-weight: 700; color: #111827; }
+    
+    .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+    .progress-fill { height: 100%; background: #b91c1c; transition: width 0.3s ease; }
+    .progress-text { font-size: 0.8rem; color: #6b7280; }
+    
+    .section-title { font-size: 1.3rem; font-weight: 600; color: #111827; margin: 2rem 0 1rem; border-bottom: 2px solid #b91c1c; padding-bottom: 0.5rem; }
+    
+    .card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb; }
+    
+    .toolbar { margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-box { flex: 1; min-width: 250px; }
+    .search-box input { width: 100%; padding: 0.8rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; }
+    .search-box input:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); }
+    
+    .table-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f9fafb; padding: 1rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; color: #374151; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 1rem; border-bottom: 1px solid #f3f4f6; }
+    tr:hover { background: #fafafa; }
+    tr:last-child td { border-bottom: none; }
+    
+    .btn { background: #b91c1c; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s ease; }
+    .btn:hover { background: #991b1b; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    .btn.btn-secondary { background: #6b7280; }
+    .btn.btn-secondary:hover { background: #4b5563; }
+    .btn.btn-danger { background: #dc2626; }
+    .btn.btn-danger:hover { background: #b91c1c; }
+    
+    .badge { display: inline-block; padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    
+    code { background: #f3f4f6; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = '../login-hospital.html';
+    }
+
+    function toggleSidebar() {
+      const layout = document.getElementById('layout');
+      if (layout) {
+        layout.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('hospitalSidebarCollapsed', layout.classList.contains('sidebar-collapsed'));
+      }
+    }
+
+    if (localStorage.getItem('hospitalSidebarCollapsed') === 'true') {
+      setTimeout(() => {
+        const layout = document.getElementById('layout');
+        if (layout) layout.classList.add('sidebar-collapsed');
+      }, 0);
+    }
+  </script>
+
+  <div class="layout" id="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><span>🩸</span> <span>Life Link</span></div>
+        <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+      </div>
+      <nav class="nav">
+        <a class="nav-item" href="../dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+        <a class="nav-item" href="./hospital-profile.html"><span>🏥</span> <span>Profile</span></a>
+        <a class="nav-item" href="./hospital-submit-request.html"><span>📝</span> <span>Submit Request</span></a>
+        <a class="nav-item" href="./hospital-request-status.html"><span>📊</span> <span>Request Status</span></a>
+        <a class="nav-item" href="./hospital-emergency-request.html"><span>🚨</span> <span>Emergency</span></a>
+        <a class="nav-item" href="./hospital-request-history.html"><span>🕑</span> <span>History & Reports</span></a>
+        <a class="nav-item" href="./hospital-notifications.html"><span>🔔</span> <span>Notifications</span></a>
+        <a class="nav-item active" href="./hospital-inventory.html"><span>📦</span> <span>Inventory</span></a>
+        <a class="nav-item" href="./hospital-analytics.html"><span>📈</span> <span>Analytics</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userInitial">H</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Hospital</div>
+          <div class="user-role">Hospital Account</div>
+        </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="container">
+        <div class="header" style="background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+          <div>
+            <h1 style="color: white; margin: 0;">Blood Inventory</h1>
+            <p style="color: #fecaca; margin-top: 0.35rem;">Real-time inventory status, expiration dates, and stock levels</p>
+          </div>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <button class="logout-btn" style="background: #059669; margin-bottom: 1.5rem;" onclick="openUpdateModal()">+ Add/Update Supply</button>
+
+        <div class="inventory-grid" id="inventoryGrid">
+          <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #6b7280;">
+            <style>
+              @keyframes spin { to { transform: rotate(360deg); } }
+            </style>
+            <div style="border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            Loading inventory data...
+          </div>
+        </div>
+
+        <div class="section-title">Detailed Inventory Units</div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search by blood type, unit ID..." oninput="filterInventory()" />
+          </div>
+          <button class="btn" onclick="toggleExpiredFilter()">
+            <span id="filterToggle">Show Expired Only</span>
+          </button>
+          <button class="btn btn-secondary" onclick="loadInventory()">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Blood Type</th>
+                <th>Unit ID</th>
+                <th>Quantity (ml)</th>
+                <th>Collection Date</th>
+                <th>Expiry Date</th>
+                <th>Days Left</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTable">
+              <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #6b7280;">No inventory data</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background: #22c55e;"></div>
+              <span><strong>Full:</strong> ≥ 50 units</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #eab308;"></div>
+              <span><strong>Medium:</strong> 20-49 units</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ef4444;"></div>
+              <span><strong>Low:</strong> 1-19 units</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #dc2626;"></div>
+              <span><strong>Critical:</strong> 0 units</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../shared-pages/api-base.js"></script>
+  <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+    const REQUEST_TIMEOUT_MS = 15000;
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-hospital.html';
+        return false;
+      }
+      return true;
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        const options = { method, headers: getAuthHeader(), signal: controller.signal };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        clearTimeout(timeoutId);
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = { success: false, message: 'Invalid server response' };
+        }
+        if (response.status === 401) {
+          localStorage.clear();
+          window.location.href = '../login-hospital.html';
+          return { success: false, message: 'Unauthorized' };
+        }
+        if (!response.ok) {
+          return { success: false, message: data.message || 'Request failed' };
+        }
+        return data;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError' && retries > 0) {
+          return apiCall(endpoint, method, body, retries - 1);
+        }
+        if (error.name === 'AbortError') {
+          return { success: false, message: 'Request timed out' };
+        }
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    function showAlert(message, type = 'info') {
+      const alertContainer = document.getElementById('alertContainer');
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      alertContainer.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    function getStatusLevel(units) {
+      if (units === 0) return { label: 'Critical', class: 'status-critical', color: '#dc2626' };
+      if (units < 20) return { label: 'Low', class: 'status-low', color: '#ef4444' };
+      if (units < 50) return { label: 'Medium', class: 'status-medium', color: '#eab308' };
+      return { label: 'Full', class: 'status-full', color: '#22c55e' };
+    }
+
+    async function loadInventory() {
+      if (!checkAuth()) return;
+
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        showAlert('Missing hospital ID. Please log in again.', 'error');
+        return;
+      }
+
+      // Get inventory data
+      const invResult = await apiCall('/inventory');
+      if (!invResult.success) {
+        showAlert('Failed to load inventory data', 'error');
+        document.getElementById('inventoryGrid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #ef4444;">Failed to load inventory</div>';
+        return;
+      }
+
+      const bloodTypes = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
+      const inventory = invResult.data || [];
+      
+      // Store all units for filtering
+      window.allUnits = inventory;
+      window.showExpiredOnly = false;
+      
+      // Create a map of blood type to inventory data
+      const inventoryMap = {};
+      inventory.forEach(item => {
+        const type = item.blood_type || item.type;
+        if (!inventoryMap[type]) {
+          inventoryMap[type] = { units: 0, expiring: 0, maxCapacity: 250 };
+        }
+        inventoryMap[type].units += Math.round((item.quantity_ml || 0) / 450);
+        // Check if expiring soon (within 7 days)
+        if (item.expiry_date) {
+          const expiry = new Date(item.expiry_date);
+          const now = new Date();
+          const daysUntilExpiry = (expiry - now) / (1000 * 60 * 60 * 24);
+          if (daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
+            inventoryMap[type].expiring++;
+          }
+        }
+      });
+
+      // Render inventory cards
+      const html = bloodTypes.map(bloodType => {
+        const data = inventoryMap[bloodType] || { units: 0, expiring: 0, maxCapacity: 250 };
+        const status = getStatusLevel(data.units);
+        const percentage = (data.units / data.maxCapacity) * 100;
+        
+        return `
+          <div class="blood-card">
+            <div class="blood-header">
+              <div class="blood-type">${bloodType}</div>
+              <div>
+                <div class="status-badge ${status.class}">${status.label}</div>
+                ${data.expiring > 0 ? `<div class="expiring-badge">⚠️ ${data.expiring} expiring</div>` : ''}
+              </div>
+            </div>
+            <div class="blood-info">
+              <div class="info-label">Available Units</div>
+              <div class="info-value">${data.units}</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%; background: ${status.color};"></div>
+            </div>
+            <div class="progress-text">${Math.round(percentage)}% of ${data.maxCapacity} unit capacity</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('inventoryGrid').innerHTML = html;
+      
+      // Display detailed units table
+      displayInventoryTable();
+    }
+
+    function filterInventory() {
+      displayInventoryTable();
+    }
+
+    function toggleExpiredFilter() {
+      window.showExpiredOnly = !window.showExpiredOnly;
+      displayInventoryTable();
+    }
+
+    function displayInventoryTable() {
+      let units = window.allUnits || [];
+      const searchTerm = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+
+      // Apply expired filter
+      if (window.showExpiredOnly) {
+        const now = new Date();
+        units = units.filter(u => new Date(u.expiry_date) < now);
+      }
+
+      // Apply search filter
+      if (searchTerm) {
+        units = units.filter(u => 
+          u.blood_type.toLowerCase().includes(searchTerm) ||
+          (u.id && u.id.toString().toLowerCase().includes(searchTerm))
+        );
+      }
+
+      document.getElementById('filterToggle').textContent = window.showExpiredOnly ? 'Show All Units' : 'Show Expired Only';
+
+      const html = units.map(u => {
+        const now = new Date();
+        const expiry = new Date(u.expiry_date);
+        const daysLeft = Math.ceil((expiry - now) / (24 * 60 * 60 * 1000));
+        const isExpired = expiry < now;
+        const isExpiring = daysLeft > 0 && daysLeft <= 7;
+        const status = isExpired ? 'Expired' : isExpiring ? 'Expiring Soon' : 'Good';
+        const badge = isExpired ? 'badge-danger' : isExpiring ? 'badge-warning' : 'badge-success';
+
+        return `
+          <tr>
+            <td><strong>${u.blood_type}</strong></td>
+            <td><code>#${u.id || 'N/A'}</code></td>
+            <td>${u.quantity_ml}ml</td>
+            <td>${new Date(u.collection_date || u.collected_date).toLocaleDateString()}</td>
+            <td>${expiry.toLocaleDateString()}</td>
+            <td>${isExpired ? '<span style="color: #dc2626;">✗ Expired</span>' : '<span style="color: #059669;">' + daysLeft + ' days</span>'}</td>
+            <td><span class="badge ${badge}">${status}</span></td>
+            <td>
+              ${!isExpired && u.status !== 'expired' ? 
+                `<button class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 1rem;" onclick="openExpireModal('${u.id}', '${u.id}', '${u.blood_type}')">Mark Expired</button>` 
+                : '<span style="color: #9ca3af;">—</span>'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('inventoryTable').innerHTML = html || '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #9ca3af;">No units found</td></tr>';
+    }
+
+    function openExpireModal(unitId, unitCode, bloodType) {
+      window.currentExpireUnitId = unitId;
+      // Could add modal here if needed for confirmation
+      confirmExpire();
+    }
+
+    async function confirmExpire() {
+      const unitId = window.currentExpireUnitId;
+      const result = await apiCall(`/inventory/${unitId}`, 'PUT', { status: 'expired' });
+      if (result.success) {
+        showAlert('✓ Unit marked as expired', 'info');
+        loadInventory();
+      } else {
+        showAlert('✗ ' + (result.message || 'Failed to update unit'), 'error');
+      }
+    }
+
+    // Initialize
+    if (localStorage.getItem('hospitalSidebarCollapsed') === 'true') {
+      const layout = document.getElementById('layout');
+      if (layout) layout.classList.add('sidebar-collapsed');
+    }
+    loadInventory();
+
+    // Refresh every 30 seconds
+    setInterval(loadInventory, 30000);
+  </script>
+
+  <!-- Add/Update Supply Modal -->
+  <div id="updateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Add/Update Blood Supply</div>
+      <form id="supplyForm" onsubmit="submitSupply(event)">
+        <div class="form-group">
+          <label>Blood Type</label>
+          <select id="bloodType" required>
+            <option value="">Select blood type</option>
+            <option>O+</option><option>O-</option><option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantity (ml)</label>
+          <input type="number" id="quantity" min="0" step="50" placeholder="e.g., 450" required />
+        </div>
+        <div class="form-group">
+          <label>Collection Date</label>
+          <input type="date" id="collectionDate" required />
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <input type="text" id="notes" placeholder="e.g., From blood drive, emergency donation" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="logout-btn" style="background: #6b7280;" onclick="closeUpdateModal()">Cancel</button>
+          <button type="submit" class="logout-btn">Add Supply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openUpdateModal() {
+      document.getElementById('updateModal').classList.add('active');
+      document.getElementById('collectionDate').valueAsDate = new Date();
+    }
+
+    function closeUpdateModal() {
+      document.getElementById('updateModal').classList.remove('active');
+      document.getElementById('supplyForm').reset();
+    }
+
+    async function submitSupply(event) {
+      event.preventDefault();
+      const bloodType = document.getElementById('bloodType').value;
+      const quantity = document.getElementById('quantity').value;
+      const collectionDate = document.getElementById('collectionDate').value;
+      const notes = document.getElementById('notes').value;
+
+      const payload = {
+        blood_type: bloodType,
+        quantity_ml: parseInt(quantity),
+        collection_date: collectionDate,
+        notes: notes
+      };
+
+      const result = await apiCall('/inventory', 'POST', payload);
+      if (result.success) {
+        showAlert('Blood supply added successfully!', 'info');
+        closeUpdateModal();
+        loadInventory();
+      } else {
+        showAlert(result.message || 'Failed to add blood supply', 'error');
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('updateModal').addEventListener('click', (e) => {
+      if (e.target.id === 'updateModal') closeUpdateModal();
+    });
+  </script>
+</body>
+</html>

@@ -35,6 +35,9 @@
     .nav-item:hover { background: #f3f4f6; }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
     .avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
 
     .main { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
     .topbar { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: sticky; top: 0.75rem; z-index: 5; }
@@ -127,7 +130,7 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">🩸 Life Link <span class="badge">Blood Bank</span></div>
+      <div class="logo">🩸 Life Link</div>
       <nav class="nav">
         <a class="nav-item active" data-page="dashboard"><span class="icon">🏠</span> Dashboard</a>
         <a class="nav-item" href="../pages/donor-management.html"><span class="icon">👥</span> Donor Mgmt</a>
@@ -142,9 +145,9 @@
       </nav>
       <div class="sidebar-footer">
         <div class="avatar" id="userInitial">S</div>
-        <div>
-          <div id="userName">Staff</div>
-          <small style="color:#6b7280;">Staff Account</small>
+        <div class="user-info">
+          <div class="user-name" id="userName">Staff</div>
+          <div class="user-role">Staff Account</div>
         </div>
         <button class="icon-btn" onclick="logout()" title="Logout">⇦</button>
       </div>

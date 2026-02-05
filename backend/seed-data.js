@@ -267,13 +267,14 @@ async function seed() {
 
   const [{ count: requestCount }] = await query('SELECT COUNT(*)::int AS count FROM blood_requests');
   if (requestCount === 0) {
+    // Initial 15 blood requests with varied statuses
     await query(
       'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
       [1, 'O+', 900, 'urgent', 'pending', '2026-02-10', 'Need for surgery']
     );
     await query(
       'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-      [2, 'A-', 450, 'routine', 'approved', '2026-02-01', 'Inventory replenishment']
+      [2, 'A-', 450, 'routine', 'fulfilled', '2026-02-01', 'Inventory replenishment']
     );
     await query(
       'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
@@ -287,35 +288,72 @@ async function seed() {
       'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
       [5, 'AB+', 675, 'routine', 'pending', '2026-02-05', 'Scheduled surgical procedures']
     );
-  } else if (requestCount < 5) {
-    // Add more requests if we have fewer than 5
-    const [{ exists: req2 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 2 AND blood_type = ?) AS exists', ['A-']);
-    if (!req2) {
-      await query(
-        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-        [2, 'A-', 450, 'routine', 'approved', '2026-02-01', 'Inventory replenishment']
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [1, 'A+', 450, 'routine', 'fulfilled', '2026-01-25', 'Post-surgery recovery ward']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [2, 'O+', 675, 'urgent', 'pending', '2026-02-08', 'Emergency room supply']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [3, 'A-', 900, 'routine', 'fulfilled', '2026-01-30', 'General inventory']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [4, 'B-', 225, 'emergency', 'pending', '2026-02-03', 'Critical patient needs']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [5, 'O-', 450, 'urgent', 'fulfilled', '2026-01-22', 'Universal donor supply']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [1, 'AB-', 225, 'routine', 'pending', '2026-02-06', 'Rare type inventory']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [2, 'B+', 675, 'urgent', 'fulfilled', '2026-01-27', 'Surgical department']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [3, 'O+', 1350, 'emergency', 'pending', '2026-02-04', 'Mass casualty preparation']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [4, 'AB+', 450, 'routine', 'fulfilled', '2026-01-29', 'Oncology department']
+    );
+    await query(
+      'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+      [5, 'A+', 900, 'urgent', 'pending', '2026-02-07', 'ICU critical supply']
+    );
+  } else if (requestCount < 25) {
+    // Add more requests for hospital 1 if we have fewer than 25 total
+    const additionalRequests = [
+      [1, 'B+', 450, 'routine', 'fulfilled', '2026-01-20', 'Routine transfusion'],
+      [1, 'O-', 675, 'urgent', 'pending', '2026-02-03', 'Emergency blood supply'],
+      [1, 'A+', 900, 'emergency', 'pending', '2026-02-04', 'Multiple trauma cases'],
+      [1, 'AB+', 225, 'routine', 'fulfilled', '2026-01-28', 'Regular inventory'],
+      [1, 'B-', 450, 'urgent', 'pending', '2026-02-06', 'ICU patients'],
+      [1, 'O+', 1350, 'routine', 'fulfilled', '2026-01-26', 'Surgery department'],
+      [1, 'A-', 675, 'emergency', 'pending', '2026-02-05', 'Critical care unit'],
+      [1, 'AB-', 225, 'routine', 'fulfilled', '2026-01-24', 'Rare blood type stock'],
+      [1, 'O+', 450, 'urgent', 'fulfilled', '2026-01-31', 'Emergency room'],
+      [1, 'A+', 675, 'routine', 'pending', '2026-02-08', 'Scheduled procedures']
+    ];
+    
+    for (const req of additionalRequests) {
+      const [{ exists }] = await query(
+        'SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = ? AND blood_type = ? AND quantity_ml = ? AND notes = ?) AS exists',
+        [req[0], req[1], req[2], req[6]]
       );
-    }
-    const [{ exists: req3 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 3 AND blood_type = ?) AS exists', ['B+']);
-    if (!req3) {
-      await query(
-        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-        [3, 'B+', 1350, 'emergency', 'pending', '2026-02-02', 'Multiple trauma patients']
-      );
-    }
-    const [{ exists: req4 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 4 AND blood_type = ?) AS exists', ['O-']);
-    if (!req4) {
-      await query(
-        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-        [4, 'O-', 225, 'urgent', 'fulfilled', '2026-01-28', 'Pediatric transfusion']
-      );
-    }
-    const [{ exists: req5 }] = await query('SELECT EXISTS(SELECT 1 FROM blood_requests WHERE hospital_id = 5 AND blood_type = ?) AS exists', ['AB+']);
-    if (!req5) {
-      await query(
-        'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
-        [5, 'AB+', 675, 'routine', 'pending', '2026-02-05', 'Scheduled surgical procedures']
-      );
+      if (!exists) {
+        await query(
+          'INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)',
+          req
+        );
+      }
     }
   }
 

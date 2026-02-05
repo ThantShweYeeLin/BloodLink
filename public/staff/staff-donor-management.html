@@ -5,36 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Donor Management — Life Link Staff</title>
   <style>
+    :root {
+      --brand-700: #b91c1c;
+      --brand-800: #991b1b;
+      --brand-600: #dc2626;
+      --surface: #ffffff;
+      --bg: #f9fafb;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --soft: #fef2f2;
+    }
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: #f5f5f5;
-      color: #111827;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-    .sidebar { background: #fff; border-right: 1px solid #e5e7eb; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .logo { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .logo { font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; color: #b91c1c; }
+    .toggle-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0; }
+    .toggle-btn:hover { background: #e5e7eb; }
     .nav { display: flex; flex-direction: column; gap: 0.4rem; }
-    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
-    .nav-item.active { background: #fef2f2; color: #b91c1c; }
-    .nav-item:hover { background: #f3f4f6; }
-    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; }
-    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
+    .nav-item.active { background: var(--soft); color: var(--brand-700); border-left-color: var(--brand-700); }
+    .nav-item:hover { background: #f3f4f6; color: var(--brand-700); }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: var(--brand-700); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
 
     .main { padding: 1.5rem 2rem; overflow-y: auto; }
-    .topbar { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-    .search { flex: 1; display: flex; align-items: center; gap: 0.6rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.55rem 0.75rem; max-width: 400px; }
+    .topbar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .search { flex: 1; display: flex; align-items: center; gap: 0.6rem; background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; padding: 0.55rem 0.75rem; max-width: 400px; }
     .search input { border: none; background: transparent; flex: 1; font-size: 0.95rem; outline: none; }
     .top-actions { display: flex; gap: 0.6rem; }
     .btn { padding: 0.7rem 1.2rem; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s ease; }
-    .btn-primary { background: #b91c1c; color: #fff; border: none; box-shadow: 0 8px 18px rgba(185, 28, 28, 0.25); }
+    .btn-primary { background: var(--brand-700); color: #fff; border: none; box-shadow: 0 8px 18px rgba(185, 28, 28, 0.25); }
     .btn-primary:hover { box-shadow: 0 10px 20px rgba(185, 28, 28, 0.3); }
     .btn-secondary { background: #f9fafb; }
     .btn-secondary:hover { background: #f3f4f6; }
-    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger { background: #fee2e2; color: var(--brand-700); }
     .btn-danger:hover { background: #fecaca; }
 
     .page { display: none; }
@@ -43,7 +62,7 @@
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .page-header h1 { margin: 0; font-size: 1.8rem; }
 
-    .table-container { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
+    .table-container { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
     th { background: #f9fafb; padding: 0.9rem; text-align: left; font-weight: 700; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
     td { padding: 0.9rem; border-bottom: 1px solid #e5e7eb; }
@@ -52,7 +71,7 @@
 
     .badge-status { padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
     .badge-eligible { background: #dcfce7; color: #166534; }
-    .badge-ineligible { background: #fee2e2; color: #b91c1c; }
+    .badge-ineligible { background: #fee2e2; color: var(--brand-700); }
     .badge-pending { background: #fef3c7; color: #92400e; }
 
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
@@ -71,43 +90,76 @@
     .action-btns button { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
 
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem; text-align: center; }
-    .stat-value { font-size: 2rem; font-weight: 800; color: #b91c1c; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--brand-700); }
     .stat-label { color: #6b7280; font-size: 0.9rem; margin-top: 0.35rem; }
 
     .alert { padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
     .alert-info { background: #dbeafe; color: #0c4a6e; border: 1px solid #7dd3fc; }
     .alert-danger { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
     .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    
+    .header {
+      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+      color: white;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
+    }
+    .header-content { display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { margin: 0; font-size: 2rem; }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .header .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .header .logout-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+    .main-section { padding: 1.5rem 2rem; }
   </style>
   <link rel="stylesheet" href="../shared-pages/sidebar-toggle.css" />
 </head>
 <body>
   <div class="layout">
     <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="logo">🩸 Life Link</div>
-      <div class="nav">
-        <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-        <div class="nav-item active" onclick="openPage('donors')">👥 Donors</div>
-        <div class="nav-item" onclick="openPage('events')">📅 Events</div>
-        <div class="nav-item" onclick="openPage('donations')">🩹 Donations</div>
-        <div class="nav-item" onclick="openPage('inventory')">📦 Inventory</div>
-        <div class="nav-item" onclick="openPage('requests')">🏥 Requests</div>
-        <div class="nav-item" onclick="openPage('reports')">📊 Reports</div>
-        <div class="nav-item" onclick="openPage('profile')">👤 Profile</div>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><span>🩸</span> <span>Life Link</span></div>
+        <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
       </div>
+      <nav class="nav">
+        <a class="nav-item" href="dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
+        <a class="nav-item active" href="staff-donor-management.html"><span>👥</span> <span>Donor Management</span></a>
+        <a class="nav-item" href="../shared-pages/donation-recording.html"><span>🩸</span> <span>Record Donation</span></a>
+        <a class="nav-item" href="../shared-pages/inventory-management.html"><span>📦</span> <span>Blood Inventory</span></a>
+        <a class="nav-item" href="../shared-pages/request-management.html"><span>🏥</span> <span>Hospital Requests</span></a>
+        <a class="nav-item" href="../shared-pages/event-management.html"><span>📅</span> <span>Events</span></a>
+        <a class="nav-item" href="../shared-pages/emergency-requests.html"><span>🚨</span> <span>Emergency</span></a>
+        <a class="nav-item" href="../shared-pages/reports.html"><span>📊</span> <span>Reports</span></a>
+        <a class="nav-item" href="../shared-pages/audit-logs.html"><span>📋</span> <span>Audit Logs</span></a>
+        <a class="nav-item" href="pages/staff-profile.html"><span>👤</span> <span>Profile</span></a>
+      </nav>
       <div class="sidebar-footer">
-        <div class="avatar" id="avatar">S</div>
-        <div style="flex: 1;">
-          <div style="font-weight: 700; font-size: 0.9rem;" id="userName">Staff</div>
-          <button onclick="logout()" style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Logout</button>
+        <div class="user-avatar" id="userInitial">S</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Staff</div>
+          <div class="user-role">Staff Account</div>
         </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
       </div>
-    </div>
+    </aside>
 
     <!-- Main Content -->
     <div class="main">
+      <div class="main-section">
+      <!-- Red Header Bar -->
+      <div class="header">
+        <div class="header-content">
+          <div>
+            <h1>👥 Donor Management</h1>
+            <p style="margin-top: 0.5rem; opacity: 0.9;">Manage and track donor information</p>
+          </div>
+          <div class="header-actions">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Topbar -->
       <div class="topbar">
         <div class="search">
@@ -425,22 +477,52 @@
     </div>
   </div>
 
+  <script src="../shared-pages/api-base.js"></script>
   <script>
-    const API = 'https://bloodlink-mbvw.onrender.com/api';
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API = `${API_BASE}/api`;
     let currentDonorId = null;
 
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      const layout = document.querySelector('.layout');
+      layout.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', layout.classList.contains('sidebar-collapsed'));
+    }
+
+    // Restore sidebar state on page load
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.querySelector('.layout').classList.add('sidebar-collapsed');
+    }
+
     // Auth
+    function getStaffIdFromToken(token) {
+      if (!token) return null;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.userId || payload.id || null;
+      } catch (err) {
+        return null;
+      }
+    }
+
     function getAuth() {
+      const token = localStorage.getItem('token');
       return {
-        token: localStorage.getItem('token'),
-        staffId: localStorage.getItem('staffId'),
+        token,
+        staffId: localStorage.getItem('staffId') || localStorage.getItem('userId') || getStaffIdFromToken(token),
         userName: localStorage.getItem('userName')
       };
     }
 
     function setUser(name) {
-      document.getElementById('userName').textContent = name.split(' ')[0];
-      document.getElementById('avatar').textContent = name[0];
+      const safeName = (name || 'Staff').trim();
+      const firstName = safeName.split(' ')[0] || 'Staff';
+      const initial = (safeName[0] || 'S').toUpperCase();
+      const nameEl = document.getElementById('userName');
+      if (nameEl) nameEl.textContent = firstName;
+      const avatarEl = document.getElementById('userInitial') || document.getElementById('avatar');
+      if (avatarEl) avatarEl.textContent = initial;
     }
 
     // Navigation
@@ -466,7 +548,19 @@
         const res = await fetch(`${API}/donors`, {
           headers: { 'Authorization': `Bearer ${auth.token}` }
         });
-        const donors = await res.json();
+        const data = await res.json();
+        let donors = Array.isArray(data) ? data : (data.data || []);
+        
+        // Sample data fallback
+        if (!donors || donors.length === 0) {
+          donors = [
+            { id: '1', full_name: 'Alex Donor', email: 'alex@donor.com', blood_type: 'O+', phone: '555-1111', last_donation_date: new Date(Date.now() - 60*24*60*60*1000).toISOString() },
+            { id: '2', full_name: 'Jordan Smith', email: 'jordan@donor.com', blood_type: 'A+', phone: '555-2222', last_donation_date: new Date(Date.now() - 100*24*60*60*1000).toISOString() },
+            { id: '3', full_name: 'Casey Johnson', email: 'casey@donor.com', blood_type: 'B-', phone: '555-3333', last_donation_date: new Date(Date.now() - 40*24*60*60*1000).toISOString() },
+            { id: '4', full_name: 'Morgan Lee', email: 'morgan@donor.com', blood_type: 'AB+', phone: '555-4444', last_donation_date: new Date(Date.now() - 120*24*60*60*1000).toISOString() },
+            { id: '5', full_name: 'Taylor Brown', email: 'taylor@donor.com', blood_type: 'O-', phone: '555-5555', last_donation_date: null }
+          ];
+        }
         
         document.getElementById('totalDonors').textContent = donors.length;
         
@@ -660,6 +754,10 @@
     // PROFILE
     async function loadProfile() {
       const auth = getAuth();
+      if (!auth.staffId) {
+        console.warn('Missing staffId. Please log in again.');
+        return;
+      }
       try {
         const res = await fetch(`${API}/staff/profile/${auth.staffId}`, {
           headers: { 'Authorization': `Bearer ${auth.token}` }

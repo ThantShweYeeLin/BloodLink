@@ -22,6 +22,16 @@
     .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 10px; color: #1f2937; text-decoration: none; font-weight: 600; transition: background 0.2s ease, color 0.2s ease; border-left: 3px solid transparent; }
     .nav-item:hover { background: #f3f4f6; color: #b91c1c; }
     .nav-item.active { background: #fef2f2; color: #b91c1c; border-left-color: #b91c1c; }
+    .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.75rem; }
+    .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fee2e2; color: #b91c1c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 0.9rem; font-weight: 600; color: #1f2937; }
+    .user-role { font-size: 0.8rem; color: #6b7280; }
+    .logout-icon { cursor: pointer; font-size: 1.2rem; color: #6b7280; transition: color 0.2s; }
+    .logout-icon:hover { color: #b91c1c; }
+    .sidebar-collapsed .sidebar-footer { flex-direction: column; padding: 0.5rem 0; }
+    .sidebar-collapsed .user-info { display: none; }
+    .sidebar-collapsed .logout-icon { display: none; }
     .main { padding: 1.5rem 2rem; }
     @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; gap: 0.6rem; } .main { padding: 1rem; } }
     
@@ -67,25 +77,48 @@
     .loading { text-align: center; padding: 2rem; color: #6b7280; }
     .spinner { border: 3px solid #e5e7eb; border-top: 3px solid #b91c1c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+    .blood-card { background: white; padding: 1.2rem; border-radius: 10px; text-align: center; border: 2px solid #e5e7eb; transition: all 0.2s; }
+    .blood-card:hover { border-color: #b91c1c; transform: translateY(-2px); }
+    .blood-type { font-size: 1.8rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.5rem; }
+    .units { font-size: 1.5rem; font-weight: 700; color: #111827; }
+    .level { color: #6b7280; font-size: 0.85rem; margin-top: 0.3rem; }
+    
+    .donors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+    .donor-card { background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); border: 2px solid #e5e7eb; padding: 1.2rem; border-radius: 10px; text-align: center; transition: all 0.2s; }
+    .donor-card:hover { border-color: #b91c1c; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(185, 28, 28, 0.1); }
+    .donor-type { font-size: 1.6rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.4rem; }
+    .donor-count { font-size: 1.4rem; font-weight: 700; color: #111827; margin-bottom: 0.2rem; }
+    .donor-label { color: #6b7280; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
   </style>
 </head>
 <body>
   <div class="layout" id="layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo"><span>🩸</span> <span>Life Link Hospital</span></div>
+        <div class="logo"><span>🩸</span> <span>Life Link</span></div>
         <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
       </div>
       <nav class="nav">
         <a class="nav-item active" href="./dashboard.html"><span>🏠</span> <span>Dashboard</span></a>
-        <a class="nav-item" href="pages/hospital-profile.html"><span>🏥</span> <span>Profile</span></a>
-        <a class="nav-item" href="pages/hospital-requests.html"><span>📋</span> <span>Requests</span></a>
-        <a class="nav-item" href="pages/hospital-inventory.html"><span>📦</span> <span>Inventory</span></a>
-        <a class="nav-item" href="pages/hospital-analytics.html"><span>📊</span> <span>Analytics</span></a>
-        <a class="nav-item" href="pages/hospital-donors.html"><span>👥</span> <span>Donors</span></a>
-        <a class="nav-item" href="pages/hospital-notifications.html"><span>🔔</span> <span>Notifications</span></a>
-        <a class="nav-item" href="pages/hospital-settings.html"><span>⚙️</span> <span>Settings</span></a>
+        <a class="nav-item" href="./pages/hospital-profile.html"><span>🏥</span> <span>Profile</span></a>
+        <a class="nav-item" href="./pages/hospital-submit-request.html"><span>📝</span> <span>Submit Request</span></a>
+        <a class="nav-item" href="./pages/hospital-request-status.html"><span>📊</span> <span>Request Status</span></a>
+        <a class="nav-item" href="./pages/hospital-emergency-request.html"><span>🚨</span> <span>Emergency</span></a>
+        <a class="nav-item" href="./pages/hospital-request-history.html"><span>🕑</span> <span>History & Reports</span></a>
+        <a class="nav-item" href="./pages/hospital-notifications.html"><span>🔔</span> <span>Notifications</span></a>
+        <a class="nav-item" href="./pages/hospital-inventory.html"><span>📦</span> <span>Inventory</span></a>
+        <a class="nav-item" href="./pages/hospital-analytics.html"><span>📈</span> <span>Analytics</span></a>
       </nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="userInitial">H</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Hospital</div>
+          <div class="user-role">Hospital Account</div>
+        </div>
+        <div class="logout-icon" onclick="logout()" title="Logout">⇦</div>
+      </div>
     </aside>
 
     <main class="main">
@@ -154,7 +187,7 @@
         <div class="section-card">
           <h2 class="section-title">⚡ Quick Actions</h2>
           <div class="quick-actions">
-            <a href="pages/hospital-requests.html" class="action-btn">
+            <a href="pages/hospital-submit-request.html" class="action-btn">
               <div class="icon">➕</div>
               <div class="label">New Request</div>
             </a>
@@ -166,10 +199,6 @@
               <div class="icon">📊</div>
               <div class="label">View Analytics</div>
             </a>
-            <a href="pages/hospital-donors.html" class="action-btn">
-              <div class="icon">👥</div>
-              <div class="label">Find Donors</div>
-            </a>
           </div>
         </div>
 
@@ -180,6 +209,28 @@
             <div class="loading">
               <div class="spinner"></div>
               Loading recent requests...
+            </div>
+          </div>
+        </div>
+
+        <!-- Blood Inventory Status -->
+        <div class="section-card">
+          <h2 class="section-title">🩸 Blood Inventory Status</h2>
+          <div id="bloodInventory">
+            <div class="loading">
+              <div class="spinner"></div>
+              Loading inventory status...
+            </div>
+          </div>
+        </div>
+
+        <!-- Available Donors -->
+        <div class="section-card" id="availableDonorsSection">
+          <h2 class="section-title">👥 Available Donors by Blood Type</h2>
+          <div id="availableDonors">
+            <div class="loading">
+              <div class="spinner"></div>
+              Loading donor information...
             </div>
           </div>
         </div>
@@ -326,10 +377,99 @@ const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
       }
     }
 
+    // Fetch blood inventory
+    async function fetchBloodInventory() {
+      try {
+        const response = await fetchWithTimeout(`${API_BASE}/api/inventory`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch inventory');
+
+        const inventory = await response.json();
+        const inventoryDiv = document.getElementById('bloodInventory');
+
+        if (inventory.length === 0) {
+          inventoryDiv.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 2rem;">No inventory data available.</p>';
+          return;
+        }
+
+        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        inventoryDiv.innerHTML = '<div class="inventory-grid">' + bloodTypes.map(type => {
+          const item = inventory.find(i => i.blood_type === type);
+          const units = item ? item.units : 0;
+          let level = 'Critical';
+          let levelColor = '#dc2626';
+          if (units >= 50) {
+            level = 'Good';
+            levelColor = '#059669';
+          } else if (units >= 20) {
+            level = 'Medium';
+            levelColor = '#f59e0b';
+          }
+
+          return `
+            <div class="blood-card">
+              <div class="blood-type">${type}</div>
+              <div class="units">${units}</div>
+              <div class="level" style="color: ${levelColor}; font-weight: 600;">${level}</div>
+            </div>
+          `;
+        }).join('') + '</div>';
+      } catch (error) {
+        console.error('Error fetching inventory:', error);
+        document.getElementById('bloodInventory').innerHTML = '<div class="alert alert-info">Failed to load inventory data.</div>';
+      }
+    }
+
+    // Fetch available donors by blood type
+    async function fetchAvailableDonors() {
+      try {
+        const response = await fetchWithTimeout(`${API_BASE}/api/donors`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch donors');
+
+        const result = await response.json();
+        // Handle both array and {success, data} formats
+        const donors = result.data || result;
+        const donorsDiv = document.getElementById('availableDonors');
+
+        if (!donors || donors.length === 0) {
+          donorsDiv.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 2rem;">No donor data available.</p>';
+          return;
+        }
+
+        // Count donors by blood type
+        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        const donorsByType = {};
+        bloodTypes.forEach(type => {
+          donorsByType[type] = donors.filter(d => d.blood_type === type).length;
+        });
+
+        donorsDiv.innerHTML = '<div class="donors-grid">' + bloodTypes.map(type => {
+          const count = donorsByType[type] || 0;
+          return `
+            <div class="donor-card">
+              <div class="donor-type">${type}</div>
+              <div class="donor-count">${count}</div>
+              <div class="donor-label">Available Donors</div>
+            </div>
+          `;
+        }).join('') + '</div>';
+      } catch (error) {
+        console.error('Error fetching donors:', error);
+        document.getElementById('availableDonors').innerHTML = '<div class="alert alert-info">Unable to load donor information. Please try again later.</div>';
+      }
+    }
+
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', () => {
       fetchStats();
       fetchRecentRequests();
+      fetchBloodInventory();
+      fetchAvailableDonors();
     });
   </script>
 </body>

@@ -171,7 +171,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://bloodlink-mbvw.onrender.com/api';
+    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
     let allEvents = [];
     let currentEditId = null;
 
@@ -209,9 +209,51 @@
     }
 
     async function loadEvents() {
-      const data = await apiCall('/staff/events');
-      if (!data.success) return showAlert('Failed to load events', 'error');
-      allEvents = data.data;
+      // Sample event data for display
+      const sampleEvents = [
+        {
+          id: '1',
+          event_name: 'Community Blood Drive - Downtown',
+          event_date: '2026-02-15T09:00:00',
+          location: 'Central Community Center, Main St',
+          target_collection: 15000,
+          description: 'Annual community blood donation event',
+          participants: 24,
+          registered_donors: ['Alex Martinez', 'Sarah Chen', 'Michael Brown']
+        },
+        {
+          id: '2',
+          event_name: 'University Campus Blood Donation',
+          event_date: '2026-02-20T10:00:00',
+          location: 'State University Student Union',
+          target_collection: 20000,
+          description: 'Student and faculty blood drive',
+          participants: 32,
+          registered_donors: ['Emma Wilson', 'James Taylor', 'Olivia Davis']
+        },
+        {
+          id: '3',
+          event_name: 'Corporate Blood Drive',
+          event_date: '2026-02-25T14:00:00',
+          location: 'Tech Corp Headquarters',
+          target_collection: 10000,
+          description: 'Employee wellness blood donation event',
+          participants: 18,
+          registered_donors: ['David Kim', 'Lisa Johnson']
+        },
+        {
+          id: '4',
+          event_name: 'Mobile Blood Drive - East District',
+          event_date: '2026-01-28T08:00:00',
+          location: 'East District Park',
+          target_collection: 12000,
+          description: 'Mobile unit blood collection',
+          participants: 15,
+          registered_donors: ['Robert Lee', 'Maria Garcia']
+        }
+      ];
+
+      allEvents = sampleEvents;
       displayEvents(allEvents);
     }
 

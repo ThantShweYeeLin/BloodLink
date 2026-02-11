@@ -17,6 +17,7 @@ async function testDatabaseConnection() {
   try {
     const result = await query('SELECT NOW() as current_time');
     console.log('✓ Database connected successfully');
+    console.log('✓ MySQL/MariaDB ready');
     return true;
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
@@ -563,6 +564,204 @@ app.get('/api/donor/profile/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching donor profile (SQL):', error);
     res.status(500).json({ success: false, message: 'Failed to fetch profile' });
+  }
+});
+
+// Get donor eligibility (SQL)
+app.get('/api/donor/eligibility/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [donorRows, donationRows] = await Promise.all([
+      query('SELECT last_donation_date FROM donors WHERE id = ? LIMIT 1', [req.params.id]),
+      query('SELECT MAX(donation_date) AS last_donation_date FROM donation_history WHERE donor_id = ?', [req.params.id])
+    ]);
+
+    const donorLast = donorRows[0]?.last_donation_date || null;
+    const historyLast = donationRows[0]?.last_donation_date || null;
+    const lastDonationDate = historyLast || donorLast;
+
+    const today = new Date();
+    let nextEligibleDate = new Date();
+    if (lastDonationDate) {
+      nextEligibleDate = new Date(lastDonationDate);
+      nextEligibleDate.setDate(nextEligibleDate.getDate() + 56);
+    }
+
+    const diffMs = nextEligibleDate.getTime() - today.getTime();
+    const daysUntilEligible = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    const isEligible = daysUntilEligible === 0;
+
+    res.json({
+      success: true,
+      data: {
+        lastDonationDate,
+        nextEligibleDate: nextEligibleDate.toISOString().slice(0, 10),
+        daysUntilEligible,
+        isEligible
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching donor eligibility (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch eligibility' });
+  }
+});
+
+// Get donor rewards (SQL)
+app.get('/api/donor/rewards/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [totalRows, recentRows] = await Promise.all([
+      query('SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = ?', [req.params.id]),
+      query("SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = ? AND donation_date >= CURRENT_DATE - INTERVAL '365 days'", [req.params.id])
+    ]);
+
+    const totalDonations = totalRows[0]?.count || 0;
+    const donationsLastYear = recentRows[0]?.count || 0;
+
+    res.json({
+      success: true,
+      data: {
+        totalDonations,
+        donationsLastYear,
+        milestones: [
+          { key: 'first', label: 'First Donation', target: 1 },
+          { key: 'hero', label: 'Hero Donor (5)', target: 5 },
+          { key: 'life_saver', label: 'Life Saver (10)', target: 10 },
+          { key: 'annual', label: 'Annual Streak', target: 4 }
+        ]
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching donor rewards (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch rewards' });
+  }
+});
+
+// Get donor notifications (SQL)
+app.get('/api/donor/notifications/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [eligibilityRows, donationRows, events] = await Promise.all([
+      query('SELECT MAX(donation_date) AS last_donation_date FROM donation_history WHERE donor_id = ?', [req.params.id]),
+      query('SELECT donation_date FROM donation_history WHERE donor_id = ? ORDER BY donation_date DESC LIMIT 1', [req.params.id]),
+      query('SELECT id, title, date, start_time, location FROM events WHERE date >= CURRENT_DATE ORDER BY date ASC LIMIT 3')
+    ]);
+
+    const lastDonationDate = eligibilityRows[0]?.last_donation_date || null;
+    let nextEligibleDate = null;
+    let daysUntilEligible = 0;
+    let isEligible = true;
+    if (lastDonationDate) {
+      const next = new Date(lastDonationDate);
+      next.setDate(next.getDate() + 56);
+      nextEligibleDate = next.toISOString().slice(0, 10);
+      const diffMs = next.getTime() - new Date().getTime();
+      daysUntilEligible = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      isEligible = daysUntilEligible === 0;
+    }
+
+    const notifications = [];
+
+    if (isEligible) {
+      notifications.push({
+        id: 'eligible-now',
+        title: 'You are eligible to donate again',
+        message: 'You can book a new appointment whenever you are ready.',
+        date: new Date().toISOString().slice(0, 10),
+        type: 'Eligibility'
+      });
+    } else if (nextEligibleDate) {
+      notifications.push({
+        id: 'eligible-soon',
+        title: 'Next eligible date scheduled',
+        message: `You can donate again in ${daysUntilEligible} days (on ${nextEligibleDate}).`,
+        date: nextEligibleDate,
+        type: 'Eligibility'
+      });
+    }
+
+    const lastDonation = donationRows[0]?.donation_date;
+    if (lastDonation) {
+      notifications.push({
+        id: 'thanks',
+        title: 'Thank you for donating!',
+        message: 'Your recent donation is making a difference.',
+        date: new Date(lastDonation).toISOString().slice(0, 10),
+        type: 'Donation'
+      });
+    }
+
+    events.forEach((event, index) => {
+      notifications.push({
+        id: `event-${event.id}-${index}`,
+        title: `Upcoming event: ${event.title}`,
+        message: `${event.date} • ${event.start_time || ''} ${event.location ? '• ' + event.location : ''}`.trim(),
+        date: event.date,
+        type: 'Event'
+      });
+    });
+
+    res.json({ success: true, data: notifications });
+  } catch (error) {
+    console.error('Error fetching donor notifications (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notifications' });
+  }
+});
+
+// Get donor appointments (SQL)
+app.get('/api/donor/appointments/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor' || req.user.userId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const appointments = await query(
+      `SELECT ep.id AS participant_id, ep.event_id, ep.status, ep.registered,
+              e.title, e.date, e.start_time, e.end_time, e.location
+       FROM event_participants ep
+       JOIN events e ON e.id = ep.event_id
+       WHERE ep.donor_id = ?
+       ORDER BY e.date DESC, e.start_time DESC`,
+      [req.params.id]
+    );
+
+    res.json({ success: true, data: appointments });
+  } catch (error) {
+    console.error('Error fetching donor appointments (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch appointments' });
+  }
+});
+
+// Cancel appointment (donor only)
+app.delete('/api/events/:eventId/leave', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'donor') {
+      return res.status(403).json({ success: false, message: 'Only donors can cancel' });
+    }
+
+    const { eventId } = req.params;
+    const removed = await query(
+      'DELETE FROM event_participants WHERE event_id = ? AND donor_id = ? RETURNING id',
+      [eventId, req.user.userId]
+    );
+
+    if (removed.length === 0) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    res.json({ success: true, message: 'Appointment cancelled' });
+  } catch (error) {
+    console.error('Error cancelling appointment (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to cancel appointment' });
   }
 });
 

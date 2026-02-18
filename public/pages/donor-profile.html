@@ -230,7 +230,8 @@
   </div>
 
   <script>
-    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
     let currentDonorData = null;
 
     function checkAuth() {
@@ -272,7 +273,10 @@
 
       if (!data.success) return showAlert('Failed to load profile', 'error');
 
-      currentDonorData = data.data;
+      const donationsResponse = await apiCall(`/donations/donor/${donorId}`);
+      const donations = Array.isArray(donationsResponse) ? donationsResponse : (donationsResponse.data || donationsResponse || []);
+
+      currentDonorData = { ...data.data, donations };
 
       // Update header
       const initial = data.data.full_name.charAt(0).toUpperCase();
@@ -283,11 +287,10 @@
       document.getElementById('bloodType').textContent = data.data.blood_type;
 
       // Calculate stats
-      const donations = data.data.donations || [];
       const totalDonations = donations.length;
       const totalVolume = donations.reduce((sum, d) => sum + (d.quantity_ml || 0), 0);
       const livesImpacted = Math.floor(totalVolume / 450); // ~450ml can save a life
-      const joinDate = new Date(data.data.created_at);
+      const joinDate = new Date(data.data.registration_date || data.data.created_at || Date.now());
       const years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
 
       document.getElementById('totalDonations').textContent = totalDonations;
@@ -296,7 +299,7 @@
       document.getElementById('memberYears').textContent = years;
 
       // Check eligibility
-      checkEligibility(data.data);
+      checkEligibility(donations);
 
       // Update form
       document.getElementById('fullName').value = data.data.full_name;
@@ -328,7 +331,7 @@
         </div>
         <div class="info-item">
           <div class="info-label">Member Since</div>
-          <div class="info-value">${new Date(data.data.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="info-value">${new Date(data.data.registration_date || data.data.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
         </div>
       `;
       document.getElementById('personalInfo').innerHTML = infoHtml;
@@ -337,23 +340,33 @@
       loadDonationHistory(donations);
     }
 
-    function checkEligibility(donor) {
-      const donations = donor.donations || [];
-      const lastDonation = donations.length > 0 ? donations[donations.length - 1] : null;
+    function checkEligibility(donations) {
+      // Ensure donations is an array
+      const donationsList = Array.isArray(donations) ? donations : [];
+      const lastDonation = donationsList.length > 0 ? donationsList[donationsList.length - 1] : null;
       
       let eligible = true;
       let message = '';
       
-      if (lastDonation) {
-        const daysSinceLastDonation = (new Date() - new Date(lastDonation.donation_date)) / (1000 * 60 * 60 * 24);
-        if (daysSinceLastDonation < 56) { // 8 weeks = 56 days
+      if (lastDonation && lastDonation.donation_date) {
+        // Has previous donations - check if enough time has passed
+        const lastDonationDate = new Date(lastDonation.donation_date);
+        const today = new Date();
+        const daysSinceLastDonation = Math.floor((today - lastDonationDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceLastDonation < 56) { 
+          // Not enough time since last donation (need 8 weeks = 56 days)
           eligible = false;
-          const daysRemaining = Math.ceil(56 - daysSinceLastDonation);
-          message = `You can donate again in ${daysRemaining} days (8 weeks between donations required)`;
+          const daysRemaining = 56 - daysSinceLastDonation;
+          message = `You can donate again in ${daysRemaining} days (8 weeks between donations required).`;
         } else {
-          message = 'You are eligible to donate! Thank you for saving lives.';
+          // Enough time has passed
+          eligible = true;
+          message = 'You are eligible to donate! Thank you for continuing to save lives.';
         }
       } else {
+        // No previous donations - new donor is eligible
+        eligible = true;
         message = 'Welcome! You are eligible to make your first donation.';
       }
 
@@ -362,7 +375,7 @@
         <div class="eligibility-banner ${!eligible ? 'ineligible' : ''}">
           <div class="icon">${eligible ? '✅' : '⏰'}</div>
           <div class="text">
-            <h3>${eligible ? 'Eligible to Donate' : 'Temporary Deferral'}</h3>
+            <h3>${eligible ? 'Eligible to Donate' : 'Not Eligible Yet'}</h3>
             <p>${message}</p>
           </div>
         </div>

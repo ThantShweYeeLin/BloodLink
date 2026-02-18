@@ -136,22 +136,27 @@
           <input type="date" id="eventDate" required>
         </div>
         <div class="form-group">
-          <label>Time *</label>
+          <label>Start Time *</label>
           <input type="time" id="eventTime" required>
+        </div>
+        <div class="form-group">
+          <label>End Time *</label>
+          <input type="time" id="eventEndTime" required>
         </div>
         <div class="form-group">
           <label>Location *</label>
           <input type="text" id="eventLocation" required>
         </div>
         <div class="form-group">
-          <label>Target Collection (ml) *</label>
-          <input type="number" id="eventTarget" min="500" required>
+          <label>Expected Donors *</label>
+          <input type="number" id="eventTarget" min="1" required placeholder="Number of expected donors">
         </div>
         <div class="form-group">
           <label>Description</label>
           <textarea id="eventDescription"></textarea>
         </div>
         <div class="modal-footer">
+          <button type="button" id="deleteEventBtn" class="btn" style="background: #dc2626; margin-right: auto; display: none;" onclick="deleteEvent()">Delete Event</button>
           <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
           <button type="submit" class="btn">Save Event</button>
         </div>
@@ -209,55 +214,52 @@
     }
 
     async function loadEvents() {
-      // Sample event data for display
-      const sampleEvents = [
-        {
-          id: '1',
-          event_name: 'Community Blood Drive - Downtown',
-          event_date: '2026-02-15T09:00:00',
-          location: 'Central Community Center, Main St',
-          target_collection: 15000,
-          description: 'Annual community blood donation event',
-          participants: 24,
-          registered_donors: ['Alex Martinez', 'Sarah Chen', 'Michael Brown']
-        },
-        {
-          id: '2',
-          event_name: 'University Campus Blood Donation',
-          event_date: '2026-02-20T10:00:00',
-          location: 'State University Student Union',
-          target_collection: 20000,
-          description: 'Student and faculty blood drive',
-          participants: 32,
-          registered_donors: ['Emma Wilson', 'James Taylor', 'Olivia Davis']
-        },
-        {
-          id: '3',
-          event_name: 'Corporate Blood Drive',
-          event_date: '2026-02-25T14:00:00',
-          location: 'Tech Corp Headquarters',
-          target_collection: 10000,
-          description: 'Employee wellness blood donation event',
-          participants: 18,
-          registered_donors: ['David Kim', 'Lisa Johnson']
-        },
-        {
-          id: '4',
-          event_name: 'Mobile Blood Drive - East District',
-          event_date: '2026-01-28T08:00:00',
-          location: 'East District Park',
-          target_collection: 12000,
-          description: 'Mobile unit blood collection',
-          participants: 15,
-          registered_donors: ['Robert Lee', 'Maria Garcia']
+      try {
+        const data = await apiCall('/events');
+        
+        console.log('Events API response:', data); // Debug log
+        
+        if (!data.success) {
+          console.error('Failed to load events:', data.message);
+          allEvents = [];
+        } else {
+          const events = data.data || [];
+          console.log('Events data:', events); // Debug log
+          
+          allEvents = events.map(event => ({
+            id: event.id || event._id,
+            event_name: event.title || event.event_name,
+            event_date: event.date || event.event_date,
+            start_time: event.start_time,
+            end_time: event.end_time,
+            location: event.location,
+            target_collection: event.expected ? event.expected * 450 : 0,
+            description: event.notes || event.description || '',
+            participants: (event.participants || []).length,
+            participant_list: event.participants || []
+          }));
+          
+          console.log('Mapped events:', allEvents); // Debug log
         }
-      ];
-
-      allEvents = sampleEvents;
-      displayEvents(allEvents);
+        
+        displayEvents();
+      } catch (error) {
+        console.error('Error loading events:', error);
+        allEvents = [];
+        displayEvents();
+      }
     }
 
-    function displayEvents(events) {
+    function displayEvents(filteredEvents) {
+      const events = filteredEvents || allEvents;
+      console.log('Displaying events:', events.length, events); // Debug log
+      
+      if (events.length === 0) {
+        document.getElementById('eventsContainer').innerHTML = '<div class="no-data">No events found</div>';
+        document.getElementById('eventTable').innerHTML = '<tr><td colspan="7" class="no-data">No events found</td></tr>';
+        return;
+      }
+      
       const gridHtml = events.map(e => {
         const date = new Date(e.event_date);
         const status = new Date(e.event_date) > new Date() ? 'Upcoming' : 'Completed';
@@ -281,7 +283,7 @@
         `;
       }).join('');
 
-      document.getElementById('eventsContainer').innerHTML = gridHtml || '<div class="no-data">No events found</div>';
+      document.getElementById('eventsContainer').innerHTML = gridHtml;
 
       const tableHtml = events.map(e => `
         <tr>
@@ -295,7 +297,7 @@
         </tr>
       `).join('');
 
-      document.getElementById('eventTable').innerHTML = tableHtml || '<tr><td colspan="7" class="no-data">No events found</td></tr>';
+      document.getElementById('eventTable').innerHTML = tableHtml;
     }
 
     function searchEvents() {
@@ -311,6 +313,10 @@
       currentEditId = null;
       document.getElementById('modalTitle').textContent = 'Create New Event';
       document.getElementById('eventForm').reset();
+      // Set default times
+      document.getElementById('eventTime').value = '09:00';
+      document.getElementById('eventEndTime').value = '17:00';
+      document.getElementById('deleteEventBtn').style.display = 'none'; // Hide delete button
       document.getElementById('eventModal').classList.add('active');
     }
 
@@ -319,41 +325,55 @@
     }
 
     async function editEvent(eventId) {
-      const event = allEvents.find(e => e.id === eventId);
-      if (!event) return;
+      console.log('editEvent called with ID:', eventId);
+      console.log('All events:', allEvents);
+      const event = allEvents.find(e => String(e.id) === String(eventId));
+      console.log('Found event:', event);
+      
+      if (!event) {
+        console.error('Event not found:', eventId);
+        alert('Event not found!');
+        return;
+      }
 
       currentEditId = eventId;
       document.getElementById('modalTitle').textContent = 'Edit Event';
       document.getElementById('eventName').value = event.event_name;
-      document.getElementById('eventDate').value = event.event_date.split('T')[0];
-      document.getElementById('eventTime').value = event.event_date.split('T')[1]?.slice(0, 5) || '09:00';
+      document.getElementById('eventDate').value = (event.event_date || '').split('T')[0];
+      document.getElementById('eventTime').value = event.start_time || '09:00';
+      document.getElementById('eventEndTime').value = event.end_time || '17:00';
       document.getElementById('eventLocation').value = event.location;
-      document.getElementById('eventTarget').value = event.target_collection;
+      document.getElementById('eventTarget').value = Math.round(event.target_collection / 450); // Convert ml back to expected donors
       document.getElementById('eventDescription').value = event.description || '';
+      document.getElementById('deleteEventBtn').style.display = 'block'; // Show delete button
       document.getElementById('eventModal').classList.add('active');
+      console.log('Edit modal opened');
     }
 
     async function saveEvent(e) {
       e.preventDefault();
 
-      const dateTime = `${document.getElementById('eventDate').value}T${document.getElementById('eventTime').value}:00`;
       const data = {
-        event_name: document.getElementById('eventName').value,
-        event_date: dateTime,
+        title: document.getElementById('eventName').value,
+        date: document.getElementById('eventDate').value,
+        start_time: document.getElementById('eventTime').value,
+        end_time: document.getElementById('eventEndTime').value,
         location: document.getElementById('eventLocation').value,
-        target_collection: parseInt(document.getElementById('eventTarget').value),
-        description: document.getElementById('eventDescription').value
+        expected: parseInt(document.getElementById('eventTarget').value),
+        notes: document.getElementById('eventDescription').value
       };
+
+      console.log('Saving event with data:', data);
 
       let result;
       if (currentEditId) {
-        result = await apiCall(`/staff/events/${currentEditId}`, 'PUT', data);
+        result = await apiCall(`/events/${currentEditId}`, 'PUT', data);
       } else {
-        result = await apiCall('/staff/events', 'POST', data);
+        result = await apiCall('/events', 'POST', data);
       }
 
       if (result.success) {
-        showAlert(currentEditId ? 'Event updated' : 'Event created', 'success');
+        showAlert(currentEditId ? 'Event updated successfully!' : 'Event created successfully!', 'success');
         closeEventModal();
         loadEvents();
       } else {
@@ -362,19 +382,53 @@
     }
 
     async function viewParticipants(eventId) {
-      const event = allEvents.find(e => e.id === eventId);
-      if (!event) return;
+      console.log('viewParticipants called with ID:', eventId);
+      console.log('All events:', allEvents);
+      const event = allEvents.find(e => String(e.id) === String(eventId));
+      console.log('Found event:', event);
+      
+      if (!event) {
+        console.error('Event not found:', eventId);
+        alert('Event not found!');
+        return;
+      }
 
       let html = `<div style="margin-bottom: 1.5rem;"><strong>${event.event_name}</strong><br><small>${new Date(event.event_date).toLocaleDateString()}</small></div>`;
       
-      if (!event.registered_donors || event.registered_donors.length === 0) {
+      if (!event.participant_list || event.participant_list.length === 0) {
         html += '<div class="no-data">No participants registered yet</div>';
       } else {
-        html += '<ul class="participant-list">';
-        event.registered_donors.forEach(d => {
-          html += `<li class="participant-item">✓ ${d}</li>`;
+        // Fetch donor details to get emails
+        const donorIds = event.participant_list.map(p => p.donor_id).filter(Boolean);
+        let donorEmails = {};
+        
+        if (donorIds.length > 0) {
+          try {
+            const donorsData = await apiCall('/staff/donors');
+            if (donorsData.success) {
+              donorsData.data.forEach(donor => {
+                donorEmails[donor.id] = donor.email;
+              });
+            }
+          } catch (err) {
+            console.error('Failed to fetch donor emails:', err);
+          }
+        }
+        
+        html += '<table style="width: 100%; border-collapse: collapse;">';
+        html += '<thead><tr style="background: #f3f4f6;"><th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Name</th><th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Email</th><th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Blood Type</th><th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Status</th></tr></thead>';
+        html += '<tbody>';
+        event.participant_list.forEach(p => {
+          const email = donorEmails[p.donor_id] || 'N/A';
+          const statusColor = p.status === 'Confirmed' ? '#10b981' : p.status === 'Tentative' ? '#f59e0b' : '#6b7280';
+          html += `<tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 0.75rem;">${p.name}</td>
+            <td style="padding: 0.75rem;">${email}</td>
+            <td style="padding: 0.75rem;">${p.blood || 'N/A'}</td>
+            <td style="padding: 0.75rem;"><span style="color: ${statusColor}; font-weight: 600;">${p.status}</span></td>
+          </tr>`;
         });
-        html += '</ul>';
+        html += '</tbody></table>';
       }
 
       document.getElementById('participantsContent').innerHTML = html;
@@ -383,6 +437,27 @@
 
     function closeParticipantsModal() {
       document.getElementById('participantsModal').classList.remove('active');
+    }
+
+    async function deleteEvent() {
+      if (!currentEditId) return;
+      
+      const event = allEvents.find(e => String(e.id) === String(currentEditId));
+      const eventName = event ? event.event_name : 'this event';
+      
+      if (!confirm(`Are you sure you want to delete "${eventName}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      const result = await apiCall(`/events/${currentEditId}`, 'DELETE');
+      
+      if (result.success) {
+        showAlert('Event deleted successfully!', 'success');
+        closeEventModal();
+        loadEvents();
+      } else {
+        showAlert(result.message || 'Failed to delete event', 'error');
+      }
     }
 
     function showAlert(message, type) {
@@ -400,8 +475,12 @@
 
     document.getElementById('searchBox').addEventListener('input', searchEvents);
 
+    console.log('Page loaded, checking auth...');
     if (checkAuth()) {
+      console.log('Auth OK, loading events...');
       loadEvents();
+    } else {
+      console.log('Auth failed, redirecting...');
     }
   </script>
 </body>

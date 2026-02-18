@@ -304,63 +304,65 @@
       };
     }
 
-    async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    async function apiCall(endpoint, method = 'GET', body = null) {
       try {
-        const options = { method, headers: getAuthHeader(), signal: controller.signal };
+        const options = { method, headers: getAuthHeader() };
         if (body) options.body = JSON.stringify(body);
+        
+        console.log('Making API call to:', `${API_URL}${endpoint}`);
         const response = await fetch(`${API_URL}${endpoint}`, options);
-        clearTimeout(timeoutId);
+        
         let data;
         try {
           data = await response.json();
         } catch (e) {
-          data = { success: false, message: 'Invalid server response' };
+          console.error('Failed to parse JSON response:', e);
+          return { success: false, message: 'Invalid server response' };
         }
+        
         if (response.status === 401) {
+          console.log('Unauthorized - redirecting to login');
           localStorage.clear();
           window.location.href = '../login-hospital.html';
           return { success: false, message: 'Unauthorized' };
         }
+        
         if (!response.ok) {
+          console.error('API error response:', data);
           return { success: false, message: data.message || 'Request failed' };
         }
+        
         return data;
       } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError' && retries > 0) {
-          return apiCall(endpoint, method, body, retries - 1);
-        }
-        if (error.name === 'AbortError') {
-          return { success: false, message: 'Request timed out' };
-        }
-        console.error('API Error:', error);
-        return { success: false, message: 'Network error' };
+        console.error('API call error:', error);
+        return { success: false, message: 'Network error: ' + error.message };
       }
     }
 
     async function loadProfile() {
       const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      console.log('Loading profile for hospital ID:', hospitalId);
+      
       if (!hospitalId) {
         showAlert('Missing hospital ID. Please log in again.', 'error');
         return;
       }
 
       let data = await apiCall(`/hospital/profile/${hospitalId}`);
+      console.log('Profile API response:', data);
 
-      if (!data.success) {
-        const cached = localStorage.getItem('cachedHospitalProfile');
-        if (cached) {
-          data = { success: true, data: JSON.parse(cached) };
-          showAlert('Showing cached profile data. Refresh to try again.', 'error');
-        } else {
-          return showAlert('Failed to load profile', 'error');
-        }
+      if (!data || !data.success) {
+        const errorMsg = data?.message || 'Failed to load profile';
+        console.error('Profile load error:', errorMsg);
+        showAlert(errorMsg, 'error');
+        // Show some default data so page doesn't look completely broken
+        document.getElementById('hospitalName').textContent = 'Loading...';
+        document.getElementById('hospitalEmail').textContent = '-';
+        document.getElementById('hospitalPhone').textContent = '-';
+        return;
       }
 
       currentHospitalData = data.data;
-      localStorage.setItem('cachedHospitalProfile', JSON.stringify(data.data));
 
       // Update header
       const initial = data.data.hospital_name.substring(0, 2).toUpperCase();

@@ -311,37 +311,19 @@
         return;
       }
 
-      let data = await apiCall(`/donor/profile/${donorId}`);
+      const data = await apiCall(`/donor/profile/${donorId}`);
       if (!data.success) {
-        const cached = localStorage.getItem('cachedDonorProfile');
-        if (cached) {
-          data = { success: true, data: JSON.parse(cached) };
-          showAlert('Showing cached profile data. Refresh to try again.', 'error');
-        } else {
-          // Use sample data if no cached data and API fails
-          data = {
-            success: true,
-            data: {
-              id: 1,
-              full_name: 'Alex Donor',
-              email: 'alex@donor.com',
-              phone: '5551112222',
-              blood_type: 'O+',
-              date_of_birth: '1990-05-15',
-              gender: 'Male',
-              address: '123 Main Street, City, State 12345',
-              created_at: new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-              donations: [
-                { date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), quantity_ml: 450, location: 'Downtown Center' },
-                { date: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(), quantity_ml: 450, location: 'Main Hospital' }
-              ]
-            }
-          };
-        }
+        showAlert('Unable to load profile from database. Please try again.', 'error');
+        return;
       }
 
-      currentDonorData = data.data;
-      localStorage.setItem('cachedDonorProfile', JSON.stringify(data.data));
+      const donationsResponse = await apiCall(`/donations/donor/${donorId}`);
+      const donations = Array.isArray(donationsResponse)
+        ? donationsResponse
+        : (donationsResponse.data || donationsResponse || []);
+
+      currentDonorData = { ...data.data, donations };
+      localStorage.setItem('cachedDonorProfile', JSON.stringify(currentDonorData));
 
       // Update header
       const initial = data.data.full_name.charAt(0).toUpperCase();
@@ -352,20 +334,11 @@
       document.getElementById('bloodType').textContent = data.data.blood_type;
 
       // Calculate stats
-      let donations = data.data.donations || [];
-      
-      // If no donations data, use sample data
-      if (!Array.isArray(donations) || donations.length === 0) {
-        donations = [
-          { date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), quantity_ml: 450, location: 'Downtown Center' },
-          { date: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(), quantity_ml: 450, location: 'Main Hospital' }
-        ];
-      }
       
       const totalDonations = donations.length;
       const totalVolume = donations.reduce((sum, d) => sum + (d.quantity_ml || 0), 0);
       const livesImpacted = Math.floor(totalVolume / 450); // ~450ml can save a life
-      const createdAt = data.data.created_at || new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+      const createdAt = data.data.registration_date || data.data.created_at || new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
       const joinDate = new Date(createdAt);
       const years = isNaN(joinDate.getTime()) ? 0 : ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
 
@@ -407,7 +380,7 @@
         </div>
         <div class="info-item">
           <div class="info-label">Member Since</div>
-          <div class="info-value">${new Date(data.data.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="info-value">${new Date(data.data.registration_date || data.data.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
         </div>
       `;
       document.getElementById('personalInfo').innerHTML = infoHtml;
@@ -417,25 +390,33 @@
     }
 
     function checkEligibility(donor) {
-      const donations = donor.donations || [];
+      // Ensure donations is an array
+      const donations = Array.isArray(donor.donations) ? donor.donations : [];
       const lastDonation = donations.length > 0 ? donations[donations.length - 1] : null;
       
-      let eligible = false;
+      let eligible = true;
       let message = '';
       
-      if (lastDonation) {
-        const daysSinceLastDonation = (new Date() - new Date(lastDonation.donation_date)) / (1000 * 60 * 60 * 24);
-        if (daysSinceLastDonation < 56) { // 8 weeks = 56 days
+      if (lastDonation && lastDonation.donation_date) {
+        // Has previous donations - check if enough time has passed
+        const lastDonationDate = new Date(lastDonation.donation_date);
+        const today = new Date();
+        const daysSinceLastDonation = Math.floor((today - lastDonationDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceLastDonation < 56) { 
+          // Not enough time since last donation (need 8 weeks = 56 days)
           eligible = false;
-          const daysRemaining = Math.ceil(56 - daysSinceLastDonation);
-          message = `You can donate again in ${daysRemaining} days (8 weeks between donations required)`;
+          const daysRemaining = 56 - daysSinceLastDonation;
+          message = `You can donate again in ${daysRemaining} days (8 weeks between donations required).`;
         } else {
+          // Enough time has passed
           eligible = true;
-          message = 'You are eligible to donate! Thank you for saving lives.';
+          message = 'You are eligible to donate! Thank you for continuing to save lives.';
         }
       } else {
-        eligible = false;
-        message = 'Complete your health screening to check eligibility for your first donation.';
+        // No previous donations - new donor is eligible
+        eligible = true;
+        message = 'Welcome! You are eligible to make your first donation.';
       }
 
       const banner = document.getElementById('eligibilityBanner');

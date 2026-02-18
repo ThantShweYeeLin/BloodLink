@@ -77,29 +77,20 @@
           <div class="grid">
             <div>
               <label>Donation Event</label>
-              <select>
-                <option>City Hall Blood Drive — Feb 10</option>
-                <option>Community Hospital — Feb 22</option>
-                <option>Campus Mobile Drive — Mar 05</option>
-              </select>
+              <select id="eventSelect"></select>
             </div>
             <div>
               <label>Date</label>
-              <input type="date" />
+              <input type="date" id="eventDate" disabled />
             </div>
             <div>
               <label>Time Slot</label>
-              <select>
-                <option>09:00 AM</option>
-                <option>10:00 AM</option>
-                <option>11:00 AM</option>
-                <option>01:00 PM</option>
-              </select>
+              <select id="eventTime" disabled></select>
             </div>
           </div>
           <div style="margin-top:1rem; display:flex; gap:0.6rem; flex-wrap:wrap;">
-            <button class="btn">Book Appointment</button>
-            <button class="btn secondary">Clear</button>
+            <button class="btn" id="bookButton">Book Appointment</button>
+            <button class="btn secondary" id="clearButton">Clear</button>
           </div>
         </div>
 
@@ -110,7 +101,33 @@
       </div>
     </main>
   </div>
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+    let cachedEvents = [];
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = '../../index.html';
+    }
+
+    function setUserName() {
+      const userName = localStorage.getItem('userName') || 'Donor';
+      const userNameEl = document.getElementById('userName');
+      const userInitialEl = document.getElementById('userInitial');
+      if (userNameEl) userNameEl.textContent = userName;
+      if (userInitialEl) userInitialEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function getAuthHeader() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    }
+
     function showToast(message) {
       const toast = document.createElement('div');
       toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:#111827; color:#fff; padding:0.75rem 1rem; border-radius:10px; z-index:1100; box-shadow:0 8px 18px rgba(0,0,0,0.18)';
@@ -119,42 +136,168 @@
       setTimeout(() => toast.remove(), 2500);
     }
 
-    function cancelAppointment(appointmentId) {
-      const stored = JSON.parse(localStorage.getItem('donorAppointments') || '[]');
-      const filtered = stored.filter(item => item.id !== appointmentId);
-      localStorage.setItem('donorAppointments', JSON.stringify(filtered));
-      showToast('Appointment cancelled.');
-      renderAppointments();
+    function formatDate(dateStr) {
+      if (!dateStr) return '--';
+      const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return '--';
+      return date.toLocaleDateString();
     }
 
-    function renderAppointments() {
-      const defaults = [
-        { id: 'seed-1', title: 'City Hall Blood Drive', date: 'Feb 10, 2026', time: '09:00 AM' },
-        { id: 'seed-2', title: 'Community Hospital', date: 'Feb 22, 2026', time: '01:00 PM' }
-      ];
-      const stored = JSON.parse(localStorage.getItem('donorAppointments') || '[]');
-      const combined = [...stored, ...defaults.filter(d => !stored.some(s => s.title === d.title && s.date === d.date && s.time === d.time))];
+    function setEventFormDefaults() {
+      const select = document.getElementById('eventSelect');
+      const dateInput = document.getElementById('eventDate');
+      const timeSelect = document.getElementById('eventTime');
+      const selectedId = select.value;
+      const event = cachedEvents.find(item => String(item._id) === String(selectedId));
+      if (!event) {
+        dateInput.value = '';
+        timeSelect.innerHTML = '';
+        return;
+      }
+      dateInput.value = event.date || '';
+      timeSelect.innerHTML = '';
+      const start = event.start_time || '--';
+      const end = event.end_time || '--';
+      const option = document.createElement('option');
+      option.textContent = `${start} - ${end}`;
+      timeSelect.appendChild(option);
+    }
 
-      const container = document.getElementById('appointmentsList');
-      if (!combined.length) {
-        container.innerHTML = '<div class="appointment-card">No appointments yet.</div>';
+    async function loadEvents() {
+      const select = document.getElementById('eventSelect');
+      select.innerHTML = '<option>Loading events...</option>';
+      try {
+        const response = await fetch(`${API_URL}/events`, { headers: getAuthHeader() });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load events');
+        }
+        cachedEvents = data.data || [];
+        if (!cachedEvents.length) {
+          select.innerHTML = '<option>No upcoming events</option>';
+          setEventFormDefaults();
+          return;
+        }
+        select.innerHTML = cachedEvents.map(event => `
+          <option value="${event._id}">${event.title} — ${formatDate(event.date)}</option>
+        `).join('');
+        setEventFormDefaults();
+      } catch (error) {
+        console.error('Events load error:', error);
+        select.innerHTML = '<option>Unable to load events</option>';
+      }
+    }
+
+    async function loadAppointments() {
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
         return;
       }
 
-      container.innerHTML = combined.map(item => `
-        <div class="appointment-card">
-          <div>
-            <strong>${item.title}</strong><br>
-            <span style="color:#4b5563;">${item.date} • ${item.time}</span>
+      const container = document.getElementById('appointmentsList');
+      container.innerHTML = '<div class="appointment-card">Loading appointments...</div>';
+      try {
+        const response = await fetch(`${API_URL}/donor/appointments/${donorId}`, {
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load appointments');
+        }
+        const appointments = data.data || [];
+        if (!appointments.length) {
+          container.innerHTML = '<div class="appointment-card">No appointments yet.</div>';
+          return;
+        }
+        container.innerHTML = appointments.map(item => `
+          <div class="appointment-card">
+            <div>
+              <strong>${item.title}</strong><br>
+              <span style="color:#4b5563;">${formatDate(item.date)} • ${item.start_time || '--'} - ${item.end_time || '--'}</span>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn" style="background:#ef4444;" data-action="cancel" data-event-id="${item.event_id}">Cancel</button>
+            </div>
           </div>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn" style="background:#ef4444;" onclick="cancelAppointment('${item.id}')">Cancel</button>
-          </div>
-        </div>
-      `).join('');
+        `).join('');
+
+        container.querySelectorAll('[data-action="cancel"]').forEach(button => {
+          button.addEventListener('click', async () => {
+            const eventId = button.dataset.eventId;
+            await cancelAppointment(eventId);
+          });
+        });
+      } catch (error) {
+        console.error('Appointments load error:', error);
+        container.innerHTML = '<div class="appointment-card">Unable to load appointments from the database.</div>';
+      }
     }
 
-    renderAppointments();
+    async function bookAppointment() {
+      const eventId = document.getElementById('eventSelect').value;
+      if (!eventId || eventId === 'Loading events...' || eventId === 'No upcoming events') {
+        showToast('Please select a valid event.');
+        return;
+      }
+      try {
+        const response = await fetch(`${API_URL}/events/${eventId}/join`, {
+          method: 'POST',
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to book appointment');
+        }
+        showToast('Appointment booked successfully.');
+        await loadAppointments();
+      } catch (error) {
+        console.error('Book appointment error:', error);
+        showToast('Unable to book appointment.');
+      }
+    }
+
+    async function cancelAppointment(eventId) {
+      try {
+        const response = await fetch(`${API_URL}/events/${eventId}/leave`, {
+          method: 'DELETE',
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to cancel appointment');
+        }
+        showToast('Appointment cancelled.');
+        await loadAppointments();
+      } catch (error) {
+        console.error('Cancel appointment error:', error);
+        showToast('Unable to cancel appointment.');
+      }
+    }
+
+    function clearForm() {
+      const select = document.getElementById('eventSelect');
+      if (select.options.length > 0) {
+        select.selectedIndex = 0;
+      }
+      setEventFormDefaults();
+    }
+
+    function init() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+      setUserName();
+      loadEvents();
+      loadAppointments();
+      document.getElementById('eventSelect').addEventListener('change', setEventFormDefaults);
+      document.getElementById('bookButton').addEventListener('click', bookAppointment);
+      document.getElementById('clearButton').addEventListener('click', clearForm);
+    }
+
+    init();
   </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>

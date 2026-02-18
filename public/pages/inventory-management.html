@@ -69,6 +69,10 @@
     .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     .modal-header { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; color: #111827; }
     .modal-footer { display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; }
+    .form-group input, .form-group select { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #b91c1c; box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1); }
   </style>
 </head>
 <body>
@@ -114,6 +118,7 @@
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="🔍 Search by blood type, unit ID..." oninput="filterInventory()" />
       </div>
+      <button class="btn" onclick="openUpdateModal()">+ Add/Update Supply</button>
       <button class="btn" onclick="toggleExpiredFilter()">
         <span id="filterToggle">Show Expired Only</span>
       </button>
@@ -140,6 +145,39 @@
           <tr><td colspan="8" class="loading"><div class="spinner"></div>Loading inventory...</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Add/Update Supply Modal -->
+  <div id="updateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">Add/Update Blood Supply</div>
+      <form id="supplyForm" onsubmit="submitSupply(event)">
+        <div class="form-group">
+          <label>Blood Type</label>
+          <select id="bloodType" required>
+            <option value="">Select blood type</option>
+            <option>O+</option><option>O-</option><option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantity (ml)</label>
+          <input type="number" id="quantity" min="0" step="50" placeholder="e.g., 450" required />
+        </div>
+        <div class="form-group">
+          <label>Collection Date</label>
+          <input type="date" id="collectionDate" required />
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <input type="text" id="notes" placeholder="e.g., From blood drive, emergency donation" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
+          <button type="submit" class="btn">Add Supply</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -178,6 +216,73 @@
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
       };
+    }
+
+    // Modal functions
+    function openUpdateModal() {
+      console.log('openUpdateModal called');
+      const modal = document.getElementById('updateModal');
+      const dateInput = document.getElementById('collectionDate');
+      if (modal) {
+        modal.classList.add('active');
+      }
+      if (dateInput) {
+        dateInput.valueAsDate = new Date();
+      }
+    }
+
+    function closeUpdateModal() {
+      const modal = document.getElementById('updateModal');
+      const form = document.getElementById('supplyForm');
+      if (modal) modal.classList.remove('active');
+      if (form) form.reset();
+    }
+
+    async function submitSupply(event) {
+      event.preventDefault();
+      const bloodType = document.getElementById('bloodType').value;
+      const quantity = document.getElementById('quantity').value;
+      const collectionDate = document.getElementById('collectionDate').value;
+      const notes = document.getElementById('notes').value;
+
+      // Calculate expiry date (42 days from collection)
+      const expiryDate = new Date(collectionDate);
+      expiryDate.setDate(expiryDate.getDate() + 42);
+
+      const payload = {
+        blood_type: bloodType,
+        quantity_ml: parseInt(quantity),
+        collection_date: collectionDate,
+        expiry_date: expiryDate.toISOString().split('T')[0],
+        location: 'Blood Bank',
+        status: 'available',
+        notes: notes || null
+      };
+
+      console.log('Adding blood supply:', payload);
+
+      try {
+        const response = await fetch(`${API_URL}/inventory`, {
+          method: 'POST',
+          headers: getAuthHeader(),
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        
+        console.log('Add supply result:', result);
+        
+        if (result.success || response.ok) {
+          const unitId = result.unit_id || `${bloodType}-${String(result.id).padStart(4, '0')}`;
+          showAlert(`✓ Blood supply added successfully! Unit ID: #${unitId}`, 'success');
+          closeUpdateModal();
+          loadInventory();
+        } else {
+          showAlert(result.message || 'Failed to add blood supply', 'error');
+        }
+      } catch (error) {
+        console.error('Error adding supply:', error);
+        showAlert('Error adding blood supply: ' + error.message, 'error');
+      }
     }
 
     async function apiCall(endpoint, method = 'GET', body = null) {
@@ -272,11 +377,12 @@
         const isExpiring = daysLeft > 0 && daysLeft <= 7;
         const status = isExpired ? 'Expired' : isExpiring ? 'Expiring Soon' : 'Good';
         const badge = isExpired ? 'badge-danger' : isExpiring ? 'badge-warning' : 'badge-success';
+        const unitId = u.id ? `${u.blood_type}-${String(u.id).padStart(4, '0')}` : 'N/A';
 
         return `
           <tr class="unit-row ${isExpired ? 'expired' : isExpiring ? 'expiring' : ''}">
             <td><strong>${u.blood_type}</strong></td>
-            <td>${u.id || 'N/A'}</td>
+            <td><code>#${unitId}</code></td>
             <td>${u.quantity_ml}ml</td>
             <td>${new Date(u.collection_date).toLocaleDateString()}</td>
             <td>${expiry.toLocaleDateString()}</td>
@@ -329,6 +435,14 @@
       localStorage.clear();
       window.location.href = '../login-staff.html';
     }
+
+    // Close modals when clicking outside
+    document.getElementById('updateModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'updateModal') closeUpdateModal();
+    });
+    document.getElementById('expireModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'expireModal') closeExpireModal();
+    });
 
     if (checkAuth()) {
       loadInventory();

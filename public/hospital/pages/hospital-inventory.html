@@ -429,10 +429,11 @@
         const status = isExpired ? 'Expired' : isExpiring ? 'Expiring Soon' : 'Good';
         const badge = isExpired ? 'badge-danger' : isExpiring ? 'badge-warning' : 'badge-success';
 
+        const unitId = u.id ? `${u.blood_type}-${String(u.id).padStart(4, '0')}` : 'N/A';
         return `
           <tr>
             <td><strong>${u.blood_type}</strong></td>
-            <td><code>#${u.id || 'N/A'}</code></td>
+            <td><code>#${unitId}</code></td>
             <td>${u.quantity_ml}ml</td>
             <td>${new Date(u.collection_date || u.collected_date).toLocaleDateString()}</td>
             <td>${expiry.toLocaleDateString()}</td>
@@ -538,7 +539,8 @@
 
       const result = await apiCall('/inventory', 'POST', payload);
       if (result.success) {
-        showAlert('Blood supply added successfully!', 'info');
+        const unitId = result.unit_id || `${bloodType}-${String(result.id).padStart(4, '0')}`;
+        showAlert(`✓ Blood supply added successfully! Unit ID: #${unitId}`, 'info');
         closeUpdateModal();
         loadInventory();
       } else {

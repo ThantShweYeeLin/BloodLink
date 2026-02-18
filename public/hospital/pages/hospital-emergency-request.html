@@ -137,8 +137,10 @@
     </main>
   </div>
 
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
-    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
     function authHeaders() {
       const token = localStorage.getItem('token') || '';
@@ -152,46 +154,71 @@
       setTimeout(() => { container.innerHTML = ''; }, 4000);
     }
 
+    function toRequiredByDate(hours) {
+      const now = new Date();
+      const ms = Number(hours || 0) * 60 * 60 * 1000;
+      const due = new Date(now.getTime() + ms);
+      return due.toISOString().slice(0, 10);
+    }
+
+    function toUnits(value) {
+      const ml = Number(value || 0);
+      return ml ? Math.round(ml / 450) : 0;
+    }
+
     async function submitEmergency(e) {
       e.preventDefault();
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        window.location.href = '../login-hospital.html';
+        return;
+      }
+      const neededHours = Number(document.getElementById('hours').value);
       const payload = {
         blood_type: document.getElementById('bloodType').value,
-        quantity_units: Number(document.getElementById('quantity').value),
-        needed_in_hours: Number(document.getElementById('hours').value),
+        quantity_required: Number(document.getElementById('quantity').value),
+        urgency: 'emergency',
+        required_by: toRequiredByDate(neededHours),
         notes: document.getElementById('notes').value || ''
       };
 
       try {
-        const res = await fetch(`${API_URL}/hospital/emergency-requests`, {
+        console.log('Submitting emergency request:', payload);
+        const res = await fetch(`${API_URL}/requests/hospital`, {
           method: 'POST',
           headers: authHeaders(),
           body: JSON.stringify(payload)
         });
         const data = await res.json();
+        console.log('Response:', data);
         if (!res.ok || data.success === false) throw new Error(data.message || 'Failed to submit');
-        showAlert('Emergency request sent');
+        showAlert('Emergency request sent successfully!', 'success');
         document.getElementById('emergencyForm').reset();
         loadUrgent();
       } catch (err) {
         console.error('Submit error', err);
-        showAlert('Could not submit right now. Using sample data.', 'error');
+        showAlert(err.message || 'Could not submit emergency request', 'error');
       }
     }
 
     async function loadUrgent() {
-      const hospitalId = localStorage.getItem('hospitalId');
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        window.location.href = '../login-hospital.html';
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/hospital/${hospitalId || ''}/emergency-requests`, { headers: authHeaders() });
+        console.log('Loading urgent requests for hospital:', hospitalId);
+        const res = await fetch(`${API_URL}/requests/hospital/${hospitalId}`, { headers: authHeaders() });
         const data = await res.json();
-        if (!res.ok || data.success === false) throw new Error(data.message || 'Failed to load');
-        renderUrgent(data.data || []);
+        console.log('Urgent requests response:', data);
+        if (!res.ok) throw new Error(data.message || 'Failed to load');
+        const rows = Array.isArray(data) ? data : (data.data || []);
+        const urgent = rows.filter(r => (r.priority || r.urgency) === 'emergency' && r.status !== 'cancelled');
+        renderUrgent(urgent);
       } catch (err) {
-        console.warn('Load error, using fallback', err);
-        const sample = [
-          { id: 201, blood_type: 'O-', quantity_required: 4, needed_in_hours: 2, status: 'pending' },
-          { id: 202, blood_type: 'A+', quantity_required: 6, needed_in_hours: 3, status: 'pending' }
-        ];
-        renderUrgent(sample);
+        console.warn('Load error:', err);
+        renderUrgent([]);
       }
     }
 
@@ -205,7 +232,7 @@
         <div class="alert-card">
           <div>
             <div style="font-weight:800; color:#111827;">#${String(item.id).padStart(4,'0')} • ${item.blood_type}</div>
-            <div style="color:#4b5563; font-size:0.95rem;">${item.quantity_required || item.quantity_units} units • Needed in ${item.needed_in_hours || '—'} hrs</div>
+            <div style="color:#4b5563; font-size:0.95rem;">${toUnits(item.units ?? item.quantity_ml ?? item.quantity_required ?? item.quantity_units)} units • Needed in ${item.needed_in_hours || '—'} hrs</div>
           </div>
           <span class="badge ${item.status === 'pending' ? 'badge-urgent' : 'badge-info'}">${item.status || 'pending'}</span>
         </div>
@@ -217,7 +244,20 @@
       window.location.href = '../login-hospital.html';
     }
 
-    loadUrgent();
+    // Initialize page
+    function init() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-hospital.html';
+        return;
+      }
+      const userName = localStorage.getItem('userName') || 'Hospital';
+      document.getElementById('userName').textContent = userName;
+      document.getElementById('userInitial').textContent = userName.charAt(0).toUpperCase();
+      loadUrgent();
+    }
+
+    init();
   </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>

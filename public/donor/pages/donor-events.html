@@ -104,40 +104,8 @@
           </div>
         </div>
 
-        <div class="card-grid">
-          <div class="card event-card" data-title="City Hall Blood Drive" data-date="Feb 10, 2026" data-time="09:00 AM" data-location="123 Civic St, Main Hall" data-focus="All types" data-capacity="60">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h3>City Hall Blood Drive</h3>
-              <span class="tag">Feb 10 • 9 AM</span>
-            </div>
-            <p style="color:#4b5563;">123 Civic St, Main Hall • Capacity: 60 donors</p>
-            <div class="card-actions">
-              <button class="btn" data-action="details">View Details</button>
-              <button class="btn secondary" data-action="register">Register</button>
-            </div>
-          </div>
-          <div class="card event-card" data-title="Community Hospital" data-date="Feb 22, 2026" data-time="01:00 PM" data-location="45 Wellness Ave" data-focus="O- / A+" data-capacity="50">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h3>Community Hospital</h3>
-              <span class="tag">Feb 22 • 1 PM</span>
-            </div>
-            <p style="color:#4b5563;">45 Wellness Ave • Focus: O- / A+</p>
-            <div class="card-actions">
-              <button class="btn" data-action="details">View Details</button>
-              <button class="btn secondary" data-action="register">Register</button>
-            </div>
-          </div>
-          <div class="card event-card" data-title="Campus Mobile Drive" data-date="Mar 05, 2026" data-time="11:00 AM" data-location="North Parking Lot" data-focus="All types" data-capacity="40">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h3>Campus Mobile Drive</h3>
-              <span class="tag">Mar 05 • 11 AM</span>
-            </div>
-            <p style="color:#4b5563;">North Parking Lot • Capacity: 40 donors</p>
-            <div class="card-actions">
-              <button class="btn" data-action="details">View Details</button>
-              <button class="btn secondary" data-action="register">Register</button>
-            </div>
-          </div>
+        <div class="card-grid" id="eventsGrid">
+          <div class="card">Loading events...</div>
         </div>
       </div>
     </main>
@@ -153,8 +121,32 @@
     </div>
   </div>
   <div id="toast" class="toast"></div>
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
     let activeEvent = null;
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = '../../index.html';
+    }
+
+    function setUserName() {
+      const userName = localStorage.getItem('userName') || 'Donor';
+      const userNameEl = document.getElementById('userName');
+      const userInitialEl = document.getElementById('userInitial');
+      if (userNameEl) userNameEl.textContent = userName;
+      if (userInitialEl) userInitialEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function getAuthHeader() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    }
 
     function showToast(message) {
       const toast = document.getElementById('toast');
@@ -163,26 +155,22 @@
       setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    function getEventData(card) {
-      return {
-        title: card.dataset.title,
-        date: card.dataset.date,
-        time: card.dataset.time,
-        location: card.dataset.location,
-        focus: card.dataset.focus,
-        capacity: card.dataset.capacity
-      };
+    function formatDate(dateStr) {
+      if (!dateStr) return '--';
+      const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return '--';
+      return date.toLocaleDateString();
     }
 
     function openEventModal(eventData) {
       activeEvent = eventData;
-      document.getElementById('modalTitle').textContent = eventData.title;
+      document.getElementById('modalTitle').textContent = eventData.name || eventData.title;
       document.getElementById('modalBody').innerHTML = `
-        <div><strong>Date:</strong> ${eventData.date}</div>
-        <div><strong>Time:</strong> ${eventData.time}</div>
-        <div><strong>Location:</strong> ${eventData.location}</div>
-        <div><strong>Blood Type Focus:</strong> ${eventData.focus}</div>
-        <div><strong>Capacity:</strong> ${eventData.capacity} donors</div>
+        <div><strong>Date:</strong> ${formatDate(eventData.date)}</div>
+        <div><strong>Time:</strong> ${eventData.start_time || '--'} - ${eventData.end_time || '--'}</div>
+        <div><strong>Location:</strong> ${eventData.location || '--'}</div>
+        <div><strong>Expected Donors:</strong> ${eventData.expected || '—'}</div>
+        <div><strong>Notes:</strong> ${eventData.notes || 'No notes'}</div>
       `;
       document.getElementById('eventModal').classList.add('active');
     }
@@ -192,53 +180,106 @@
       activeEvent = null;
     }
 
-    function saveAppointment(eventData) {
-      const stored = JSON.parse(localStorage.getItem('donorAppointments') || '[]');
-      const exists = stored.some(item => item.title === eventData.title && item.date === eventData.date && item.time === eventData.time);
-      if (exists) {
-        showToast('You are already registered for this event.');
-        return false;
-      }
-      stored.unshift({
-        id: Date.now().toString(),
-        title: eventData.title,
-        date: eventData.date,
-        time: eventData.time,
-        location: eventData.location
-      });
-      localStorage.setItem('donorAppointments', JSON.stringify(stored));
-      return true;
-    }
-
     function registerFromModal() {
       if (!activeEvent) return;
-      const saved = saveAppointment(activeEvent);
-      if (saved) {
+      registerForEvent(activeEvent.id);
+    }
+
+    async function registerForEvent(eventId) {
+      try {
+        const response = await fetch(`${API_URL}/events/${eventId}/join`, {
+          method: 'POST',
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to register');
+        }
         showToast('Registered! Added to your appointments.');
+        await loadEvents();
         closeEventModal();
+      } catch (error) {
+        console.error('Registration error:', error);
+        showToast('Unable to register for this event.');
       }
     }
 
-    document.querySelectorAll('.event-card').forEach(card => {
-      card.addEventListener('click', (e) => {
-        const action = e.target?.dataset?.action;
-        if (!action) return;
-        const eventData = getEventData(card);
-        if (action === 'details') {
-          openEventModal(eventData);
-        }
-        if (action === 'register') {
-          const saved = saveAppointment(eventData);
-          if (saved) {
-            showToast('Registered! Added to your appointments.');
+    function renderEvents(events, donorId) {
+      const container = document.getElementById('eventsGrid');
+      if (!events.length) {
+        container.innerHTML = '<div class="card">No upcoming events found.</div>';
+        return;
+      }
+
+      container.innerHTML = events.map(event => {
+        const participants = event.participants || [];
+        const joined = participants.some(p => String(p.donor_id) === String(donorId));
+        const tag = `${formatDate(event.date)} • ${event.start_time || ''}`.trim();
+        return `
+          <div class="card event-card" data-id="${event.id}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3>${event.name || event.title}</h3>
+              <span class="tag">${tag}</span>
+            </div>
+            <p style="color:#4b5563;">${event.location || 'Location TBD'}${event.expected ? ` • Expected: ${event.expected}` : ''}</p>
+            <div class="card-actions">
+              <button class="btn" data-action="details">View Details</button>
+              <button class="btn secondary" data-action="register" ${joined ? 'disabled' : ''}>${joined ? 'Registered' : 'Register'}</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.event-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const action = e.target?.dataset?.action;
+          if (!action) return;
+          if (e.target?.disabled) return;
+          const eventId = card.dataset.id;
+          const eventData = events.find(item => String(item.id) === String(eventId));
+          if (!eventData) return;
+          if (action === 'details') {
+            openEventModal(eventData);
           }
-        }
+          if (action === 'register') {
+            registerForEvent(eventId);
+          }
+        });
       });
-    });
+    }
+
+    async function loadEvents() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/events/upcoming`, { headers: getAuthHeader() });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to load events');
+        }
+        renderEvents(Array.isArray(data) ? data : (data.data || []), donorId);
+      } catch (error) {
+        console.error('Events load error:', error);
+        document.getElementById('eventsGrid').innerHTML = '<div class="card">Unable to load events from the database.</div>';
+      }
+    }
 
     document.getElementById('eventModal').addEventListener('click', (e) => {
       if (e.target.id === 'eventModal') closeEventModal();
     });
+
+    setUserName();
+    loadEvents();
   </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>

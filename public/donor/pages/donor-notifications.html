@@ -72,47 +72,94 @@
         </div>
 
         <div class="card">
-          <div class="notif">
-            <div>
-              <div class="notif-title">You are eligible to donate again</div>
-              <div class="notif-meta">Feb 02, 2026 • Eligibility reminder</div>
-            </div>
-            <div class="actions">
-              <span class="badge">New</span>
-              <button class="btn secondary">Mark Read</button>
-            </div>
-          </div>
-          <div class="notif">
-            <div>
-              <div class="notif-title">Thank you for donating!</div>
-              <div class="notif-meta">Dec 12, 2025 • Your blood helped 3 patients.</div>
-            </div>
-            <div class="actions">
-              <button class="btn secondary">Archive</button>
-            </div>
-          </div>
-          <div class="notif">
-            <div>
-              <div class="notif-title">Emergency appeal: O- needed</div>
-              <div class="notif-meta">Nov 30, 2025 • City Hospital</div>
-            </div>
-            <div class="actions">
-              <button class="btn">Respond</button>
-            </div>
-          </div>
-          <div class="notif">
-            <div>
-              <div class="notif-title">Event update: Campus Drive</div>
-              <div class="notif-meta">Nov 20, 2025 • New slots opened</div>
-            </div>
-            <div class="actions">
-              <button class="btn secondary">Mark Read</button>
+          <div id="notificationsList">
+            <div class="notif">
+              <div>
+                <div class="notif-title">Loading notifications...</div>
+                <div class="notif-meta">Please wait</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
   </div>
+  <script src="../../shared-pages/api-base.js"></script>
+  <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = '../../index.html';
+    }
+
+    function setUserName() {
+      const userName = localStorage.getItem('userName') || 'Donor';
+      const userNameEl = document.getElementById('userName');
+      const userInitialEl = document.getElementById('userInitial');
+      if (userNameEl) userNameEl.textContent = userName;
+      if (userInitialEl) userInitialEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function getAuthHeader() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    }
+
+    async function loadNotifications() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      const container = document.getElementById('notificationsList');
+      try {
+        const response = await fetch(`${API_URL}/donor/notifications/${donorId}`, {
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load notifications');
+        }
+
+        const notifications = data.data || [];
+        if (!notifications.length) {
+          container.innerHTML = '<div class="notif"><div><div class="notif-title">No notifications yet</div><div class="notif-meta">You are all caught up.</div></div></div>';
+          return;
+        }
+
+        container.innerHTML = notifications.map(item => `
+          <div class="notif">
+            <div>
+              <div class="notif-title">${item.title}</div>
+              <div class="notif-meta">${item.date || ''} • ${item.type || 'Update'}</div>
+              <div style="color:#4b5563; font-size:0.9rem; margin-top:0.25rem;">${item.message || ''}</div>
+            </div>
+            <div class="actions">
+              <span class="badge">New</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Notifications load error:', error);
+        container.innerHTML = '<div class="notif"><div><div class="notif-title">Unable to load notifications</div><div class="notif-meta">Please try again later.</div></div></div>';
+      }
+    }
+
+    setUserName();
+    loadNotifications();
+  </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>
 </html>

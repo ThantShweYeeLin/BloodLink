@@ -159,53 +159,6 @@
     .links a:hover {
       text-decoration: underline;
     }
-
-    .demo-accounts {
-      background: #fce7f3;
-      border: 2px dashed #db2777;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin-top: 1.5rem;
-    }
-
-    .demo-accounts h3 {
-      margin: 0 0 1rem;
-      color: #831843;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .demo-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-    }
-
-    .demo-btn {
-      padding: 0.6rem;
-      background: #db2777;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-align: center;
-    }
-
-    .demo-btn:hover {
-      background: #be185d;
-      transform: translateY(-1px);
-    }
-
-    .demo-note {
-      font-size: 0.75rem;
-      color: #831843;
-      margin-top: 0.75rem;
-      text-align: center;
-    }
     
     @media (max-width: 768px) {
       .container {
@@ -246,15 +199,6 @@
 
       <div class="links">
         <p>Don't have an account? <a href="register-staff.html">Register here</a></p>
-      </div>
-
-      <div class="demo-accounts">
-        <h3>🎬 Demo Accounts</h3>
-        <div class="demo-buttons">
-          <button class="demo-btn" onclick="autofillDemo('staff@bloodlink.com', 'Test123!')">Taylor (Staff)</button>
-          <button class="demo-btn" onclick="autofillDemo('casey.martinez@lifelink.com', 'Test123!')">Casey (Staff)</button>
-        </div>
-        <p class="demo-note">Click to auto-fill demo credentials</p>
       </div>
     </div>
   </div>
@@ -307,12 +251,6 @@
         window.location.href = 'dashboard.html';
       }
     });
-
-    function autofillDemo(email, password) {
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = password;
-      document.getElementById('loginBtn').focus();
-    }
 
     async function handleLogin(event) {
       event.preventDefault();

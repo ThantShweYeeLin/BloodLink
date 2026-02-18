@@ -102,7 +102,10 @@
     </main>
   </div>
 
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
     // Lightweight canvas rendering (no external libs to keep page standalone)
     function drawBar(canvasId, labels, values, color = '#ef4444') {
       const c = document.getElementById(canvasId);
@@ -158,22 +161,62 @@
       `;
     }
 
-    function loadAnalytics() {
-      // Stubbed data; replace with GET /api/hospital/:id/analytics
-      const sample = {
-        totalRequests: 128,
-        fulfilledUnits: 420,
-        emergencyShare: 32,
-        avgHours: 5.4,
-        types: { 'O+': 140, 'A+': 90, 'B+': 70, 'AB-': 20 },
-        monthly: [40, 52, 38, 60, 55, 70],
-        months: ['Jan','Feb','Mar','Apr','May','Jun'],
-        emergency: [3,6,4,7,5,8]
-      };
-      renderStats(sample);
-      drawBar('chartTypes', Object.keys(sample.types), Object.values(sample.types));
-      drawBar('chartMonthly', sample.months, sample.monthly, '#f97316');
-      drawLine('chartEmergency', sample.months, sample.emergency, '#22c55e');
+    async function loadAnalytics() {
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        window.location.href = '../login-hospital.html';
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/requests/hospital/${hospitalId}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed');
+
+        const rows = Array.isArray(data) ? data : (data.data || []);
+        const totalRequests = rows.length;
+        const fulfilledUnits = rows.filter(r => r.status === 'fulfilled')
+          .reduce((sum, r) => sum + (Number(r.units ?? r.quantity_ml ?? r.quantity) || 0), 0);
+        const emergencyCount = rows.filter(r => r.priority === 'emergency' || r.urgency === 'emergency').length;
+        const emergencyShare = totalRequests ? Math.round((emergencyCount / totalRequests) * 100) : 0;
+
+        const byType = rows.reduce((acc, r) => {
+          acc[r.blood_type] = (acc[r.blood_type] || 0) + 1;
+          return acc;
+        }, {});
+
+        const byMonth = rows.reduce((acc, r) => {
+          if (!r.date) return acc;
+          const d = new Date(r.date);
+          if (Number.isNaN(d.getTime())) return acc;
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          acc[key] = acc[key] || { total: 0, emergency: 0 };
+          acc[key].total += 1;
+          if (r.priority === 'emergency' || r.urgency === 'emergency') acc[key].emergency += 1;
+          return acc;
+        }, {});
+
+        const months = Object.keys(byMonth).sort();
+        const monthly = months.map(m => byMonth[m].total);
+        const emergency = months.map(m => byMonth[m].emergency);
+
+        renderStats({
+          totalRequests,
+          fulfilledUnits,
+          emergencyShare,
+          avgHours: 0
+        });
+        drawBar('chartTypes', Object.keys(byType), Object.values(byType));
+        drawBar('chartMonthly', months, monthly, '#f97316');
+        drawLine('chartEmergency', months, emergency, '#22c55e');
+      } catch (err) {
+        console.error('Failed to load analytics.', err);
+        renderStats({ totalRequests: 0, fulfilledUnits: 0, emergencyShare: 0, avgHours: 0 });
+        drawBar('chartTypes', [], []);
+        drawBar('chartMonthly', [], [], '#f97316');
+        drawLine('chartEmergency', [], [], '#22c55e');
+      }
     }
 
     function logout() {

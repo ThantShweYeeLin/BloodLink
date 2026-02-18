@@ -81,7 +81,7 @@
     .requests-table tr:hover { background: #f9fafb; }
     .status-badge { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
     .status-pending { background: #fef3c7; color: #92400e; }
-    .status-approved { background: #d1fae5; color: #065f46; }
+    .status-fulfilled { background: #d1fae5; color: #065f46; }
     .status-fulfilled { background: #dbeafe; color: #1e40af; }
     .status-rejected { background: #fee2e2; color: #991b1b; }
     
@@ -343,120 +343,146 @@ const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
     // Fetch dashboard statistics
     async function fetchStats() {
       try {
+        console.log('[fetchStats] Starting to fetch stats with API_BASE:', API_BASE);
+        
         // Fetch total donors
         const donorsResponse = await fetchWithTimeout(`${API_BASE}/api/donors`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchStats] Donors response status:', donorsResponse.status);
+        
         if (donorsResponse.ok) {
           const result = await donorsResponse.json();
+          console.log('[fetchStats] Donors result:', result);
           const donors = result.data || result;  // Handle both formats
-          document.getElementById('totalDonors').textContent = donors.length;
+          document.getElementById('totalDonors').textContent = Array.isArray(donors) ? donors.length : 0;
         } else {
-          document.getElementById('totalDonors').textContent = 5;
+          console.error('[fetchStats] Donors fetch failed:', donorsResponse.status);
+          document.getElementById('totalDonors').textContent = 0;
         }
 
         // Fetch monthly donations
         const donationsResponse = await fetchWithTimeout(`${API_BASE}/api/donations`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchStats] Donations response status:', donationsResponse.status);
+        
         if (donationsResponse.ok) {
           const donations = await donationsResponse.json();
+          console.log('[fetchStats] Donations result:', donations);
+          const donationsArray = Array.isArray(donations) ? donations : (donations.data || []);
           const thisMonth = new Date().getMonth();
-          const monthlyDonations = donations.filter(d => new Date(d.date).getMonth() === thisMonth);
+          const thisYear = new Date().getFullYear();
+          const monthlyDonations = donationsArray.filter(d => {
+            const donationDate = new Date(d.donation_date || d.date);
+            return donationDate.getMonth() === thisMonth && donationDate.getFullYear() === thisYear;
+          });
           document.getElementById('monthlyDonations').textContent = monthlyDonations.length;
         } else {
-          document.getElementById('monthlyDonations').textContent = 3;
+          console.error('[fetchStats] Donations fetch failed:', donationsResponse.status);
+          document.getElementById('monthlyDonations').textContent = 0;
         }
 
         // Fetch inventory
-        const inventoryResponse = await fetchWithTimeout(`${API_BASE}/api/inventory`, {
+        const inventoryResponse = await fetchWithTimeout(`${API_BASE}/api/staff/inventory`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchStats] Inventory response status:', inventoryResponse.status);
+        
         if (inventoryResponse.ok) {
           const inventoryResult = await inventoryResponse.json();
-          const inventoryData = inventoryResult.data || inventoryResult;
-          const byType = {};
-
-          inventoryData.forEach(item => {
-            const type = item.blood_type || item.type;
-            const units = item.units ?? Math.round((item.quantity_ml || 0) / 450);
-            byType[type] = (byType[type] || 0) + units;
-          });
-
-          const totalUnits = Object.values(byType).reduce((sum, units) => sum + units, 0);
+          console.log('[fetchStats] Inventory result:', inventoryResult);
+          const inventoryData = Array.isArray(inventoryResult) ? inventoryResult : (inventoryResult.data || []);
+          
+          // Count total units (each row in blood_inventory is 1 unit)
+          const totalUnits = inventoryData.filter(item => item.status === 'available').length;
           document.getElementById('totalUnits').textContent = totalUnits;
 
-          const criticalCount = Object.values(byType).filter(units => units < 10).length;
+          // Group by blood type to check critical levels
+          const byType = {};
+          inventoryData.forEach(item => {
+            if (item.status === 'available') {
+              const type = item.blood_type || item.type;
+              byType[type] = (byType[type] || 0) + 1;
+            }
+          });
+
+          const criticalCount = Object.values(byType).filter(count => count < 10).length;
           document.getElementById('criticalInventory').textContent = criticalCount;
         } else {
-          document.getElementById('totalUnits').textContent = 24;
-          document.getElementById('criticalInventory').textContent = 1;
+          console.error('[fetchStats] Inventory fetch failed:', inventoryResponse.status);
+          document.getElementById('totalUnits').textContent = 0;
+          document.getElementById('criticalInventory').textContent = 0;
         }
 
         // Fetch events
-        const eventsResponse = await fetchWithTimeout(`${API_BASE}/api/events/upcoming`, {
+        const eventsResponse = await fetchWithTimeout(`${API_BASE}/api/events`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchStats] Events response status:', eventsResponse.status);
+        
         if (eventsResponse.ok) {
-          const events = await eventsResponse.json();
-          document.getElementById('upcomingEvents').textContent = events.length;
+          const eventsResult = await eventsResponse.json();
+          console.log('[fetchStats] Events result:', eventsResult);
+          const events = Array.isArray(eventsResult) ? eventsResult : (eventsResult.data || []);
+          // Filter upcoming events
+          const now = new Date();
+          const upcomingEvents = events.filter(e => new Date(e.date) >= now);
+          document.getElementById('upcomingEvents').textContent = upcomingEvents.length;
         } else {
-          document.getElementById('upcomingEvents').textContent = 4;
+          console.error('[fetchStats] Events fetch failed:', eventsResponse.status);
+          document.getElementById('upcomingEvents').textContent = 0;
         }
 
         // Fetch blood requests
         const requestsResponse = await fetchWithTimeout(`${API_BASE}/api/staff/requests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchStats] Requests response status:', requestsResponse.status);
+        
         if (requestsResponse.ok) {
-          const requests = await requestsResponse.json();
+          const requestsResult = await requestsResponse.json();
+          console.log('[fetchStats] Requests result:', requestsResult);
+          const requests = Array.isArray(requestsResult) ? requestsResult : (requestsResult.data || []);
           document.getElementById('totalRequests').textContent = requests.length;
           
           const pendingCount = requests.filter(r => r.status === 'pending').length;
           document.getElementById('pendingRequests').textContent = pendingCount;
         } else {
-          document.getElementById('totalRequests').textContent = 8;
-          document.getElementById('pendingRequests').textContent = 3;
+          console.error('[fetchStats] Requests fetch failed:', requestsResponse.status);
+          document.getElementById('totalRequests').textContent = 0;
+          document.getElementById('pendingRequests').textContent = 0;
         }
+        
+        console.log('[fetchStats] All stats fetched successfully');
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error('[fetchStats] Error fetching stats:', error);
         // Set default values on error
-        document.getElementById('totalDonors').textContent = 5;
-        document.getElementById('monthlyDonations').textContent = 3;
-        document.getElementById('totalUnits').textContent = 24;
-        document.getElementById('upcomingEvents').textContent = 4;
-        document.getElementById('totalRequests').textContent = 8;
-        document.getElementById('pendingRequests').textContent = 3;
-        document.getElementById('criticalInventory').textContent = 1;
+        document.getElementById('totalDonors').textContent = 0;
+        document.getElementById('monthlyDonations').textContent = 0;
+        document.getElementById('totalUnits').textContent = 0;
+        document.getElementById('upcomingEvents').textContent = 0;
+        document.getElementById('totalRequests').textContent = 0;
+        document.getElementById('pendingRequests').textContent = 0;
+        document.getElementById('criticalInventory').textContent = 0;
       }
     }
 
     // Fetch blood inventory
     async function fetchBloodInventory() {
       try {
+        console.log('[fetchBloodInventory] Fetching inventory from:', `${API_BASE}/api/inventory`);
         const response = await fetchWithTimeout(`${API_BASE}/api/inventory`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('[fetchBloodInventory] Response status:', response.status);
 
         let inventory = [];
-        
+
         if (response.ok) {
           const inventoryResult = await response.json();
-          inventory = inventoryResult.data || inventoryResult;
-        }
-        
-        // Sample data fallback
-        if (!inventory || inventory.length === 0) {
-          inventory = [
-            { blood_type: 'O+', quantity_ml: 2700, units: 6 },
-            { blood_type: 'A+', quantity_ml: 2250, units: 5 },
-            { blood_type: 'B+', quantity_ml: 3150, units: 7 },
-            { blood_type: 'AB+', quantity_ml: 900, units: 2 },
-            { blood_type: 'O-', quantity_ml: 1350, units: 3 },
-            { blood_type: 'A-', quantity_ml: 900, units: 2 },
-            { blood_type: 'B-', quantity_ml: 450, units: 1 },
-            { blood_type: 'AB-', quantity_ml: 450, units: 1 }
-          ];
+          console.log('[fetchBloodInventory] Inventory result:', inventoryResult);
+          inventory = Array.isArray(inventoryResult) ? inventoryResult : (inventoryResult.data || []);
         }
         
         const inventoryDiv = document.getElementById('bloodInventory');
@@ -468,11 +494,14 @@ const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
 
         const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
         const totals = inventory.reduce((acc, item) => {
-          const type = item.blood_type || item.type;
-          const units = item.units ?? Math.round((item.quantity_ml || 0) / 450);
-          acc[type] = (acc[type] || 0) + units;
+          if (item.status === 'available') {
+            const type = item.blood_type || item.type;
+            acc[type] = (acc[type] || 0) + 1; // Each row is 1 unit
+          }
           return acc;
         }, {});
+        
+        console.log('[fetchBloodInventory] Blood type totals:', totals);
 
         inventoryDiv.innerHTML = '<div class="inventory-grid">' + bloodTypes.map(type => {
           const units = totals[type] || 0;
@@ -489,17 +518,8 @@ const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
           `;
         }).join('') + '</div>';
       } catch (error) {
-        console.error('Error fetching inventory:', error);
-        // Display sample data on error
-        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-        const sampleData = { 'O+': 6, 'A+': 5, 'B+': 7, 'AB+': 2, 'O-': 3, 'A-': 2, 'B-': 1, 'AB-': 1 };
-        document.getElementById('bloodInventory').innerHTML = '<div class="inventory-grid">' + bloodTypes.map(type => `
-          <div class="blood-card">
-            <div class="blood-type">${type}</div>
-            <div class="units">${sampleData[type]}</div>
-            <div class="level">${sampleData[type] >= 5 ? 'Good' : 'Low'}</div>
-          </div>
-        `).join('') + '</div>';
+        console.error('[fetchBloodInventory] Error fetching inventory:', error);
+        document.getElementById('bloodInventory').innerHTML = '<p style="text-align: center; color: #6b7280; padding: 2rem;">Error loading inventory data.</p>';
       }
     }
 
@@ -511,21 +531,10 @@ const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
         });
 
         let requests = [];
-        
+
         if (response.ok) {
           const result = await response.json();
           requests = result.data || result;  // Handle both formats
-        }
-        
-        // Sample data fallback
-        if (!requests || requests.length === 0) {
-          requests = [
-            { hospital_name: 'City General Hospital', blood_type: 'O-', quantity_required: 2000, urgency: 'emergency', status: 'pending', request_date: new Date(Date.now() - 1*60*60*1000).toISOString() },
-            { hospital_name: 'St. Mary Medical Center', blood_type: 'A+', quantity_required: 1500, urgency: 'urgent', status: 'pending', request_date: new Date(Date.now() - 3*60*60*1000).toISOString() },
-            { hospital_name: 'Memorial Hospital', blood_type: 'B+', quantity_required: 1000, urgency: 'routine', status: 'fulfilled', request_date: new Date(Date.now() - 6*60*60*1000).toISOString() },
-            { hospital_name: 'Children\'s Hospital', blood_type: 'AB+', quantity_required: 900, urgency: 'routine', status: 'pending', request_date: new Date(Date.now() - 12*60*60*1000).toISOString() },
-            { hospital_name: 'County Hospital', blood_type: 'O+', quantity_required: 2500, urgency: 'urgent', status: 'fulfilled', request_date: new Date(Date.now() - 24*60*60*1000).toISOString() }
-          ];
         }
         
         const requestsDiv = document.getElementById('recentRequests');

@@ -948,8 +948,8 @@
         const statsRes = await fetch(`/api/dashboard/stats/donor/${auth.donorId}`, { headers: { 'Authorization': `Bearer ${auth.token}` } });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
-          if (statsData.success) {
-            const stats = statsData.data;
+          const stats = statsData?.success ? statsData.data : statsData;
+          if (stats) {
             const totalDonations = stats.totalDonations || 0;
             document.getElementById('totalDonations').textContent = totalDonations;
             document.getElementById('livesSaved').textContent = totalDonations * 3;

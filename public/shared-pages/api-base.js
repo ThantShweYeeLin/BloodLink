@@ -7,7 +7,10 @@
     location.hostname === '' ||
     location.protocol === 'file:';
   const stored = localStorage.getItem('apiBase');
-  let apiBase = stored || (isLocalHost ? LOCAL_BASE : RENDER_BASE);
+  let apiBase = isLocalHost ? LOCAL_BASE : (stored || RENDER_BASE);
+  if (isLocalHost && stored !== LOCAL_BASE) {
+    localStorage.setItem('apiBase', LOCAL_BASE);
+  }
 
   window.LIFELINK_API_BASE = apiBase;
   console.log('[API Base Init] Setting API_BASE to:', window.LIFELINK_API_BASE);

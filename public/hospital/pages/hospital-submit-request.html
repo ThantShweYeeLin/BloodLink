@@ -151,8 +151,10 @@
     </main>
   </div>
 
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
-    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
     function showAlert(message, type = 'success') {
       const container = document.getElementById('alertContainer');
@@ -171,7 +173,7 @@
 
     async function submitRequest(e) {
       e.preventDefault();
-      const hospitalId = localStorage.getItem('hospitalId');
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
       const payload = {
         hospital_id: hospitalId,
         blood_type: document.getElementById('bloodType').value,
@@ -187,7 +189,7 @@
       }
 
       try {
-        const res = await fetch(`${API_URL}/hospital/requests`, {
+        const res = await fetch(`${API_URL}/requests/hospital`, {
           method: 'POST',
           headers: getAuthHeader(),
           body: JSON.stringify(payload)
@@ -198,7 +200,7 @@
         document.getElementById('requestForm').reset();
       } catch (err) {
         console.error(err);
-        showAlert('API not ready yet; request not saved. Hook this form to POST /api/hospital/requests.', 'error');
+        showAlert('Unable to submit request. Please try again.', 'error');
       }
     }
 

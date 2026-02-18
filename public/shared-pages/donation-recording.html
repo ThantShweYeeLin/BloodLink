@@ -612,20 +612,14 @@
     async function loadDonors() {
       const data = await apiCall('/staff/donors');
       
-      let donors = data.data || [];
-      
-      // Sample data fallback if API fails
-      if (!data.success || !donors.length) {
-        donors = [
-          { id: '1', full_name: 'Alex Donor', blood_type: 'O+', isEligible: true, phone: '555-1234', last_donation_date: new Date(Date.now() - 60*24*60*60*1000).toISOString() },
-          { id: '2', full_name: 'Jordan Smith', blood_type: 'A+', isEligible: true, phone: '555-5678', last_donation_date: new Date(Date.now() - 45*24*60*60*1000).toISOString() },
-          { id: '3', full_name: 'Casey Johnson', blood_type: 'B-', isEligible: false, phone: '555-9012', last_donation_date: new Date(Date.now() - 30*24*60*60*1000).toISOString() },
-          { id: '4', full_name: 'Morgan Lee', blood_type: 'AB+', isEligible: true, phone: '555-3456', last_donation_date: new Date(Date.now() - 70*24*60*60*1000).toISOString() }
-        ];
-      }
+      const donors = data.data || [];
 
       const eligible = donors.filter(d => d.isEligible);
       const select = document.getElementById('donorSelect');
+      if (!eligible.length) {
+        select.innerHTML = '<option value="">No eligible donors available</option>';
+        return;
+      }
       select.innerHTML = '<option value="">-- Select Donor --</option>' +
         eligible.map(d => `<option value="${d.id}" data-blood="${d.blood_type}">${d.full_name} (${d.blood_type})</option>`).join('');
     }

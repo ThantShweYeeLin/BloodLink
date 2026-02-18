@@ -75,38 +75,128 @@
             <div class="badge-card">
               <div class="badge-icon">🥉</div>
               <strong>First Donation</strong>
-              <p style="color:#4b5563; margin:0.2rem 0;">Unlocked</p>
-              <div class="progress"><div style="width:100%"></div></div>
+              <p style="color:#4b5563; margin:0.2rem 0;" id="firstDonationStatus">--</p>
+              <div class="progress"><div id="firstDonationProgress" style="width:0%"></div></div>
             </div>
             <div class="badge-card">
               <div class="badge-icon">🥈</div>
               <strong>Hero Donor (5)</strong>
-              <p style="color:#4b5563; margin:0.2rem 0;">4 / 5 donations</p>
-              <div class="progress"><div style="width:80%"></div></div>
+              <p style="color:#4b5563; margin:0.2rem 0;" id="heroDonationStatus">--</p>
+              <div class="progress"><div id="heroDonationProgress" style="width:0%"></div></div>
             </div>
             <div class="badge-card">
               <div class="badge-icon">🥇</div>
               <strong>Life Saver (10)</strong>
-              <p style="color:#4b5563; margin:0.2rem 0;">4 / 10 donations</p>
-              <div class="progress"><div style="width:40%"></div></div>
+              <p style="color:#4b5563; margin:0.2rem 0;" id="lifeSaverStatus">--</p>
+              <div class="progress"><div id="lifeSaverProgress" style="width:0%"></div></div>
             </div>
             <div class="badge-card">
               <div class="badge-icon">🏅</div>
               <strong>Annual Streak</strong>
-              <p style="color:#4b5563; margin:0.2rem 0;">Donated every 3 months</p>
-              <div class="progress"><div style="width:60%"></div></div>
+              <p style="color:#4b5563; margin:0.2rem 0;" id="annualStreakStatus">--</p>
+              <div class="progress"><div id="annualStreakProgress" style="width:0%"></div></div>
             </div>
           </div>
         </div>
 
         <div class="card">
           <h3 style="margin-bottom:0.6rem;">Certificates</h3>
-          <p style="color:#4b5563;">Download a PDF recognition for your latest donation.</p>
-          <button class="btn" style="margin-top:0.5rem;">Download Certificate</button>
+          <p style="color:#4b5563;" id="certificateNote">Download a PDF recognition for your latest donation.</p>
+          <button class="btn" style="margin-top:0.5rem;" id="downloadCertificate" disabled>Download Certificate</button>
         </div>
       </div>
     </main>
   </div>
+  <script src="../../shared-pages/api-base.js"></script>
+  <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = '../../index.html';
+    }
+
+    function setUserName() {
+      const userName = localStorage.getItem('userName') || 'Donor';
+      const userNameEl = document.getElementById('userName');
+      const userInitialEl = document.getElementById('userInitial');
+      if (userNameEl) userNameEl.textContent = userName;
+      if (userInitialEl) userInitialEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function getAuthHeader() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    }
+
+    function setProgress(elementId, value, target) {
+      const progress = Math.min(100, Math.round((value / target) * 100));
+      const el = document.getElementById(elementId);
+      if (el) el.style.width = `${progress}%`;
+    }
+
+    async function loadRewards() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/donor/rewards/${donorId}`, {
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load rewards');
+        }
+
+        const total = data.data.totalDonations || 0;
+        const yearly = data.data.donationsLastYear || 0;
+
+        document.getElementById('firstDonationStatus').textContent = total >= 1 ? 'Unlocked' : '0 / 1 donations';
+        setProgress('firstDonationProgress', Math.min(total, 1), 1);
+
+        document.getElementById('heroDonationStatus').textContent = `${Math.min(total, 5)} / 5 donations`;
+        setProgress('heroDonationProgress', Math.min(total, 5), 5);
+
+        document.getElementById('lifeSaverStatus').textContent = `${Math.min(total, 10)} / 10 donations`;
+        setProgress('lifeSaverProgress', Math.min(total, 10), 10);
+
+        document.getElementById('annualStreakStatus').textContent = `${Math.min(yearly, 4)} / 4 donations in 12 months`;
+        setProgress('annualStreakProgress', Math.min(yearly, 4), 4);
+
+        const downloadButton = document.getElementById('downloadCertificate');
+        const certificateNote = document.getElementById('certificateNote');
+        if (total > 0) {
+          downloadButton.disabled = false;
+          certificateNote.textContent = 'Download a PDF recognition for your latest donation.';
+        } else {
+          downloadButton.disabled = true;
+          certificateNote.textContent = 'Complete your first donation to unlock certificates.';
+        }
+      } catch (error) {
+        console.error('Rewards load error:', error);
+        document.getElementById('firstDonationStatus').textContent = 'Unable to load rewards';
+        document.getElementById('heroDonationStatus').textContent = '—';
+        document.getElementById('lifeSaverStatus').textContent = '—';
+        document.getElementById('annualStreakStatus').textContent = '—';
+      }
+    }
+
+    setUserName();
+    loadRewards();
+  </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>
 </html>

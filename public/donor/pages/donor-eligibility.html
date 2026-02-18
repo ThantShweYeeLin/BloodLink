@@ -70,7 +70,7 @@
             <h1>Eligibility Status</h1>
             <p style="margin-top:0.35rem; color:#ecfeff;">See when you can donate again and why.</p>
           </div>
-          <div class="status blocked">⏳ Not Eligible Yet</div>
+          <div class="status" id="eligibilityStatus">⏳ Checking eligibility...</div>
         </div>
 
         <div class="card">
@@ -78,45 +78,129 @@
           <div class="grid">
             <div class="tile">
               <h3>Last Donation</h3>
-              <p>Dec 12, 2025</p>
+              <p id="lastDonation">--</p>
             </div>
             <div class="tile">
               <h3>Next Eligible Date</h3>
-              <p>Feb 20, 2026</p>
+              <p id="nextEligible">--</p>
             </div>
             <div class="tile">
               <h3>Countdown</h3>
-              <p class="countdown" id="countdown">32 days</p>
+              <p class="countdown" id="countdown">--</p>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="section-title">Eligibility Notes</div>
-          <ul class="list">
-            <li>No recent travel restrictions.</li>
-            <li>Hemoglobin level: 13.8 g/dL.</li>
-            <li>No reported illness in the last 14 days.</li>
-          </ul>
+          <ul class="list" id="eligibilityNotes"></ul>
         </div>
 
         <div class="card">
           <div class="section-title">If Not Eligible</div>
-          <p style="color:#4b5563;">Reasons like recent donation, medications, or travel will appear here with guidance on when to try again.</p>
+          <p style="color:#4b5563;" id="notEligibleMessage">We will show any waiting period and your next eligible date here.</p>
         </div>
       </div>
     </main>
   </div>
 
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
-    function updateCountdown() {
-      const nextDate = new Date('2026-02-20');
-      const today = new Date();
-      const diff = Math.max(0, nextDate - today);
-      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-      document.getElementById('countdown').textContent = `${days} days`;
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = '../../index.html';
     }
-    updateCountdown();
+
+    function setUserName() {
+      const userName = localStorage.getItem('userName') || 'Donor';
+      const userNameEl = document.getElementById('userName');
+      const userInitialEl = document.getElementById('userInitial');
+      if (userNameEl) userNameEl.textContent = userName;
+      if (userInitialEl) userInitialEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function getAuthHeader() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '--';
+      const date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return '--';
+      return date.toLocaleDateString();
+    }
+
+    async function loadEligibility() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/donor/eligibility/${donorId}`, {
+          headers: getAuthHeader()
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load eligibility');
+        }
+
+        const info = data.data;
+        document.getElementById('lastDonation').textContent = info.lastDonationDate
+          ? formatDate(info.lastDonationDate)
+          : 'No donations yet';
+        document.getElementById('nextEligible').textContent = formatDate(info.nextEligibleDate);
+        document.getElementById('countdown').textContent = `${info.daysUntilEligible} days`;
+
+        const statusEl = document.getElementById('eligibilityStatus');
+        const notesEl = document.getElementById('eligibilityNotes');
+        const notEligibleMessage = document.getElementById('notEligibleMessage');
+        notesEl.innerHTML = '';
+
+        if (info.isEligible) {
+          statusEl.textContent = '✅ Eligible Now';
+          statusEl.classList.remove('blocked');
+          
+          // Update header to green with new message
+          const headerEl = document.querySelector('.header');
+          headerEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+          headerEl.querySelector('h1').textContent = 'You\'re Ready to Donate!';
+          headerEl.querySelector('p').textContent = 'Schedule your next appointment and save lives today.';
+          
+          notesEl.innerHTML = '<li>You are eligible to donate again.</li>';
+          notEligibleMessage.textContent = 'You can book a new appointment whenever you are ready.';
+        } else {
+          statusEl.textContent = '⏳ Not Eligible Yet';
+          statusEl.classList.add('blocked');
+          notesEl.innerHTML = `
+            <li>Next eligible date: ${formatDate(info.nextEligibleDate)}</li>
+            <li>Please wait ${info.daysUntilEligible} more days.</li>
+          `;
+          notEligibleMessage.textContent = 'We will update this section with any additional guidance as it becomes available.';
+        }
+      } catch (error) {
+        console.error('Eligibility load error:', error);
+        document.getElementById('eligibilityStatus').textContent = '⚠️ Unable to load eligibility';
+        document.getElementById('eligibilityNotes').innerHTML = '<li>Could not load eligibility data from the database.</li>';
+      }
+    }
+
+    setUserName();
+    loadEligibility();
   </script>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
 </body>

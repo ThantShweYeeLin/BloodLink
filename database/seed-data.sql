@@ -52,7 +52,7 @@ VALUES
 -- Insert Blood Requests
 INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, required_by_date, notes)
 VALUES
-  (1, 'O+', 3000, 'routine', 'approved', '2026-02-25', 'Regular stock replenishment'),
+  (1, 'O+', 3000, 'routine', 'fulfilled', '2026-02-25', 'Regular stock replenishment'),
   (1, 'A+', 1500, 'urgent', 'pending', '2026-01-22', 'Emergency surgery scheduled'),
   (2, 'B-', 900, 'emergency', 'pending', '2026-01-20', 'Trauma patient'),
   (3, 'AB+', 600, 'routine', 'fulfilled', '2026-02-01', 'Stock update');
@@ -71,7 +71,7 @@ INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, change
 VALUES
   ('donors', 1, 'INSERT', 'admin', 1, 'New donor created: Alice Johnson'),
   ('blood_inventory', 1, 'INSERT', 'staff', 1, 'Blood unit received: O+ 1800ml'),
-  ('blood_requests', 1, 'UPDATE', 'staff', 1, 'Status updated to approved'),
+  ('blood_requests', 1, 'UPDATE', 'staff', 1, 'Status updated to fulfilled'),
   ('events', 1, 'INSERT', 'staff', 1, 'New event created: Winter Blood Drive');
 
 -- Verify data was inserted

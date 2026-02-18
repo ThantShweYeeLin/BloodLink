@@ -80,15 +80,15 @@
         <div class="filters">
           <div>
             <label>From Date</label>
-            <input type="date" />
+            <input type="date" id="fromDate" />
           </div>
           <div>
             <label>To Date</label>
-            <input type="date" />
+            <input type="date" id="toDate" />
           </div>
           <div>
             <label>Status</label>
-            <select>
+            <select id="statusFilter">
               <option value="">All</option>
               <option>Completed</option>
               <option>Pending</option>
@@ -96,8 +96,8 @@
             </select>
           </div>
           <div style="display:flex; align-items:flex-end; gap:0.6rem;">
-            <button class="btn">Apply</button>
-            <button class="btn secondary">Download CSV</button>
+            <button class="btn" onclick="applyFilters()">Apply</button>
+            <button class="btn secondary" onclick="downloadCSV()">Download CSV</button>
           </div>
         </div>
 
@@ -112,35 +112,8 @@
                 <th>Location</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>Dec 12, 2025</td>
-                <td>450 mL</td>
-                <td><span class="badge badge-success">Completed</span></td>
-                <td><span class="badge badge-success">Pass</span></td>
-                <td>City Center Clinic</td>
-              </tr>
-              <tr>
-                <td>Sep 01, 2025</td>
-                <td>450 mL</td>
-                <td><span class="badge badge-success">Completed</span></td>
-                <td><span class="badge badge-success">Pass</span></td>
-                <td>Red Cross Hub</td>
-              </tr>
-              <tr>
-                <td>Jun 10, 2025</td>
-                <td>450 mL</td>
-                <td><span class="badge badge-pending">Pending</span></td>
-                <td><span class="badge badge-pending">In Review</span></td>
-                <td>Mobile Drive</td>
-              </tr>
-              <tr>
-                <td>Jan 15, 2025</td>
-                <td>450 mL</td>
-                <td><span class="badge badge-fail">Cancelled</span></td>
-                <td><span class="badge badge-fail">N/A</span></td>
-                <td>Community Hospital</td>
-              </tr>
+            <tbody id="donationsTable">
+              <tr><td colspan="5" style="text-align:center; padding:1.5rem; color:#9ca3af;">Loading donations...</td></tr>
             </tbody>
           </table>
         </div>
@@ -148,5 +121,181 @@
     </main>
   </div>
   <script type="module" src="../../shared-pages/sidebar-toggle.js"></script>
+  <script src="../../shared-pages/api-base.js"></script>
+  <script>
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = `${API_BASE}/api`;
+    const REQUEST_TIMEOUT_MS = 15000;
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('donorId');
+      localStorage.removeItem('userId');
+      window.location.href = '../login-donor.html';
+    }
+
+    function getAuthHeader() {
+      return {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        const options = { method, headers: getAuthHeader(), signal: controller.signal };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        clearTimeout(timeoutId);
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          data = { success: false, message: 'Invalid server response' };
+        }
+        if (response.status === 401) {
+          localStorage.clear();
+          window.location.href = '../login-donor.html';
+          return { success: false, message: 'Unauthorized' };
+        }
+        if (!response.ok) {
+          return { success: false, message: data.message || 'Request failed' };
+        }
+        return data;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError' && retries > 0) {
+          return apiCall(endpoint, method, body, retries - 1);
+        }
+        if (error.name === 'AbortError') {
+          return { success: false, message: 'Request timed out' };
+        }
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    function renderDonations(donations) {
+      const table = document.getElementById('donationsTable');
+      if (!donations || donations.length === 0) {
+        table.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:#9ca3af;">No donation history yet.</td></tr>';
+        return;
+      }
+
+      table.innerHTML = donations.map(d => {
+        const status = d.status || 'Completed';
+        const statusClass = status.toLowerCase() === 'completed'
+          ? 'badge-success'
+          : (status.toLowerCase() === 'pending' ? 'badge-pending' : 'badge-fail');
+        const testResult = d.test_result || (status.toLowerCase() === 'completed' ? 'Pass' : 'N/A');
+        const testClass = testResult.toLowerCase() === 'pass' ? 'badge-success' : (testResult.toLowerCase().includes('review') ? 'badge-pending' : 'badge-fail');
+        return `
+          <tr>
+            <td>${new Date(d.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+            <td>${d.quantity_ml || d.quantity || 0} mL</td>
+            <td><span class="badge ${statusClass}">${status}</span></td>
+            <td><span class="badge ${testClass}">${testResult}</span></td>
+            <td>${d.location || 'Life Link Center'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    let allDonations = [];
+
+    async function loadDonationHistory() {
+      const donorId = localStorage.getItem('donorId') || localStorage.getItem('userId');
+      if (!donorId) {
+        window.location.href = '../login-donor.html';
+        return;
+      }
+      const data = await apiCall(`/donations/donor/${donorId}`);
+      allDonations = Array.isArray(data) ? data : (data.data || data || []);
+      renderDonations(allDonations);
+    }
+
+    function applyFilters() {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      const status = document.getElementById('statusFilter').value;
+
+      let filtered = [...allDonations];
+
+      // Filter by date range
+      if (fromDate) {
+        const from = new Date(fromDate);
+        filtered = filtered.filter(d => new Date(d.date || d.donation_date) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999); // Include the entire end date
+        filtered = filtered.filter(d => new Date(d.date || d.donation_date) <= to);
+      }
+
+      // Filter by status
+      if (status) {
+        filtered = filtered.filter(d => {
+          const donationStatus = (d.status || 'Completed').toLowerCase();
+          return donationStatus === status.toLowerCase();
+        });
+      }
+
+      renderDonations(filtered);
+    }
+
+    function downloadCSV() {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      const status = document.getElementById('statusFilter').value;
+
+      let data = [...allDonations];
+
+      // Apply same filters
+      if (fromDate) {
+        const from = new Date(fromDate);
+        data = data.filter(d => new Date(d.date || d.donation_date) >= from);
+      }
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        data = data.filter(d => new Date(d.date || d.donation_date) <= to);
+      }
+      if (status) {
+        data = data.filter(d => {
+          const donationStatus = (d.status || 'Completed').toLowerCase();
+          return donationStatus === status.toLowerCase();
+        });
+      }
+
+      // Generate CSV
+      const headers = ['Date', 'Quantity (mL)', 'Status', 'Test Result', 'Location'];
+      const rows = data.map(d => [
+        new Date(d.date || d.donation_date).toLocaleDateString('en-US'),
+        d.quantity_ml || d.quantity || 0,
+        d.status || 'Completed',
+        d.test_result || 'Pass',
+        d.location || 'Life Link Center'
+      ]);
+
+      let csv = headers.join(',') + '\n';
+      csv += rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+      // Download
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `donation-history-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDonationHistory);
+  </script>
 </body>
 </html>

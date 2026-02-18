@@ -118,6 +118,31 @@
       margin-bottom: 1rem;
     }
     
+    .login-link {
+      border-top: 1px solid #e5e7eb;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      text-align: center;
+    }
+    
+    .login-link p {
+      margin: 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+    
+    .login-link a {
+      color: #c62828;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .login-link a:hover {
+      color: #a01e1e;
+      text-decoration: underline;
+    }
+    
     @media (max-width: 768px) {
       .container {
         padding: 1rem;
@@ -192,6 +217,10 @@
 
         <button type="submit">Register</button>
       </form>
+      
+      <div class="login-link">
+        <p>Have an account? <a href="login-donor.html">Login here</a></p>
+      </div>
     </div>
   </div>
 
@@ -232,7 +261,13 @@
           body: JSON.stringify(formData)
         });
         
-        const result = await response.json();
+        const text = await response.text();
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (parseError) {
+          result = { success: false, message: text || 'Invalid server response' };
+        }
         
         if (result.success) {
           successMsg.textContent = '✓ Registration successful!';
@@ -242,7 +277,8 @@
           // Redirect to login
           setTimeout(() => window.location.href = 'login-donor.html', 2000);
         } else {
-          alert('Error: ' + result.message);
+          const details = result?.error ? ` (${result.error})` : '';
+          alert('Error: ' + (result.message || 'Registration failed') + details);
           submitButton.disabled = false;
           submitButton.textContent = 'Register';
         }

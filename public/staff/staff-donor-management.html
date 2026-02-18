@@ -477,6 +477,20 @@
     </div>
   </div>
 
+  <!-- Donor History Modal -->
+  <div id="donorHistoryModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Donation History</h2>
+        <button class="close-btn" onclick="closeDonorHistoryModal()">✕</button>
+      </div>
+      <div id="donorHistoryContent"></div>
+      <div style="text-align: right; margin-top: 1.5rem;">
+        <button class="btn" onclick="closeDonorHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../shared-pages/api-base.js"></script>
   <script>
     const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
@@ -549,19 +563,8 @@
           headers: { 'Authorization': `Bearer ${auth.token}` }
         });
         const data = await res.json();
-        let donors = Array.isArray(data) ? data : (data.data || []);
-        
-        // Sample data fallback
-        if (!donors || donors.length === 0) {
-          donors = [
-            { id: '1', full_name: 'Alex Donor', email: 'alex@donor.com', blood_type: 'O+', phone: '555-1111', last_donation_date: new Date(Date.now() - 60*24*60*60*1000).toISOString() },
-            { id: '2', full_name: 'Jordan Smith', email: 'jordan@donor.com', blood_type: 'A+', phone: '555-2222', last_donation_date: new Date(Date.now() - 100*24*60*60*1000).toISOString() },
-            { id: '3', full_name: 'Casey Johnson', email: 'casey@donor.com', blood_type: 'B-', phone: '555-3333', last_donation_date: new Date(Date.now() - 40*24*60*60*1000).toISOString() },
-            { id: '4', full_name: 'Morgan Lee', email: 'morgan@donor.com', blood_type: 'AB+', phone: '555-4444', last_donation_date: new Date(Date.now() - 120*24*60*60*1000).toISOString() },
-            { id: '5', full_name: 'Taylor Brown', email: 'taylor@donor.com', blood_type: 'O-', phone: '555-5555', last_donation_date: null }
-          ];
-        }
-        
+        const donors = Array.isArray(data) ? data : (data.data || []);
+
         document.getElementById('totalDonors').textContent = donors.length;
         
         const eligible = donors.filter(d => {
@@ -573,6 +576,10 @@
         document.getElementById('eligibleDonors').textContent = eligible.length;
 
         const tbody = document.getElementById('donorsList');
+        if (!donors.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No donors found.</td></tr>';
+          return;
+        }
         tbody.innerHTML = donors.map(d => {
           const lastDonation = d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString() : 'Never';
           const daysSince = d.last_donation_date ? Math.floor((new Date() - new Date(d.last_donation_date)) / (1000 * 60 * 60 * 24)) : 999;
@@ -641,7 +648,83 @@
     }
 
     async function viewDonorHistory(donorId) {
-      alert('Donation history for donor ' + donorId + ' - Feature coming soon');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login again');
+        window.location.href = '../login-staff.html';
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API}/staff/donors/${donorId}`, { 
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
+        
+        if (!data.success) {
+          alert('Failed to load donor history: ' + (data.message || 'Unknown error'));
+          return;
+        }
+
+        const donor = data.data;
+        const donations = donor.donations || [];
+
+        let html = `
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.5rem;">${donor.full_name}</h3>
+            <div style="color: #6b7280;">Blood Type: ${donor.blood_type} | Email: ${donor.email}</div>
+          </div>
+        `;
+        
+        if (donations.length === 0) {
+          html += '<div class="alert alert-info">No donations recorded yet</div>';
+        } else {
+          html += `
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f9fafb;">
+                  <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Date</th>
+                  <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Blood Type</th>
+                  <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Quantity</th>
+                  <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Recorded By</th>
+                  <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid #e5e7eb;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+          
+          donations.forEach(d => {
+            const status = d.status || 'completed';
+            html += `
+              <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 0.8rem;">${new Date(d.donation_date).toLocaleDateString()}</td>
+                <td style="padding: 0.8rem;">${d.blood_type}</td>
+                <td style="padding: 0.8rem;">${d.quantity_ml} ml</td>
+                <td style="padding: 0.8rem;">${d.staff_name || 'Unknown'}</td>
+                <td style="padding: 0.8rem;"><span class="badge-status badge-eligible">${status}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+              </tbody>
+            </table>
+          `;
+        }
+
+        document.getElementById('donorHistoryContent').innerHTML = html;
+        document.getElementById('donorHistoryModal').classList.add('active');
+        
+      } catch (err) {
+        alert('Error loading donor history: ' + err.message);
+      }
+    }
+
+    function closeDonorHistoryModal() {
+      document.getElementById('donorHistoryModal').classList.remove('active');
     }
 
     async function deleteDonor(donorId) {

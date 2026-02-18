@@ -256,7 +256,6 @@
     const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
     const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
     const REQUEST_TIMEOUT_MS = 15000;
-    const DEMO_STATS = { events: 3, donations: 12, years: 1.8 };
     let currentStaffData = null;
     let statsLocked = false;
 
@@ -299,11 +298,11 @@
       return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
 
-    function applyDemoStats() {
+    function applyEmptyStats() {
       statsLocked = true;
-      document.getElementById('eventsCount').textContent = DEMO_STATS.events;
-      document.getElementById('donationsCount').textContent = DEMO_STATS.donations;
-      document.getElementById('yearsService').textContent = DEMO_STATS.years;
+      document.getElementById('eventsCount').textContent = '0';
+      document.getElementById('donationsCount').textContent = '0';
+      document.getElementById('yearsService').textContent = '0';
     }
 
     async function apiCall(endpoint, method = 'GET', body = null, retries = 1) {
@@ -438,7 +437,7 @@
 
         const stats = await apiCall(`/staff/stats/${staffId}`);
         if (!stats.success || !stats.data) {
-          applyDemoStats();
+          applyEmptyStats();
           return;
         }
 
@@ -454,11 +453,11 @@
           const years = ((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
           document.getElementById('yearsService').textContent = years || '0';
         } else {
-          applyDemoStats();
+          applyEmptyStats();
         }
       } catch (err) {
         console.error('Error loading staff stats:', err);
-        applyDemoStats();
+        applyEmptyStats();
       }
     }
 

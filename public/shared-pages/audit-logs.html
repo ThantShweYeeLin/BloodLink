@@ -134,10 +134,6 @@
         <h4>Active Users</h4>
         <div class="number" id="activeUsers">-</div>
       </div>
-      <div class="stat-card">
-        <h4>Critical Actions</h4>
-        <div class="number" id="criticalActions">-</div>
-      </div>
     </div>
 
     <div class="toolbar">
@@ -242,25 +238,29 @@
     }
 
     async function loadAuditLogs() {
-      // Sample data for display
-      const sampleLogs = [
-        { id: 1, action: 'INSERT', table_name: 'donors', record_id: 5, user_type: 'staff', user_id: 1, created_at: new Date(Date.now() - 3600000).toISOString(), changes: '{"status":"active"}' },
-        { id: 2, action: 'UPDATE', table_name: 'blood_inventory', record_id: 12, user_type: 'staff', user_id: 2, created_at: new Date(Date.now() - 7200000).toISOString(), changes: '{"quantity_ml":"450"}' },
-        { id: 3, action: 'DELETE', table_name: 'blood_requests', record_id: 8, user_type: 'staff', user_id: 1, created_at: new Date(Date.now() - 10800000).toISOString(), changes: '{"reason":"cancelled"}' },
-        { id: 4, action: 'INSERT', table_name: 'donation_history', record_id: 23, user_type: 'staff', user_id: 3, created_at: new Date(Date.now() - 14400000).toISOString(), changes: '{"blood_type":"O+"}' },
-        { id: 5, action: 'UPDATE', table_name: 'donors', record_id: 2, user_type: 'staff', user_id: 2, created_at: new Date(Date.now() - 18000000).toISOString(), changes: '{"status":"inactive"}' }
-      ];
+      const data = await apiCall('/staff/audit-logs');
+      if (!data.success) {
+        allLogs = [];
+        filteredLogs = [];
+        document.getElementById('totalLogs').textContent = 0;
+        document.getElementById('todayLogs').textContent = 0;
+        document.getElementById('activeUsers').textContent = 0;
+        displayLogs();
+        return;
+      }
 
-      allLogs = sampleLogs;
-      filteredLogs = sampleLogs;
-      
-      // Update stats with sample data
-      document.getElementById('totalLogs').textContent = 45;
-      document.getElementById('todayLogs').textContent = 12;
-      document.getElementById('activeUsers').textContent = 3;
-      document.getElementById('criticalActions').textContent = 8;
+      const logs = Array.isArray(data.data) ? data.data : (data.data?.logs || []);
+      allLogs = logs;
+      filteredLogs = allLogs;
 
-      // Display logs immediately
+      const today = new Date().toISOString().split('T')[0];
+      const todayCount = allLogs.filter(log => log.created_at?.startsWith(today)).length;
+      const uniqueUsers = new Set(allLogs.map(log => `${log.user_type}_${log.user_id}`)).size;
+
+      document.getElementById('totalLogs').textContent = allLogs.length;
+      document.getElementById('todayLogs').textContent = todayCount;
+      document.getElementById('activeUsers').textContent = uniqueUsers;
+
       displayLogs();
     }
 
@@ -296,10 +296,11 @@
           'DELETE': 'badge-delete'
         }[log.action] || 'badge-view';
 
+        const userLabel = log.user_name ? `${log.user_type.toUpperCase()} — ${log.user_name}` : `${log.user_type ? log.user_type.toUpperCase() : 'SYSTEM'} #${log.user_id}`;
         return `
           <tr>
             <td><small>${new Date(log.created_at).toLocaleString()}</small></td>
-            <td>${log.user_type ? log.user_type.toUpperCase() : 'System'} #${log.user_id}</td>
+            <td>${userLabel}</td>
             <td><span class="badge ${actionClass}">${log.action}</span></td>
             <td>${log.table_name}</td>
             <td><code style="background: #f3f4f6; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">#${log.record_id}</code></td>
@@ -343,6 +344,10 @@
           <div class="detail-item">
             <strong>User ID</strong>
             <span>#${log.user_id}</span>
+          </div>
+          <div class="detail-item">
+            <strong>User Name</strong>
+            <span>${log.user_name || 'N/A'}</span>
           </div>
           <div class="detail-item">
             <strong>Action</strong>

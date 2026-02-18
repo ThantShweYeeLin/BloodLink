@@ -32,6 +32,8 @@
     .btn:hover { background: #a01e1e; }
     .btn-secondary { background: #6b7280; }
     .btn-secondary:hover { background: #4b5563; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
     .event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
     .event-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #b91c1c; }
     .event-card h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
@@ -65,6 +67,8 @@
     @media (max-width: 1024px) { body { grid-template-columns: 1fr; } .sidebar { position: relative; height: auto; } }
     @media (max-width: 768px) { .main-content { padding: 1rem; } .header { flex-direction: column; text-align: center; } }
     .participant-item { padding: 0.5rem 0; font-size: 0.9rem; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
   </style>
   <link rel="stylesheet" href="./sidebar-toggle.css" />
 </head>
@@ -162,6 +166,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
           <button type="submit" class="btn">Save Event</button>
+          <button type="button" class="btn btn-success" id="completeBtn" style="display: none;" onclick="markAsCompleted()">Mark as Completed</button>
         </div>
       </form>
     </div>
@@ -228,58 +233,56 @@
     }
 
     async function loadEvents() {
-      // Sample event data for display
-      const sampleEvents = [
-        {
-          id: '1',
-          event_name: 'Community Blood Drive - Downtown',
-          event_date: '2026-02-15T09:00:00',
-          location: 'Central Community Center, Main St',
-          target_collection: 15000,
-          description: 'Annual community blood donation event',
-          participants: 24,
-          registered_donors: ['Alex Martinez', 'Sarah Chen', 'Michael Brown']
-        },
-        {
-          id: '2',
-          event_name: 'University Campus Blood Donation',
-          event_date: '2026-02-20T10:00:00',
-          location: 'State University Student Union',
-          target_collection: 20000,
-          description: 'Student and faculty blood drive',
-          participants: 32,
-          registered_donors: ['Emma Wilson', 'James Taylor', 'Olivia Davis']
-        },
-        {
-          id: '3',
-          event_name: 'Corporate Blood Drive',
-          event_date: '2026-02-25T14:00:00',
-          location: 'Tech Corp Headquarters',
-          target_collection: 10000,
-          description: 'Employee wellness blood donation event',
-          participants: 18,
-          registered_donors: ['David Kim', 'Lisa Johnson']
-        },
-        {
-          id: '4',
-          event_name: 'Mobile Blood Drive - East District',
-          event_date: '2026-01-28T08:00:00',
-          location: 'East District Park',
-          target_collection: 12000,
-          description: 'Mobile unit blood collection',
-          participants: 15,
-          registered_donors: ['Robert Lee', 'Maria Garcia']
+      try {
+        const data = await apiCall('/events');
+        
+        console.log('Events API response:', data);
+        
+        if (!data.success) {
+          console.error('Failed to load events:', data.message);
+          allEvents = [];
+        } else {
+          const events = data.data || [];
+          console.log('Events data:', events);
+          
+          allEvents = events.map(event => ({
+            id: event.id || event._id,
+            event_name: event.title || event.event_name,
+            event_date: event.date || event.event_date,
+            start_time: event.start_time,
+            end_time: event.end_time,
+            location: event.location,
+            target_collection: event.expected ? event.expected * 450 : 0,
+            description: event.notes || event.description || '',
+            participants: (event.participants || []).length,
+            participant_list: event.participants || [],
+            status: event.status || (new Date(event.date || event.event_date) > new Date() ? 'upcoming' : 'past')
+          }));
+          
+          console.log('Mapped events:', allEvents);
         }
-      ];
-
-      allEvents = sampleEvents;
-      displayEvents(allEvents);
+        
+        displayEvents();
+      } catch (error) {
+        console.error('Error loading events:', error);
+        allEvents = [];
+        displayEvents();
+      }
     }
 
-    function displayEvents(events) {
+    function displayEvents(filteredEvents) {
+      const events = filteredEvents || allEvents;
+      console.log('Displaying events:', events.length, events);
+      
+      if (events.length === 0) {
+        document.getElementById('eventsContainer').innerHTML = '<div class="no-data">No events found</div>';
+        document.getElementById('eventTable').innerHTML = '<tr><td colspan="7" class="no-data">No events found</td></tr>';
+        return;
+      }
+      
       const gridHtml = events.map(e => {
         const date = new Date(e.event_date);
-        const status = new Date(e.event_date) > new Date() ? 'Upcoming' : 'Completed';
+        const status = e.status === 'completed' ? 'Completed' : (new Date(e.event_date) > new Date() ? 'Upcoming' : 'Past');
         return `
           <div class="event-card">
             <h3>${e.event_name}</h3>
@@ -293,8 +296,9 @@
               <span>👥 Participants: ${e.participants || 0}</span>
             </div>
             <div class="event-actions">
-              <button class="btn" onclick="viewParticipants('${e.id}')">Participants</button>
-              <button class="btn btn-secondary" onclick="editEvent('${e.id}')">Edit</button>
+              <button class="btn" onclick="viewParticipants(${e.id})">Participants</button>
+              <button class="btn btn-secondary" onclick="editEvent(${e.id})">Edit</button>
+              <button class="btn btn-danger" onclick="deleteEvent(${e.id})">Delete</button>
             </div>
           </div>
         `;
@@ -309,8 +313,11 @@
           <td>${e.location}</td>
           <td>${e.participants || 0}</td>
           <td>${e.target_collection}ml</td>
-          <td><span class="event-badge">${new Date(e.event_date) > new Date() ? 'Upcoming' : 'Completed'}</span></td>
-          <td><button class="btn btn-secondary" onclick="editEvent('${e.id}')">Edit</button></td>
+          <td><span class="event-badge">${e.status === 'completed' ? 'Completed' : (new Date(e.event_date) > new Date() ? 'Upcoming' : 'Past')}</span></td>
+          <td>
+            <button class="btn btn-secondary" onclick="editEvent(${e.id})" style="padding: 0.4rem 0.8rem; margin-right: 0.5rem;">Edit</button>
+            <button class="btn btn-danger" onclick="deleteEvent(${e.id})" style="padding: 0.4rem 0.8rem;">Delete</button>
+          </td>
         </tr>
       `).join('');
 
@@ -330,6 +337,7 @@
       currentEditId = null;
       document.getElementById('modalTitle').textContent = 'Create New Event';
       document.getElementById('eventForm').reset();
+      document.getElementById('completeBtn').style.display = 'none';
       document.getElementById('eventModal').classList.add('active');
     }
 
@@ -338,41 +346,72 @@
     }
 
     async function editEvent(eventId) {
-      const event = allEvents.find(e => e.id === eventId);
-      if (!event) return;
+      console.log('Edit event called with ID:', eventId, 'Type:', typeof eventId);
+      const event = allEvents.find(e => e.id == eventId); // Use == for type coercion
+      if (!event) {
+        console.error('Event not found:', eventId, 'Available events:', allEvents.map(e => e.id));
+        showAlert('Event not found', 'error');
+        return;
+      }
 
       currentEditId = eventId;
       document.getElementById('modalTitle').textContent = 'Edit Event';
       document.getElementById('eventName').value = event.event_name;
-      document.getElementById('eventDate').value = event.event_date.split('T')[0];
-      document.getElementById('eventTime').value = event.event_date.split('T')[1]?.slice(0, 5) || '09:00';
+      
+      // Handle date - it might be in different formats
+      const eventDate = event.event_date;
+      if (eventDate) {
+        const dateObj = new Date(eventDate);
+        const dateStr = dateObj.toISOString().split('T')[0];
+        document.getElementById('eventDate').value = dateStr;
+      }
+      
+      document.getElementById('eventTime').value = event.start_time || '09:00';
       document.getElementById('eventLocation').value = event.location;
       document.getElementById('eventTarget').value = event.target_collection;
       document.getElementById('eventDescription').value = event.description || '';
+      
+      // Show complete button only for non-completed events
+      const completeBtn = document.getElementById('completeBtn');
+      if (event.status === 'completed') {
+        completeBtn.style.display = 'none';
+      } else {
+        completeBtn.style.display = 'inline-block';
+      }
+      
       document.getElementById('eventModal').classList.add('active');
     }
 
     async function saveEvent(e) {
       e.preventDefault();
 
-      const dateTime = `${document.getElementById('eventDate').value}T${document.getElementById('eventTime').value}:00`;
+      const eventDate = document.getElementById('eventDate').value;
+      const eventTime = document.getElementById('eventTime').value || '09:00';
+      const targetMl = parseInt(document.getElementById('eventTarget').value);
+      
       const data = {
-        event_name: document.getElementById('eventName').value,
-        event_date: dateTime,
+        title: document.getElementById('eventName').value,
+        date: eventDate,
+        start_time: eventTime,
+        end_time: eventTime, // You can add a separate end time field if needed
         location: document.getElementById('eventLocation').value,
-        target_collection: parseInt(document.getElementById('eventTarget').value),
-        description: document.getElementById('eventDescription').value
+        expected: Math.floor(targetMl / 450), // Convert ml to number of donors
+        notes: document.getElementById('eventDescription').value
       };
+
+      console.log('Saving event with data:', data);
 
       let result;
       if (currentEditId) {
-        result = await apiCall(`/staff/events/${currentEditId}`, 'PUT', data);
+        result = await apiCall(`/events/${currentEditId}`, 'PUT', data);
       } else {
-        result = await apiCall('/staff/events', 'POST', data);
+        result = await apiCall('/events', 'POST', data);
       }
 
+      console.log('Save result:', result);
+
       if (result.success) {
-        showAlert(currentEditId ? 'Event updated' : 'Event created', 'success');
+        showAlert(currentEditId ? 'Event updated successfully!' : 'Event created successfully!', 'success');
         closeEventModal();
         loadEvents();
       } else {
@@ -380,20 +419,77 @@
       }
     }
 
-    async function viewParticipants(eventId) {
-      const event = allEvents.find(e => e.id === eventId);
-      if (!event) return;
-
-      let html = `<div style="margin-bottom: 1.5rem;"><strong>${event.event_name}</strong><br><small>${new Date(event.event_date).toLocaleDateString()}</small></div>`;
+    async function markAsCompleted() {
+      if (!currentEditId) return;
       
-      if (!event.registered_donors || event.registered_donors.length === 0) {
+      if (!confirm('Mark this event as completed?')) return;
+      
+      const result = await apiCall(`/events/${currentEditId}/complete`, 'PUT');
+      
+      if (result.success) {
+        showAlert('Event marked as completed!', 'success');
+        closeEventModal();
+        loadEvents();
+      } else {
+        showAlert(result.message || 'Failed to mark event as completed', 'error');
+      }
+    }
+
+    async function viewParticipants(eventId) {
+      console.log('View participants called with ID:', eventId, 'Type:', typeof eventId);
+      const event = allEvents.find(e => e.id == eventId); // Use == for type coercion
+      if (!event) {
+        console.error('Event not found:', eventId, 'Available events:', allEvents.map(e => e.id));
+        showAlert('Event not found', 'error');
+        return;
+      }
+
+      let html = `
+        <div style="margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">${event.event_name}</h3>
+          <div style="color: #6b7280; font-size: 0.9rem;">${new Date(event.event_date).toLocaleDateString()}</div>
+        </div>
+      `;
+      
+      const participants = event.participant_list || [];
+      
+      if (participants.length === 0) {
         html += '<div class="no-data">No participants registered yet</div>';
       } else {
-        html += '<ul class="participant-list">';
-        event.registered_donors.forEach(d => {
-          html += `<li class="participant-item">✓ ${d}</li>`;
+        html += `
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f3f4f6;">
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb;">Name</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb;">Email</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb;">Blood Type</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        participants.forEach(p => {
+          const status = p.status || 'registered';
+          const bloodType = p.blood || 'Unknown';
+          const statusColor = status.toLowerCase() === 'confirmed' ? '#10b981' : '#6b7280';
+          const displayName = p.name || p.email || 'Unknown';
+          const displayEmail = p.email || displayName;
+          
+          html += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 0.75rem;">${displayName}</td>
+              <td style="padding: 0.75rem;">${displayEmail}</td>
+              <td style="padding: 0.75rem;">${bloodType}</td>
+              <td style="padding: 0.75rem; color: ${statusColor}; font-weight: 600; text-transform: capitalize;">${status}</td>
+            </tr>
+          `;
         });
-        html += '</ul>';
+        
+        html += `
+            </tbody>
+          </table>
+        `;
       }
 
       document.getElementById('participantsContent').innerHTML = html;
@@ -402,6 +498,23 @@
 
     function closeParticipantsModal() {
       document.getElementById('participantsModal').classList.remove('active');
+    }
+
+    async function deleteEvent(eventId) {
+      if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+        return;
+      }
+
+      console.log('Deleting event:', eventId);
+      const result = await apiCall(`/events/${eventId}`, 'DELETE');
+      console.log('Delete completed');
+
+      if (result.success) {
+        showAlert('✓ Event deleted successfully!', 'success');
+        loadEvents();
+      } else {
+        showAlert(result.message || 'Failed to delete event', 'error');
+      }
     }
 
     function showAlert(message, type) {

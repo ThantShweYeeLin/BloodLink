@@ -309,15 +309,20 @@
         <h2>Donor Selection</h2>
 
         <div class="info-box">
-          💡 Only donors who are currently eligible for donation are shown in the list.
+          💡 Enter donor name and email. The system will match with existing donors. Only eligible donors can donate.
         </div>
 
         <div class="form-group">
-          <label for="donorSelect">Select Donor *</label>
-          <select id="donorSelect" onchange="selectDonor()">
-            <option value="">-- Loading eligible donors --</option>
-          </select>
+          <label for="donorName">Donor Name *</label>
+          <input type="text" id="donorName" placeholder="Enter donor's full name" oninput="onDonorInputChange()">
         </div>
+
+        <div class="form-group">
+          <label for="donorEmail">Donor Email *</label>
+          <input type="email" id="donorEmail" placeholder="Enter donor's email" oninput="onDonorInputChange()">
+        </div>
+
+        <div id="donorMatchStatus" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;"></div>
 
         <!-- Donor Info -->
         <div id="donorInfo" class="donor-info">
@@ -560,9 +565,10 @@
   </div>
 
   <script>
-    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
+    const API_URL = `${window.LIFELINK_API_BASE || 'http://localhost:3000'}/api`;
     let selectedDonor = null;
     let selectedEvent = null;
+    let allDonors = [];
     let testResults = {
       bloodTypePass: null,
       screeningPass: null,
@@ -573,7 +579,9 @@
     // Auth check
     function checkAuth() {
       const token = localStorage.getItem('token');
-      if (!token) {
+      const userType = localStorage.getItem('userType');
+      if (!token || userType !== 'staff') {
+        localStorage.clear();
         window.location.href = 'login-staff.html';
         return false;
       }
@@ -596,7 +604,19 @@
         if (body) options.body = JSON.stringify(body);
 
         const response = await fetch(`${API_URL}${endpoint}`, options);
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          data = { success: false, message: text || 'Invalid server response' };
+        }
+        if (!response.ok && data?.success !== false) {
+          data = {
+            success: false,
+            message: `HTTP ${response.status}: ${response.statusText}`
+          };
+        }
 
         if (!response.ok && response.status === 401) {
           localStorage.clear();
@@ -606,7 +626,7 @@
         return data;
       } catch (error) {
         console.error('API Error:', error);
-        return { success: false, message: 'Network error' };
+        return { success: false, message: `Network error: ${error?.message || 'Unknown error'}` };
       }
     }
 
@@ -614,11 +634,57 @@
     async function loadDonors() {
       const data = await apiCall('/staff/donors');
       if (!data.success) return showError('Failed to load donors');
+      
+      // Store all donors for matching
+      allDonors = data.data;
+    }
 
-      const eligible = data.data.filter(d => d.isEligible);
-      const select = document.getElementById('donorSelect');
-      select.innerHTML = '<option value="">-- Select Donor --</option>' +
-        eligible.map(d => `<option value="${d.id}" data-blood="${d.blood_type}">${d.full_name} (${d.blood_type})</option>`).join('');
+    function onDonorInputChange() {
+      const name = document.getElementById('donorName').value.trim().toLowerCase();
+      const email = document.getElementById('donorEmail').value.trim().toLowerCase();
+
+      if (!name || !email) {
+        document.getElementById('donorMatchStatus').style.display = 'none';
+        document.getElementById('donorInfo').classList.remove('visible');
+        document.getElementById('summaryDonor').textContent = 'Not selected';
+        selectedDonor = null;
+        return;
+      }
+
+      // Search for matching donor
+      const matchedDonor = allDonors.find(d => 
+        d.full_name.toLowerCase().includes(name) && 
+        d.email.toLowerCase() === email
+      );
+
+      const statusDiv = document.getElementById('donorMatchStatus');
+
+      if (matchedDonor) {
+        if (!matchedDonor.isEligible) {
+          statusDiv.innerHTML = `<div style="background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; padding: 0.75rem;">⚠️ Donor found but not eligible. Must wait ${matchedDonor.daysUntilEligible} more days.</div>`;
+          statusDiv.style.display = 'block';
+          document.getElementById('donorInfo').classList.remove('visible');
+          document.getElementById('summaryDonor').textContent = 'Not selected';
+          selectedDonor = null;
+          return;
+        }
+
+        statusDiv.innerHTML = `<div style="background: #d1fae5; border-left: 4px solid #10b981; color: #065f46; padding: 0.75rem;">✓ Donor found and eligible</div>`;
+        statusDiv.style.display = 'block';
+        selectedDonor = {
+          id: matchedDonor.id,
+          name: matchedDonor.full_name,
+          blood: matchedDonor.blood_type
+        };
+        document.getElementById('summaryDonor').textContent = matchedDonor.full_name;
+        fetchDonorDetails(matchedDonor.id);
+      } else {
+        statusDiv.innerHTML = `<div style="background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 0.75rem;">✗ No matching donor found in system</div>`;
+        statusDiv.style.display = 'block';
+        document.getElementById('donorInfo').classList.remove('visible');
+        document.getElementById('summaryDonor').textContent = 'Not selected';
+        selectedDonor = null;
+      }
     }
 
     async function loadEvents() {
@@ -632,27 +698,6 @@
     }
 
     // Donor selection
-    function selectDonor() {
-      const select = document.getElementById('donorSelect');
-      const donorId = select.value;
-
-      if (!donorId) {
-        document.getElementById('donorInfo').classList.remove('visible');
-        selectedDonor = null;
-        return;
-      }
-
-      const option = select.options[select.selectedIndex];
-      selectedDonor = {
-        id: donorId,
-        name: option.text.split(' (')[0],
-        blood: option.dataset.blood
-      };
-
-      // Load full donor data
-      fetchDonorDetails(donorId);
-    }
-
     async function fetchDonorDetails(donorId) {
       const data = await apiCall(`/staff/donors/${donorId}`);
       if (!data.success) return;
@@ -741,7 +786,7 @@
       }
 
       // Enable submit if donor selected and all tests passed
-      const donorSelected = document.getElementById('donorSelect').value;
+      const donorSelected = selectedDonor !== null;
       const submitBtn = document.getElementById('submitBtn');
       
       const screeningFailed = testResults.screeningPass === false;
@@ -801,14 +846,16 @@
         showSuccess(`✓ Donation recorded successfully!\n\nDonation ID: ${result.data.id}\nExpiry Date: ${result.data.expiryDate}`);
         resetForm();
       } else {
-        showError(result.message || 'Failed to record donation');
+        const errorDetails = result?.error ? ` (code: ${result.error.code || 'n/a'}, sql: ${result.error.sqlMessage || 'n/a'})` : '';
+        showError(`${result.message || 'Failed to record donation'}${errorDetails}`);
         btn.disabled = false;
         btn.textContent = 'Record Donation';
       }
     }
 
     function resetForm() {
-      document.getElementById('donorSelect').value = '';
+      document.getElementById('donorName').value = '';
+      document.getElementById('donorEmail').value = '';
       document.getElementById('eventSelect').value = '';
       document.getElementById('bloodType').value = '';
       document.getElementById('quantity').value = '450';
@@ -820,6 +867,7 @@
       document.querySelectorAll('.test-item').forEach(item => item.classList.remove('selected', 'failed'));
 
       document.getElementById('donorInfo').classList.remove('visible');
+      document.getElementById('donorMatchStatus').style.display = 'none';
       document.getElementById('eventInfo').style.display = 'none';
       document.getElementById('rejectionAlert').style.display = 'none';
       document.getElementById('summaryTests').innerHTML = '<span class="badge badge-warning">Incomplete</span>';
@@ -830,7 +878,6 @@
       selectedEvent = null;
 
       calculateExpiry();
-      loadDonors();
     }
 
     // Messages

@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 // Database connection test on startup
 async function testDatabaseConnection() {
   try {
-    const result = await query('SELECT NOW() as current_time');
+    const result = await query('SELECT 1 AS ok');
     console.log('✓ Database connected successfully');
     console.log('✓ MySQL/MariaDB ready');
     return true;
@@ -274,14 +274,42 @@ app.post('/api/register/donor', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     console.log('🔐 Password hashed. Running INSERT query...');
+    const donorColumns = await query('SHOW COLUMNS FROM donors');
+    const donorColumnSet = new Set(donorColumns.map(col => col.Field));
+    const donorFields = [];
+    const donorValues = [];
+    const addDonorField = (field, value) => {
+      if (donorColumnSet.has(field)) {
+        donorFields.push(field);
+        donorValues.push(value);
+      }
+    };
+
+    addDonorField('full_name', fullName);
+    addDonorField('email', email.toLowerCase());
+    addDonorField('phone', phone);
+    if (donorColumnSet.has('date_of_birth')) {
+      addDonorField('date_of_birth', dob);
+    } else if (donorColumnSet.has('dob')) {
+      addDonorField('dob', dob);
+    }
+    addDonorField('blood_type', bloodType);
+    addDonorField('address', address);
+    addDonorField('city', city);
+    addDonorField('password_hash', passwordHash);
+    if (donorColumnSet.has('is_active')) {
+      addDonorField('is_active', true);
+    }
+
+    const donorPlaceholders = donorFields.map(() => '?').join(', ');
     const result = await query(
-      `INSERT INTO donors (full_name, email, phone, date_of_birth, blood_type, address, city, password_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-      [fullName, email.toLowerCase(), phone, dob, bloodType, address, city, passwordHash]
+      `INSERT INTO donors (${donorFields.join(', ')}) VALUES (${donorPlaceholders})`,
+      donorValues
     );
 
-    console.log('✅ Donor registration successful:', result[0]);
-    res.status(201).json({ success: true, message: 'Donor registered successfully', donorId: String(result[0].id) });
+    const donorId = result?.insertId || (Array.isArray(result) && result[0]?.id);
+    console.log('✅ Donor registration successful:', donorId);
+    res.status(201).json({ success: true, message: 'Donor registered successfully', donorId: String(donorId) });
   } catch (error) {
     console.error('❌ Donor registration error (SQL):', error.message);
     console.error('   Full error:', error);
@@ -323,13 +351,41 @@ app.post('/api/register/hospital', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const hospitalColumns = await query('SHOW COLUMNS FROM hospitals');
+    const hospitalColumnSet = new Set(hospitalColumns.map(col => col.Field));
+    const hospitalFields = [];
+    const hospitalValues = [];
+    const addHospitalField = (field, value) => {
+      if (hospitalColumnSet.has(field)) {
+        hospitalFields.push(field);
+        hospitalValues.push(value);
+      }
+    };
+
+    addHospitalField('hospital_name', hospitalName);
+    addHospitalField('license_number', licenseNumber);
+    addHospitalField('contact_person', contactPerson);
+    addHospitalField('email', email.toLowerCase());
+    addHospitalField('phone', phone);
+    addHospitalField('address', address);
+    addHospitalField('city', city);
+    addHospitalField('bed_capacity', parseInt(bedCapacity));
+    addHospitalField('password_hash', passwordHash);
+    if (hospitalColumnSet.has('is_verified')) {
+      addHospitalField('is_verified', false);
+    }
+    if (hospitalColumnSet.has('is_active')) {
+      addHospitalField('is_active', true);
+    }
+
+    const hospitalPlaceholders = hospitalFields.map(() => '?').join(', ');
     const result = await query(
-      `INSERT INTO hospitals (hospital_name, license_number, contact_person, email, phone, address, city, bed_capacity, password_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-      [hospitalName, licenseNumber, contactPerson, email.toLowerCase(), phone, address, city, parseInt(bedCapacity), passwordHash]
+      `INSERT INTO hospitals (${hospitalFields.join(', ')}) VALUES (${hospitalPlaceholders})`,
+      hospitalValues
     );
 
-    res.status(201).json({ success: true, message: 'Hospital registered successfully', hospitalId: String(result[0].id) });
+    const hospitalId = result?.insertId || (Array.isArray(result) && result[0]?.id);
+    res.status(201).json({ success: true, message: 'Hospital registered successfully', hospitalId: String(hospitalId) });
   } catch (error) {
     console.error('Hospital registration error (SQL):', error.message, error.stack);
     const isDev = process.env.NODE_ENV !== 'production';
@@ -376,13 +432,41 @@ app.post('/api/register/staff', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const staffColumns = await query('SHOW COLUMNS FROM staff');
+    const staffColumnSet = new Set(staffColumns.map(col => col.Field));
+    const staffFields = [];
+    const staffValues = [];
+    const addStaffField = (field, value) => {
+      if (staffColumnSet.has(field)) {
+        staffFields.push(field);
+        staffValues.push(value);
+      }
+    };
+
+    addStaffField('full_name', fullName);
+    addStaffField('employee_id', employeeId);
+    addStaffField('certification', certification);
+    addStaffField('email', email.toLowerCase());
+    addStaffField('phone', phone);
+    addStaffField('blood_bank_name', bloodBank);
+    addStaffField('department', department);
+    addStaffField('address', address);
+    addStaffField('password_hash', passwordHash);
+    if (staffColumnSet.has('is_verified')) {
+      addStaffField('is_verified', false);
+    }
+    if (staffColumnSet.has('is_active')) {
+      addStaffField('is_active', true);
+    }
+
+    const staffPlaceholders = staffFields.map(() => '?').join(', ');
     const result = await query(
-      `INSERT INTO staff (full_name, employee_id, certification, email, phone, blood_bank_name, department, address, password_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-      [fullName, employeeId, certification, email.toLowerCase(), phone, bloodBank, department, address, passwordHash]
+      `INSERT INTO staff (${staffFields.join(', ')}) VALUES (${staffPlaceholders})`,
+      staffValues
     );
 
-    res.status(201).json({ success: true, message: 'Staff registered successfully', staffId: String(result[0].id) });
+    const staffId = result?.insertId || (Array.isArray(result) && result[0]?.id);
+    res.status(201).json({ success: true, message: 'Staff registered successfully', staffId: String(staffId) });
   } catch (error) {
     console.error('Staff registration error (SQL):', error.message, error.stack);
     const isDev = process.env.NODE_ENV !== 'production';
@@ -514,13 +598,123 @@ app.get('/api/inventory', authenticateToken, async (req, res) => {
     }
 
     const inventory = await query(
-      'SELECT blood_type, quantity_ml, expiry_date FROM blood_inventory ORDER BY blood_type ASC, expiry_date ASC'
+      'SELECT id, blood_type, quantity_ml, collection_date, expiry_date, status FROM blood_inventory WHERE status != "used" ORDER BY blood_type ASC, expiry_date ASC'
     );
 
     res.json({ success: true, data: inventory });
   } catch (error) {
     console.error('Error fetching inventory (SQL):', error);
     res.status(500).json({ success: false, message: 'Failed to fetch inventory' });
+  }
+});
+
+// Add/update blood inventory (SQL)
+app.post('/api/inventory', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff' && req.user.userType !== 'hospital') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const {
+      blood_type,
+      quantity_ml,
+      collection_date,
+      expiry_date,
+      location,
+      status,
+      donor_id
+    } = req.body || {};
+
+    if (!blood_type || quantity_ml === undefined) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const qty = Number(quantity_ml);
+    if (Number.isNaN(qty) || qty < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid quantity' });
+    }
+
+    const baseDate = collection_date ? new Date(collection_date) : new Date();
+    const safeBase = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
+    const expiry = expiry_date
+      ? new Date(expiry_date)
+      : new Date(safeBase.getTime() + 42 * 24 * 60 * 60 * 1000);
+    const expiryStr = Number.isNaN(expiry.getTime())
+      ? new Date(safeBase.getTime() + 42 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      : expiry.toISOString().slice(0, 10);
+    const collectionStr = safeBase.toISOString().slice(0, 10);
+
+    const result = await query(
+      `INSERT INTO blood_inventory (blood_type, quantity_ml, location, expiry_date, donor_id, collection_date, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        blood_type,
+        qty,
+        location || (req.user.userType === 'hospital' ? 'Hospital Storage' : 'Main Storage'),
+        expiryStr,
+        donor_id || null,
+        collectionStr,
+        status || 'available'
+      ]
+    );
+
+    const unitId = result.insertId;
+    const formattedUnitId = `${blood_type}-${String(unitId).padStart(4, '0')}`;
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Inventory updated', 
+      id: unitId,
+      unit_id: formattedUnitId,
+      data: {
+        id: unitId,
+        blood_type,
+        quantity_ml: qty,
+        collection_date: collectionStr,
+        expiry_date: expiryStr,
+        status: status || 'available'
+      }
+    });
+  } catch (error) {
+    console.error('Error updating inventory (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to update inventory' });
+  }
+});
+
+// Get all requests (for staff) (SQL)
+app.get('/api/requests', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Unauthorized - Staff only' });
+    }
+
+    const requests = await query(`
+      SELECT 
+        r.id, 
+        r.blood_type, 
+        r.quantity_ml, 
+        r.urgency, 
+        r.status, 
+        r.request_date,
+        r.required_by_date,
+        r.hospital_id,
+        h.hospital_name AS hospital_name
+      FROM blood_requests r
+      LEFT JOIN hospitals h ON r.hospital_id = h.id
+      ORDER BY 
+        CASE r.urgency 
+          WHEN 'emergency' THEN 1
+          WHEN 'urgent' THEN 2
+          WHEN 'routine' THEN 3
+          ELSE 4
+        END,
+        r.request_date DESC
+    `);
+
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    console.error('Error fetching all requests (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch requests' });
   }
 });
 
@@ -540,6 +734,77 @@ app.get('/api/requests/hospital/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching hospital requests (SQL):', error);
     res.status(500).json({ success: false, message: 'Failed to fetch requests' });
+  }
+});
+
+// Cancel hospital request (SQL)
+app.post('/api/requests/:id/cancel', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'hospital') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const [rows] = await query(
+      'SELECT id, hospital_id, status FROM blood_requests WHERE id = ? LIMIT 1',
+      [req.params.id]
+    );
+
+    if (!rows) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    if (String(rows.hospital_id) !== String(req.user.userId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    if (rows.status === 'fulfilled' || rows.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Request cannot be cancelled' });
+    }
+
+    await query(
+      'UPDATE blood_requests SET status = ?, fulfilled_date = NULL WHERE id = ?',
+      ['cancelled', req.params.id]
+    );
+
+    res.json({ success: true, message: 'Request cancelled' });
+  } catch (error) {
+    console.error('Error cancelling request (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to cancel request' });
+  }
+});
+
+// Create hospital request (SQL)
+app.post('/api/requests/hospital', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'hospital') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const {
+      blood_type,
+      quantity_required,
+      urgency,
+      required_by,
+      notes
+    } = req.body || {};
+
+    if (!blood_type || !quantity_required || !required_by) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const mappedUrgency = urgency === 'emergency' ? 'emergency' : (urgency === 'urgent' ? 'urgent' : 'routine');
+    const quantityMl = Number(quantity_required) * 450;
+
+    await query(
+      `INSERT INTO blood_requests (hospital_id, blood_type, quantity_ml, urgency, status, request_date, required_by_date, notes)
+       VALUES (?, ?, ?, ?, 'pending', NOW(), ?, ?)`,
+      [req.user.userId, blood_type, quantityMl, mappedUrgency, required_by, notes || null]
+    );
+
+    res.status(201).json({ success: true, message: 'Request submitted' });
+  } catch (error) {
+    console.error('Error creating hospital request (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to submit request' });
   }
 });
 
@@ -617,8 +882,8 @@ app.get('/api/donor/rewards/:id', authenticateToken, async (req, res) => {
     }
 
     const [totalRows, recentRows] = await Promise.all([
-      query('SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = ?', [req.params.id]),
-      query("SELECT COUNT(*)::int AS count FROM donation_history WHERE donor_id = ? AND donation_date >= CURRENT_DATE - INTERVAL '365 days'", [req.params.id])
+      query('SELECT COUNT(*) AS count FROM donation_history WHERE donor_id = ?', [req.params.id]),
+      query('SELECT COUNT(*) AS count FROM donation_history WHERE donor_id = ? AND donation_date >= DATE_SUB(CURRENT_DATE, INTERVAL 365 DAY)', [req.params.id])
     ]);
 
     const totalDonations = totalRows[0]?.count || 0;
@@ -749,12 +1014,12 @@ app.delete('/api/events/:eventId/leave', authenticateToken, async (req, res) => 
     }
 
     const { eventId } = req.params;
-    const removed = await query(
-      'DELETE FROM event_participants WHERE event_id = ? AND donor_id = ? RETURNING id',
+    const result = await query(
+      'DELETE FROM event_participants WHERE event_id = ? AND donor_id = ?',
       [eventId, req.user.userId]
     );
 
-    if (removed.length === 0) {
+    if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Appointment not found' });
     }
 
@@ -830,8 +1095,8 @@ app.get('/api/staff/stats/:id', authenticateToken, async (req, res) => {
     }
 
     const [eventRows, donationRows, staffRows] = await Promise.all([
-      query('SELECT COUNT(*)::int AS count FROM events WHERE created_by_type = ? AND created_by_id = ?', ['staff', req.params.id]),
-      query('SELECT COUNT(*)::int AS count FROM donation_history WHERE staff_id = ?', [req.params.id]),
+      query('SELECT COUNT(*) AS count FROM events WHERE created_by_type = ? AND created_by_id = ?', ['staff', req.params.id]),
+      query('SELECT COUNT(*) AS count FROM donation_history WHERE staff_id = ?', [req.params.id]),
       query('SELECT registration_date FROM staff WHERE id = ? LIMIT 1', [req.params.id])
     ]);
 
@@ -1024,7 +1289,7 @@ app.get('/api/events', authenticateToken, async (req, res) => {
     const events = await query(
       `SELECT id, title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name
        FROM events
-       WHERE date >= CURRENT_DATE - INTERVAL '1 day'
+       WHERE date >= DATE_SUB(CURRENT_DATE, INTERVAL 1 DAY)
        ORDER BY date ASC, start_time ASC`
     );
     const ids = events.map(e => e.id);
@@ -1102,16 +1367,144 @@ app.post('/api/events', authenticateToken, async (req, res) => {
       ]
     );
 
-    const insertedId = result[0].id;
+    const insertedId = result.insertId;
     const [event] = await query(
       `SELECT id, title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name
        FROM events WHERE id = ?`,
       [insertedId]
     );
+    
+    // Create audit log entry
+    await query(
+      `INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes)
+       VALUES ('event', ?, 'INSERT', 'staff', ?, ?)`,
+      [insertedId, req.user.userId, JSON.stringify({ title, date, location })]
+    );
+    
     res.status(201).json({ success: true, data: { ...event, participants: [] } });
   } catch (error) {
     console.error('Error creating event (SQL):', error);
     res.status(500).json({ success: false, message: 'Failed to create event' });
+  }
+});
+
+// Update event (staff only)
+app.put('/api/events/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Only staff can update events' });
+    }
+
+    const { title, date, start_time, end_time, startTime, endTime, location, expected, notes } = req.body;
+    const start = start_time || startTime;
+    const end = end_time || endTime;
+    
+    if (!title || !date || !start || !end || !location) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    await query(
+      `UPDATE events 
+       SET title = ?, date = ?, start_time = ?, end_time = ?, location = ?, expected = ?, notes = ?
+       WHERE id = ?`,
+      [title, date, start, end, location, expected || null, notes || null, req.params.id]
+    );
+
+    const [updated] = await query(
+      `SELECT id, title, date, start_time, end_time, location, expected, notes, created_by_type, created_by_id, created_by_name
+       FROM events WHERE id = ?`,
+      [req.params.id]
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    
+    // Create audit log entry
+    await query(
+      `INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes)
+       VALUES ('event', ?, 'UPDATE', 'staff', ?, ?)`,
+      [req.params.id, req.user.userId, JSON.stringify({ title, date, location })]
+    );
+
+    res.json({ success: true, message: 'Event updated successfully', data: updated });
+  } catch (error) {
+    console.error('Error updating event (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to update event' });
+  }
+});
+
+// Mark event as completed (staff only)
+app.put('/api/events/:id/complete', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Only staff can mark events as completed' });
+    }
+
+    const { id } = req.params;
+    
+    // Check if event exists and get details
+    const [event] = await query('SELECT id, title, status FROM events WHERE id = ?', [id]);
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+    
+    if (event.status === 'completed') {
+      return res.status(400).json({ success: false, message: 'Event is already marked as completed' });
+    }
+
+    // Update event status
+    await query(
+      `UPDATE events SET status = ? WHERE id = ?`,
+      ['completed', id]
+    );
+    
+    // Create audit log entry
+    await query(
+      `INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes)
+       VALUES ('event', ?, 'UPDATE', 'staff', ?, ?)`,
+      [id, req.user.userId, JSON.stringify({ status: 'completed', title: event.title })]
+    );
+
+    res.json({ success: true, message: 'Event marked as completed successfully' });
+  } catch (error) {
+    console.error('Error marking event as completed:', error);
+    res.status(500).json({ success: false, message: 'Failed to mark event as completed' });
+  }
+});
+
+// Delete event (staff only)
+app.delete('/api/events/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Only staff can delete events' });
+    }
+
+    const { id } = req.params;
+    
+    // Get event details before deleting
+    const [event] = await query('SELECT title FROM events WHERE id = ?', [id]);
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+
+    // First, delete all event participants
+    await query('DELETE FROM event_participants WHERE event_id = ?', [id]);
+
+    // Then delete the event
+    await query('DELETE FROM events WHERE id = ?', [id]);
+    
+    // Create audit log entry
+    await query(
+      `INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes)
+       VALUES ('event', ?, 'DELETE', 'staff', ?, ?)`,
+      [id, req.user.userId, JSON.stringify({ title: event.title })]
+    );
+
+    res.json({ success: true, message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting event (SQL):', error);
+    res.status(500).json({ success: false, message: 'Failed to delete event' });
   }
 });
 
@@ -1129,6 +1522,13 @@ app.post('/api/events/:eventId/join', authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
 
+    // Get donor's blood type
+    const [donor] = await query(
+      `SELECT blood_type FROM donors WHERE id = ?`,
+      [req.user.userId]
+    );
+    const bloodType = donor?.blood_type || 'Unknown';
+
     // Check if already joined
     const existing = await query(
       `SELECT id FROM event_participants WHERE event_id = ? AND donor_id = ?`,
@@ -1138,7 +1538,7 @@ app.post('/api/events/:eventId/join', authenticateToken, async (req, res) => {
       await query(
         `INSERT INTO event_participants (event_id, donor_id, name, blood, status, registered)
          VALUES (?, ?, ?, ?, 'Confirmed', CURRENT_DATE)`,
-        [eventId, req.user.userId, req.user.email || 'Donor', 'Unknown']
+        [eventId, req.user.userId, req.user.email || 'Donor', bloodType]
       );
     }
 
@@ -1286,9 +1686,24 @@ app.get('/api/staff/donors/:id', authenticateToken, async (req, res) => {
 
     if (!donor) return res.status(404).json({ success: false, message: 'Donor not found' });
 
+    const donationColumns = await query('SHOW COLUMNS FROM donation_history');
+    const donationColumnSet = new Set(donationColumns.map(col => col.Field));
+    const donationSelectFields = [
+      'dh.id',
+      'dh.donation_date',
+      'dh.blood_type',
+      'dh.quantity_ml',
+      's.full_name as staff_name'
+    ];
+    if (donationColumnSet.has('status')) {
+      donationSelectFields.push('dh.status');
+    }
+
     const donations = await query(
-      `SELECT id, donation_date, blood_type, quantity_ml, status FROM donation_history 
-       WHERE donor_id = ? ORDER BY donation_date DESC`,
+      `SELECT ${donationSelectFields.join(', ')}
+       FROM donation_history dh
+       LEFT JOIN staff s ON dh.staff_id = s.id
+       WHERE dh.donor_id = ? ORDER BY dh.donation_date DESC`,
       [req.params.id]
     );
 
@@ -1319,14 +1734,14 @@ app.post('/api/staff/donors', authenticateToken, async (req, res) => {
     const passwordHash = await bcrypt.hash(password || 'DefaultPass123', 10);
     const result = await query(
       `INSERT INTO donors (full_name, email, phone, blood_type, date_of_birth, address, city, password_hash, registration_date, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, true) RETURNING id`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, true)`,
       [full_name, email.toLowerCase(), phone, blood_type, date_of_birth, address, city, passwordHash]
     );
 
     res.status(201).json({ 
       success: true, 
       message: 'Donor added successfully',
-      data: { id: result[0].id, full_name, email, blood_type }
+      data: { id: result.insertId, full_name, email, blood_type }
     });
   } catch (error) {
     console.error('Error adding donor:', error);
@@ -1375,8 +1790,8 @@ app.delete('/api/staff/donors/:id', authenticateToken, async (req, res) => {
 
     await query('UPDATE donors SET is_active = false WHERE id = ?', [req.params.id]);
     await query(
-      'INSERT INTO audit_log (action, entity_type, entity_id, staff_id, changes) VALUES (?, ?, ?, ?, ?)',
-      ['DELETE', 'donor', req.params.id, req.user.userId, 'Donor deactivated']
+      'INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes) VALUES (?, ?, ?, ?, ?, ?)',
+      ['donors', req.params.id, 'DELETE', 'staff', req.user.userId, 'Donor deactivated']
     );
 
     res.json({ success: true, message: 'Donor deactivated' });
@@ -1395,7 +1810,7 @@ app.post('/api/staff/donations', authenticateToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { donor_id, blood_type, quantity_ml, donation_date } = req.body;
+    const { donor_id, blood_type, quantity_ml, donation_date, notes } = req.body;
     if (!donor_id || !blood_type || !quantity_ml || !donation_date) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
@@ -1420,22 +1835,89 @@ app.post('/api/staff/donations', authenticateToken, async (req, res) => {
       }
     }
 
+    // Resolve location from staff record (fallback if missing)
+    let location = 'Blood Bank';
+    try {
+      const [staffRow] = await query('SELECT blood_bank_name FROM staff WHERE id = ?', [req.user.userId]);
+      if (staffRow?.blood_bank_name) location = staffRow.blood_bank_name;
+    } catch (err) {
+      console.warn('Failed to fetch staff location for donation:', err?.message || err);
+    }
+
     // Calculate expiry date (42 days for most blood types)
     const expiryDate = new Date(donation_date);
     expiryDate.setDate(expiryDate.getDate() + 42);
 
+    // Build donation insert based on actual schema
+    const donationColumns = await query('SHOW COLUMNS FROM donation_history');
+    const donationColumnSet = new Set(donationColumns.map(col => col.Field));
+
+    const donationFields = ['donor_id', 'donation_date', 'blood_type', 'quantity_ml'];
+    const donationValues = [donor_id, donation_date, blood_type, quantity_ml];
+
+    if (donationColumnSet.has('location')) {
+      donationFields.push('location');
+      donationValues.push(location);
+    }
+    if (donationColumnSet.has('status')) {
+      donationFields.push('status');
+      donationValues.push('completed');
+    }
+    if (donationColumnSet.has('staff_id')) {
+      donationFields.push('staff_id');
+      donationValues.push(req.user.userId);
+    }
+    if (donationColumnSet.has('notes')) {
+      donationFields.push('notes');
+      donationValues.push(notes || null);
+    }
+
+    const donationPlaceholders = donationFields.map(() => '?').join(', ');
+
     // Insert donation record
     const result = await query(
-      `INSERT INTO donation_history (donor_id, donation_date, blood_type, quantity_ml, status, staff_id)
-       VALUES (?, ?, ?, ?, 'completed', ?) RETURNING id`,
-      [donor_id, donation_date, blood_type, quantity_ml, req.user.userId]
+      `INSERT INTO donation_history (${donationFields.join(', ')}) VALUES (${donationPlaceholders})`,
+      donationValues
     );
+    const donationId = result?.insertId || (Array.isArray(result) && result[0]?.id);
+    if (!donationId) throw new Error('Failed to create donation record');
 
-    // Add to inventory
+    // Add to inventory (schema-adaptive)
+    const inventoryColumns = await query('SHOW COLUMNS FROM blood_inventory');
+    const inventoryColumnSet = new Set(inventoryColumns.map(col => col.Field));
+
+    const inventoryFields = ['blood_type', 'quantity_ml'];
+    const inventoryValues = [blood_type, quantity_ml];
+
+    if (inventoryColumnSet.has('location')) {
+      inventoryFields.push('location');
+      inventoryValues.push(location);
+    }
+    if (inventoryColumnSet.has('expiry_date')) {
+      inventoryFields.push('expiry_date');
+      inventoryValues.push(expiryDate.toISOString().split('T')[0]);
+    }
+    if (inventoryColumnSet.has('donor_id')) {
+      inventoryFields.push('donor_id');
+      inventoryValues.push(donor_id);
+    }
+    if (inventoryColumnSet.has('donation_id')) {
+      inventoryFields.push('donation_id');
+      inventoryValues.push(donationId);
+    }
+    if (inventoryColumnSet.has('collection_date')) {
+      inventoryFields.push('collection_date');
+      inventoryValues.push(donation_date);
+    }
+    if (inventoryColumnSet.has('status')) {
+      inventoryFields.push('status');
+      inventoryValues.push('available');
+    }
+
+    const inventoryPlaceholders = inventoryFields.map(() => '?').join(', ');
     await query(
-      `INSERT INTO blood_inventory (blood_type, quantity_ml, donation_id, expiry_date, status)
-       VALUES (?, ?, ?, ?, 'available')`,
-      [blood_type, quantity_ml, result[0].id, expiryDate.toISOString().split('T')[0]]
+      `INSERT INTO blood_inventory (${inventoryFields.join(', ')}) VALUES (${inventoryPlaceholders})`,
+      inventoryValues
     );
 
     // Update donor's last donation date
@@ -1444,17 +1926,21 @@ app.post('/api/staff/donations', authenticateToken, async (req, res) => {
       [donation_date, donor_id]
     );
 
-    // Log action
-    await query(
-      'INSERT INTO audit_log (action, entity_type, entity_id, staff_id, changes) VALUES (?, ?, ?, ?, ?)',
-      ['CREATE', 'donation', result[0].id, req.user.userId, `${quantity_ml}ml ${blood_type}`]
-    );
+    // Log action (non-fatal if audit_log schema differs)
+    try {
+      await query(
+        'INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes) VALUES (?, ?, ?, ?, ?, ?)',
+        ['donation_history', donationId, 'INSERT', 'staff', req.user.userId, `${quantity_ml}ml ${blood_type}`]
+      );
+    } catch (err) {
+      console.warn('Audit log insert failed:', err?.message || err);
+    }
 
     res.status(201).json({ 
       success: true, 
       message: 'Donation recorded',
       data: {
-        id: result[0].id,
+        id: donationId,
         donor_id,
         blood_type,
         quantity_ml,
@@ -1463,7 +1949,15 @@ app.post('/api/staff/donations', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error recording donation:', error);
-    res.status(500).json({ success: false, message: 'Failed to record donation' });
+    res.status(500).json({
+      success: false,
+      message: `Failed to record donation: ${error?.message || 'Unknown error'}`,
+      error: {
+        code: error?.code,
+        sqlMessage: error?.sqlMessage,
+        sqlState: error?.sqlState
+      }
+    });
   }
 });
 
@@ -1501,8 +1995,8 @@ app.put('/api/staff/inventory/:id', authenticateToken, async (req, res) => {
 
     await query('UPDATE blood_inventory SET status = ? WHERE id = ?', [status, req.params.id]);
     await query(
-      'INSERT INTO audit_log (action, entity_type, entity_id, staff_id, changes) VALUES (?, ?, ?, ?, ?)',
-      ['UPDATE', 'inventory', req.params.id, req.user.userId, `Status changed to ${status}`]
+      'INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes) VALUES (?, ?, ?, ?, ?, ?)',
+      ['blood_inventory', req.params.id, 'UPDATE', 'staff', req.user.userId, `Status changed to ${status}`]
     );
 
     const [updated] = await query('SELECT * FROM blood_inventory WHERE id = ?', [req.params.id]);
@@ -1550,26 +2044,72 @@ app.put('/api/staff/requests/:id/fulfill', authenticateToken, async (req, res) =
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { quantity_fulfilled, notes } = req.body;
-    if (!quantity_fulfilled) {
-      return res.status(400).json({ success: false, message: 'Quantity fulfilled required' });
-    }
+    const { blood_unit_ids, quantity_fulfilled, notes } = req.body || {};
 
     const [request] = await query(
-      'SELECT blood_type, quantity_required FROM blood_requests WHERE id = ?',
+      'SELECT blood_type, quantity_ml FROM blood_requests WHERE id = ?',
       [req.params.id]
     );
     if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
 
-    const status = quantity_fulfilled >= request.quantity_required ? 'fulfilled' : 'partial';
-    await query(
-      'UPDATE blood_requests SET status = ?, quantity_fulfilled = ?, fulfilled_date = CURRENT_TIMESTAMP, notes = ? WHERE id = ?',
-      [status, quantity_fulfilled, notes || null, req.params.id]
-    );
+    let fulfilledMl = 0;
+    let selectedUnits = [];
+
+    if (Array.isArray(blood_unit_ids) && blood_unit_ids.length > 0) {
+      const placeholders = blood_unit_ids.map(() => '?').join(',');
+      selectedUnits = await query(
+        `SELECT id, blood_type, quantity_ml, status, expiry_date
+         FROM blood_inventory
+         WHERE id IN (${placeholders})`,
+        blood_unit_ids
+      );
+
+      const invalid = selectedUnits.find(u => u.blood_type !== request.blood_type);
+      if (invalid) {
+        return res.status(400).json({ success: false, message: 'Selected units do not match request blood type' });
+      }
+
+      const unavailable = selectedUnits.find(u => u.status !== 'available');
+      if (unavailable) {
+        return res.status(400).json({ success: false, message: 'One or more selected units are not available' });
+      }
+
+      const expired = selectedUnits.find(u => new Date(u.expiry_date) <= new Date());
+      if (expired) {
+        return res.status(400).json({ success: false, message: 'One or more selected units are expired' });
+      }
+
+      fulfilledMl = selectedUnits.reduce((sum, u) => sum + Number(u.quantity_ml || 0), 0);
+    } else if (quantity_fulfilled) {
+      fulfilledMl = Number(quantity_fulfilled);
+      if (Number.isNaN(fulfilledMl) || fulfilledMl <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid quantity fulfilled' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Select blood units or provide quantity fulfilled' });
+    }
+
+    const status = 'fulfilled';
 
     await query(
-      'INSERT INTO audit_log (action, entity_type, entity_id, staff_id, changes) VALUES (?, ?, ?, ?, ?)',
-      ['UPDATE', 'request', req.params.id, req.user.userId, `Fulfilled ${quantity_fulfilled}ml`]
+      `UPDATE blood_requests
+       SET status = ?, fulfilled_date = CURRENT_TIMESTAMP, notes = ?
+       WHERE id = ?`,
+      [status, notes || null, req.params.id]
+    );
+
+    if (selectedUnits.length > 0) {
+      const unitPlaceholders = selectedUnits.map(() => '?').join(',');
+      await query(
+        `UPDATE blood_inventory SET status = 'used'
+         WHERE id IN (${unitPlaceholders})`,
+        selectedUnits.map(u => u.id)
+      );
+    }
+
+    await query(
+      'INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes) VALUES (?, ?, ?, ?, ?, ?)',
+      ['blood_requests', req.params.id, 'UPDATE', 'staff', req.user.userId, `Fulfilled ${fulfilledMl}ml`]
     );
 
     const [updated] = await query('SELECT * FROM blood_requests WHERE id = ?', [req.params.id]);
@@ -1577,6 +2117,35 @@ app.put('/api/staff/requests/:id/fulfill', authenticateToken, async (req, res) =
   } catch (error) {
     console.error('Error fulfilling request:', error);
     res.status(500).json({ success: false, message: 'Failed to fulfill request' });
+  }
+});
+
+app.put('/api/staff/requests/:id/reject', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userType !== 'staff') {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { rejection_reason } = req.body || {};
+    if (!rejection_reason) {
+      return res.status(400).json({ success: false, message: 'Rejection reason required' });
+    }
+
+    await query(
+      'UPDATE blood_requests SET status = ?, notes = ? WHERE id = ?',
+      ['cancelled', rejection_reason, req.params.id]
+    );
+
+    await query(
+      'INSERT INTO audit_log (table_name, record_id, action, user_type, user_id, changes) VALUES (?, ?, ?, ?, ?, ?)',
+      ['blood_requests', req.params.id, 'UPDATE', 'staff', req.user.userId, `Rejected: ${rejection_reason}`]
+    );
+
+    const [updated] = await query('SELECT * FROM blood_requests WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Request rejected', data: updated });
+  } catch (error) {
+    console.error('Error rejecting request:', error);
+    res.status(500).json({ success: false, message: 'Failed to reject request' });
   }
 });
 
@@ -1644,9 +2213,30 @@ app.get('/api/staff/reports', authenticateToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const thirtyDaysStr = thirtyDaysAgo.toISOString().split('T')[0];
+    // Get period from query parameter (daily, weekly, monthly, yearly)
+    const period = req.query.period || 'monthly';
+    let daysAgo = 30; // default monthly
+    
+    switch(period) {
+      case 'daily':
+        daysAgo = 1;
+        break;
+      case 'weekly':
+        daysAgo = 7;
+        break;
+      case 'monthly':
+        daysAgo = 30;
+        break;
+      case 'yearly':
+        daysAgo = 365;
+        break;
+      default:
+        daysAgo = 30;
+    }
+
+    const periodStartDate = new Date();
+    periodStartDate.setDate(periodStartDate.getDate() - daysAgo);
+    const periodStartStr = periodStartDate.toISOString().split('T')[0];
 
     const [
       totalDonors,
@@ -1657,11 +2247,11 @@ app.get('/api/staff/reports', authenticateToken, async (req, res) => {
       dailyStats
     ] = await Promise.all([
       query('SELECT COUNT(*) as count FROM donors WHERE is_active = true'),
-      query(`SELECT COUNT(*) as count FROM donation_history WHERE donation_date >= ?`, [thirtyDaysStr]),
+      query(`SELECT COUNT(*) as count FROM donation_history WHERE donation_date >= ?`, [periodStartStr]),
       query(`SELECT SUM(quantity_ml) as total FROM blood_inventory WHERE status = 'available'`),
       query(`SELECT status, COUNT(*) as count FROM blood_requests GROUP BY status`),
       query(`SELECT blood_type, SUM(quantity_ml) as total FROM blood_inventory WHERE status = 'available' GROUP BY blood_type`),
-      query(`SELECT DATE(donation_date) as date, COUNT(*) as donations, SUM(quantity_ml) as volume FROM donation_history WHERE donation_date >= ? GROUP BY DATE(donation_date) ORDER BY date DESC LIMIT 30`, [thirtyDaysStr])
+      query(`SELECT DATE(donation_date) as date, COUNT(*) as donations, SUM(quantity_ml) as volume FROM donation_history WHERE donation_date >= ? GROUP BY DATE(donation_date) ORDER BY date DESC LIMIT ?`, [periodStartStr, daysAgo])
     ]);
 
     const requestsByStatus = requestStats.reduce((acc, r) => { acc[r.status] = r.count; return acc; }, {});
@@ -1709,29 +2299,16 @@ app.get('/api/staff/audit-logs', authenticateToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const [logs, totalCount, todayCount, criticalCount] = await Promise.all([
-      query(
-        `SELECT id, action, table_name, record_id, user_type, user_id, changes, timestamp as created_at
-         FROM audit_log
-         ORDER BY timestamp DESC
-         LIMIT 100`
-      ),
-      query('SELECT COUNT(*) as count FROM audit_log'),
-      query(`SELECT COUNT(*) as count FROM audit_log WHERE timestamp >= CURRENT_DATE`),
-      query(`SELECT COUNT(*) as count FROM audit_log WHERE action IN ('delete', 'update', 'create_critical')`)
-    ]);
+    const logs = await query(
+      `SELECT al.id, al.action, al.table_name, al.record_id, al.user_type, al.user_id, al.changes,
+              al.timestamp as created_at, s.full_name as user_name
+       FROM audit_log al
+       LEFT JOIN staff s ON al.user_type = 'staff' AND al.user_id = s.id
+       ORDER BY al.timestamp DESC
+       LIMIT 100`
+    );
 
-    const response = {
-      logs: logs,
-      summary: {
-        total_logs: totalCount[0]?.count || 0,
-        today_activity: todayCount[0]?.count || 0,
-        active_users: 1, // In real implementation, count distinct user_id
-        critical_actions: criticalCount[0]?.count || 0
-      }
-    };
-
-    res.json({ success: true, data: response });
+    res.json({ success: true, data: logs });
   } catch (error) {
     console.error('Error fetching audit logs:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch audit logs' });

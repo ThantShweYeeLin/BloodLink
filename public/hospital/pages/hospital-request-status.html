@@ -96,15 +96,16 @@
               <tr>
                 <th>ID</th>
                 <th>Blood Type</th>
-                <th>Quantity</th>
+                <th>Quantity (mL)</th>
                 <th>Urgency</th>
                 <th>Requested</th>
                 <th>Status</th>
                 <th>Fulfillment</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="statusTable">
-              <tr><td colspan="7" style="text-align:center; padding:1.2rem; color:#6b7280;">Loading...</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding:1.2rem; color:#6b7280;">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -112,8 +113,10 @@
     </main>
   </div>
 
+  <script src="../../shared-pages/api-base.js"></script>
   <script>
-    const API_URL = window.LIFELINK_API_BASE || 'http://localhost:3000/api';
+    const API_BASE = window.LIFELINK_API_BASE || 'http://localhost:3000';
+    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
     function badge(status) {
       if (status === 'fulfilled') return 'badge status-fulfilled';
@@ -134,40 +137,60 @@
     }
 
     async function loadStatus() {
-      const hospitalId = localStorage.getItem('hospitalId');
+      const hospitalId = localStorage.getItem('hospitalId') || localStorage.getItem('userId');
+      if (!hospitalId) {
+        window.location.href = '../login-hospital.html';
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/hospital/${hospitalId}/requests`, { headers: authHeaders() });
+        const res = await fetch(`${API_URL}/requests/hospital/${hospitalId}`, { headers: authHeaders() });
         const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Failed');
-        renderTable(data.data || []);
+        if (!res.ok) throw new Error(data.message || 'Failed');
+        const rows = Array.isArray(data) ? data : (data.data || []);
+        renderTable(rows);
       } catch (err) {
-        console.warn('API not ready for hospital requests, using sample data.');
-        const sample = [
-          { id: 101, blood_type: 'O+', quantity_required: 6, urgency: 'emergency', status: 'pending', request_date: new Date(), expected: '2 hrs' },
-          { id: 102, blood_type: 'A-', quantity_required: 4, urgency: 'normal', status: 'fulfilled', request_date: new Date(Date.now()-86400000*3), fulfilled_date: new Date(Date.now()-86400000), notes: 'Delivered via mobile unit' },
-        ];
-        renderTable(sample);
-        showAlert('Using sample data. Hook to GET /api/hospital/:id/requests.', 'error');
+        console.error('Failed to load hospital requests.', err);
+        renderTable([]);
       }
     }
 
     function renderTable(rows) {
       const tbody = document.getElementById('statusTable');
-      if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:1.3rem; color:#9ca3af;">No requests yet</td></tr>';
+      const visibleRows = rows.filter(r => r.status !== 'fulfilled');
+      if (!visibleRows.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:1.3rem; color:#9ca3af;">No active requests</td></tr>';
         return;
       }
-      tbody.innerHTML = rows.map(r => `
+      tbody.innerHTML = visibleRows.map(r => `
         <tr>
           <td><strong>#${String(r.id).padStart(4,'0')}</strong></td>
           <td>${r.blood_type}</td>
-          <td>${r.quantity_required || r.quantity_units || r.quantity}</td>
-          <td>${r.urgency || 'normal'}</td>
-          <td>${r.request_date ? new Date(r.request_date).toLocaleDateString() : '—'}</td>
+          <td>${r.quantity_ml ?? r.units ?? r.quantity ?? 0}</td>
+          <td>${r.priority || r.urgency || 'normal'}</td>
+          <td>${r.date ? new Date(r.date).toLocaleDateString() : '—'}</td>
           <td><span class="${badge(r.status)}">${r.status || 'pending'}</span></td>
-          <td>${r.fulfilled_date ? new Date(r.fulfilled_date).toLocaleString() : (r.expected || '—')}</td>
+          <td>${r.fulfilled_date ? new Date(r.fulfilled_date).toLocaleString() : '—'}</td>
+          <td>
+            <button class="btn" style="padding:0.4rem 0.75rem; font-size:0.85rem;" onclick="cancelRequest('${r.id}')" ${r.status === 'cancelled' ? 'disabled' : ''}>Cancel</button>
+          </td>
         </tr>
       `).join('');
+    }
+
+    async function cancelRequest(requestId) {
+      try {
+        const res = await fetch(`${API_URL}/requests/${requestId}/cancel`, {
+          method: 'POST',
+          headers: authHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Failed');
+        showAlert('Request cancelled');
+        loadStatus();
+      } catch (err) {
+        console.error('Cancel failed', err);
+        showAlert('Unable to cancel request', 'error');
+      }
     }
 
     function logout() {

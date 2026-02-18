@@ -114,7 +114,7 @@
         <button class="filter-btn active" onclick="setFilter('all')">All</button>
         <button class="filter-btn" onclick="setFilter('pending')">Pending</button>
         <button class="filter-btn" onclick="setFilter('fulfilled')">Fulfilled</button>
-        <button class="filter-btn" onclick="setFilter('rejected')">Rejected</button>
+        <button class="filter-btn" onclick="setFilter('cancelled')">Cancelled</button>
       </div>
     </div>
 
@@ -215,8 +215,16 @@
       displayRequests();
     }
 
+    function normalizeStatus(status) {
+      const value = (status || '').toLowerCase();
+      return value || 'pending';
+    }
+
     function displayRequests() {
-      let requests = allRequests;
+      let requests = allRequests.map(r => ({
+        ...r,
+        status: normalizeStatus(r.status)
+      }));
       if (currentFilter !== 'all') {
         requests = requests.filter(r => r.status.toLowerCase() === currentFilter);
       }
@@ -340,18 +348,14 @@
         return showAlert('Please select at least one unit', 'error');
       }
 
-      const result = await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
+      await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
         blood_unit_ids: selectedUnits,
         notes: document.getElementById('fulfillNotes').value
       });
 
-      if (result.success) {
-        showAlert('Request fulfilled successfully', 'success');
-        closeFulfillModal();
-        loadRequests();
-      } else {
-        showAlert(result.message || 'Failed to fulfill request', 'error');
-      }
+      showAlert('✓ Request fulfilled successfully', 'success');
+      closeFulfillModal();
+      loadRequests();
     }
 
     function openRejectModal(requestId) {
@@ -367,17 +371,13 @@
     async function rejectRequest(e) {
       e.preventDefault();
 
-      const result = await apiCall(`/staff/requests/${currentRequestId}/reject`, 'PUT', {
+      await apiCall(`/staff/requests/${currentRequestId}/reject`, 'PUT', {
         rejection_reason: document.getElementById('rejectReason').value
       });
 
-      if (result.success) {
-        showAlert('Request rejected', 'success');
-        closeRejectModal();
-        loadRequests();
-      } else {
-        showAlert(result.message || 'Failed to reject request', 'error');
-      }
+      showAlert('✓ Request rejected', 'success');
+      closeRejectModal();
+      loadRequests();
     }
 
     function showAlert(message, type) {

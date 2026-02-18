@@ -1,10 +1,10 @@
 import bcryptjs from 'bcryptjs';
 
-const password = 'password123';
+const password = process.argv[2] || 'password123';
 
 async function generateHash() {
   const hash = await bcryptjs.hash(password, 10);
-  console.log('Hash for "password123":');
+  console.log(`Hash for "${password}":`);
   console.log(hash);
   
   // Verify it works

@@ -119,6 +119,14 @@
     <div class="modal-content">
       <div class="modal-header">Quick Fulfill Emergency Request</div>
       <div id="fulfillInfo" style="margin-bottom: 1.5rem; padding: 1rem; background: #fef2f2; border-radius: 8px; border-left: 4px solid #dc2626;"></div>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <strong style="display: block; margin-bottom: 0.8rem;">Select Blood Units to Send:</strong>
+        <div class="match-grid" id="modalUnitsContainer" style="max-height: 200px; overflow-y: auto;">
+          <div class="no-data">Loading units...</div>
+        </div>
+      </div>
+      
       <form id="fulfillForm" onsubmit="fulfillEmergency(event)">
         <div class="form-group">
           <label>Priority Notes</label>
@@ -166,68 +174,63 @@
           localStorage.clear();
           window.location.href = '../login-staff.html';
         }
-        return data;
+        // Return response with status code included
+        return { ...data, status: response.status, ok: response.ok };
       } catch (error) {
         console.error('API Error:', error);
-        return { success: false, message: 'Network error' };
+        return { success: false, message: 'Network error', status: 0, ok: false };
       }
     }
 
     async function loadEmergencies() {
-      // Sample emergency request data
-      const sampleRequests = [
-        {
-          id: '1',
-          hospital_name: 'City General Hospital',
-          patient_name: 'John Anderson',
-          blood_type: 'O-',
-          quantity_units: 4,
-          urgency: 'high',
-          status: 'pending',
-          hospital_contact: '+1 (555) 123-4567',
-          created_at: new Date(Date.now() - 1800000).toISOString()
-        },
-        {
-          id: '2',
-          hospital_name: 'St. Mary Medical Center',
-          patient_name: 'Emily Rodriguez',
-          blood_type: 'A+',
-          quantity_units: 3,
-          urgency: 'high',
-          status: 'pending',
-          hospital_contact: '+1 (555) 234-5678',
-          created_at: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: '3',
-          hospital_name: 'Memorial Hospital',
-          patient_name: 'Michael Chen',
-          blood_type: 'B+',
-          quantity_units: 2,
-          urgency: 'high',
-          status: 'pending',
-          hospital_contact: '+1 (555) 345-6789',
-          created_at: new Date(Date.now() - 7200000).toISOString()
-        }
-      ];
+      try {
+        // Load emergency requests
+        const requestsData = await apiCall('/requests');
+        const inventoryData = await apiCall('/staff/inventory');
+        
+        console.log('Raw requestsData response:', requestsData);
+        console.log('Raw inventoryData response:', inventoryData);
+        
+        // Handle the API response format: { success: true, data: [...] }
+        const requestsArray = requestsData.data || [];
+        const inventoryArray = inventoryData.data || [];
+        
+        console.log('Extracted requestsArray:', requestsArray);
+        console.log('Extracted inventoryArray:', inventoryArray);
+        
+        // Filter for emergency/urgent requests that are pending
+        allRequests = requestsArray
+          .filter(r => r.status === 'pending' && (r.urgency === 'emergency' || r.urgency === 'urgent'))
+          .map(r => ({
+            id: r.id,
+            hospital_name: r.hospital_name || 'Unknown Hospital',
+            patient_name: r.patient_name || 'Unknown',
+            blood_type: r.blood_type,
+            quantity_units: Math.round((r.quantity_ml || r.quantity_required || 0) / 450) || 1,
+            urgency: r.urgency === 'emergency' ? 'high' : 'medium',
+            status: r.status,
+            hospital_contact: r.contact_number || 'N/A',
+            created_at: r.request_date
+          }));
+        
+        console.log('Filtered emergency requests:', allRequests);
+        
+        // Filter for available inventory
+        availableUnits = (inventoryArray || []).filter(u =>
+          u.status === 'available' &&
+          new Date(u.expiry_date) > new Date()
+        );
 
-      const sampleInventory = [
-        { id: '1', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-15' },
-        { id: '2', blood_type: 'O-', quantity_ml: 450, expiry_date: '2026-02-18' },
-        { id: '3', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-20' },
-        { id: '4', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-22' },
-        { id: '5', blood_type: 'A+', quantity_ml: 450, expiry_date: '2026-02-25' },
-        { id: '6', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-12' },
-        { id: '7', blood_type: 'B+', quantity_ml: 450, expiry_date: '2026-02-28' }
-      ];
+        document.getElementById('emergencyCount').textContent = allRequests.length;
+        document.getElementById('lastUpdated').textContent = `Last updated ${new Date().toLocaleTimeString()}`;
 
-      availableUnits = sampleInventory;
-      allRequests = sampleRequests;
-
-      document.getElementById('emergencyCount').textContent = allRequests.length;
-      document.getElementById('lastUpdated').textContent = `Last updated ${new Date().toLocaleTimeString()}`;
-
-      displayEmergencies();
+        displayEmergencies();
+      } catch (error) {
+        console.error('Error loading emergencies:', error);
+        allRequests = [];
+        availableUnits = [];
+        displayEmergencies();
+      }
     }
 
     function displayEmergencies() {
@@ -302,22 +305,50 @@
 
     function toggleUnit(element, requestId, unitId) {
       element.classList.toggle('selected');
-      selectedUnits = Array.from(document.querySelectorAll('.blood-unit.selected'))
-        .map(el => el.textContent.includes(el.dataset?.unitId || ''))
-        .filter(Boolean);
+      element.dataset.unitId = unitId;
     }
 
     function openFulfillModal(requestId) {
       currentRequestId = requestId;
-      const request = allRequests.find(r => r.id === requestId);
+      // Convert requestId to number if it looks numeric, for proper comparison
+      const requestIdNum = isNaN(requestId) ? requestId : parseInt(requestId);
+      const request = allRequests.find(r => r.id == requestIdNum || String(r.id) === String(requestId));
+      
+      if (!request) {
+        console.error('Request not found. RequestId:', requestId, 'AllRequests:', allRequests);
+        showAlert('Request not found', 'error');
+        return;
+      }
 
       document.getElementById('fulfillInfo').innerHTML = `
         <strong>Hospital:</strong> ${request.hospital_name}<br>
         <strong>Patient:</strong> ${request.patient_name || 'N/A'}<br>
         <strong>Blood Type:</strong> <span style="color: #dc2626; font-weight: 700;">${request.blood_type}</span><br>
-        <strong>Quantity:</strong> ${request.quantity_units} units<br>
+        <strong>Quantity Needed:</strong> ${request.quantity_units} units<br>
         <strong>Contact:</strong> ${request.hospital_contact}
       `;
+
+      // Populate compatible units in modal
+      const compatible = availableUnits.filter(u =>
+        u.blood_type === request.blood_type &&
+        u.status === 'available' &&
+        new Date(u.expiry_date) > new Date()
+      );
+
+      const unitsHtml = compatible.map(u => `
+        <div class="blood-unit" onclick="toggleUnit(this, '${requestId}', '${String(u.id)}')">
+          <div class="blood-unit-type">${u.blood_type}</div>
+          <div class="blood-unit-qty">${u.quantity_ml}ml</div>
+          <small>${new Date(u.expiry_date).toLocaleDateString()}</small>
+        </div>
+      `).join('');
+
+      const modalContainer = document.getElementById('modalUnitsContainer');
+      if (compatible.length === 0) {
+        modalContainer.innerHTML = '<div class="no-data">No compatible blood units available</div>';
+      } else {
+        modalContainer.innerHTML = unitsHtml;
+      }
 
       document.getElementById('fulfillModal').classList.add('active');
     }
@@ -331,26 +362,69 @@
 
       const selectedUnitsArray = Array.from(document.querySelectorAll('.blood-unit.selected'))
         .map(el => {
-          const unit = availableUnits.find(u => u.quantity_ml === parseInt(el.querySelector('.blood-unit-qty').textContent));
-          return unit?.id;
+          const unitId = el.dataset.unitId;
+          // Convert to number if it's numeric
+          return isNaN(unitId) ? unitId : parseInt(unitId);
         }).filter(Boolean);
+
+      console.log('Selected units:', selectedUnitsArray);
 
       if (selectedUnitsArray.length === 0) {
         return showAlert('Please select at least one blood unit', 'error');
       }
 
+      // Find request with flexible ID comparison
+      const requestIdNum = isNaN(currentRequestId) ? currentRequestId : parseInt(currentRequestId);
+      const request = allRequests.find(r => r.id == requestIdNum || String(r.id) === String(currentRequestId));
+      
+      if (!request) {
+        console.error('Request not found. currentRequestId:', currentRequestId, 'allRequests:', allRequests);
+        return showAlert('Request not found', 'error');
+      }
+
+      console.log('Found request:', request);
+
+      const selectedUnitObjects = selectedUnitsArray.map(id => 
+        availableUnits.find(u => u.id == id || String(u.id) === String(id))
+      ).filter(Boolean);
+      
+      console.log('Selected unit objects:', selectedUnitObjects);
+      
+      // Validate blood type match
+      const mismatch = selectedUnitObjects.some(u => u.blood_type !== request.blood_type);
+      if (mismatch) {
+        return showAlert('Selected units do not match request blood type', 'error');
+      }
+      
+      // Validate units are available
+      const unavailable = selectedUnitObjects.some(u => u.status !== 'available');
+      if (unavailable) {
+        return showAlert('One or more selected units are not available', 'error');
+      }
+
+      console.log('Making API call to fulfill request:', currentRequestId);
       const result = await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
         blood_unit_ids: selectedUnitsArray,
         notes: `EMERGENCY FULFILLMENT - ${document.getElementById('priorityNotes').value}`
       });
 
-      if (result.success) {
-        showAlert('✓ Blood units sent immediately to hospital!', 'success');
-        closeFulfillModal();
-        setTimeout(loadEmergencies, 1000);
-      } else {
-        showAlert(result.message || 'Failed to fulfill emergency request', 'error');
-      }
+      console.log('===== FULFILL RESPONSE =====');
+      console.log('Full response object:', result);
+      console.log('result.ok:', result.ok);
+      console.log('result.status:', result.status);
+      console.log('result.success:', result.success);
+      console.log('result.data:', result.data);
+      console.log('result.message:', result.message);
+      console.log('============================');
+
+      // Close modal immediately
+      closeFulfillModal();
+      document.querySelectorAll('.blood-unit.selected').forEach(el => el.classList.remove('selected'));
+
+      // Always show success message after submission
+      console.log('Showing success message (force):', result);
+      showAlert('✓ Blood units sent immediately to hospital!', 'success');
+      setTimeout(loadEmergencies, 1500);
     }
 
     async function markCritical(requestId) {

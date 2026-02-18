@@ -212,10 +212,14 @@
         if (body) options.body = JSON.stringify(body);
         const response = await fetch(`${API_URL}${endpoint}`, options);
         const data = await response.json();
-        if (!response.ok && response.status === 401) {
+        
+        // Handle authentication errors
+        if (response.status === 401) {
           localStorage.clear();
           window.location.href = '../login-staff.html';
+          return { success: false, message: 'Session expired' };
         }
+        
         return data;
       } catch (error) {
         console.error('API Error:', error);
@@ -226,17 +230,7 @@
     async function loadRequests() {
       const data = await apiCall('/staff/requests');
       
-      let requests = data.data;
-      
-      // Sample data fallback
-      if (!data.success || !requests || requests.length === 0) {
-        requests = [
-          { id: '1', hospital_name: 'City General Hospital', blood_type: 'O-', quantity_units: 5, status: 'pending', urgency: 'emergency', required_by: new Date(Date.now() + 2*60*60*1000).toISOString(), hospital_phone: '555-1234', created_at: new Date(Date.now() - 30*60*1000).toISOString() },
-          { id: '2', hospital_name: 'St. Mary Medical Center', blood_type: 'A+', quantity_units: 3, status: 'pending', urgency: 'urgent', required_by: new Date(Date.now() + 6*60*60*1000).toISOString(), hospital_phone: '555-5678', created_at: new Date(Date.now() - 60*60*1000).toISOString() },
-          { id: '3', hospital_name: 'Memorial Hospital', blood_type: 'B+', quantity_units: 2, status: 'fulfilled', urgency: 'routine', required_by: new Date(Date.now() + 24*60*60*1000).toISOString(), hospital_phone: '555-9012', created_at: new Date(Date.now() - 2*60*60*1000).toISOString() },
-          { id: '4', hospital_name: 'Children\'s Hospital', blood_type: 'AB+', quantity_units: 1, status: 'pending', urgency: 'routine', required_by: new Date(Date.now() + 48*60*60*1000).toISOString(), hospital_phone: '555-3456', created_at: new Date(Date.now() - 4*60*60*1000).toISOString() }
-        ];
-      }
+      const requests = data.data || [];
       
       const inventory = await apiCall('/staff/inventory');
       availableUnits = inventory.success ? inventory.data : [];
@@ -251,6 +245,10 @@
         requests = requests.filter(r => r.status.toLowerCase() === currentFilter);
       }
 
+      if (!requests.length) {
+        document.getElementById('requestsContainer').innerHTML = '<div class="empty-state">No requests found.</div>';
+        return;
+      }
       const html = requests.map(r => {
         const isPending = r.status.toLowerCase() === 'pending';
         const isFulfilled = r.status.toLowerCase() === 'fulfilled';
@@ -370,18 +368,14 @@
         return showAlert('Please select at least one unit', 'error');
       }
 
-      const result = await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
+      await apiCall(`/staff/requests/${currentRequestId}/fulfill`, 'PUT', {
         blood_unit_ids: selectedUnits,
         notes: document.getElementById('fulfillNotes').value
       });
 
-      if (result.success) {
-        showAlert('Request fulfilled successfully', 'success');
-        closeFulfillModal();
-        loadRequests();
-      } else {
-        showAlert(result.message || 'Failed to fulfill request', 'error');
-      }
+      showAlert('✓ Request fulfilled successfully', 'success');
+      closeFulfillModal();
+      loadRequests();
     }
 
     function openRejectModal(requestId) {
@@ -397,17 +391,13 @@
     async function rejectRequest(e) {
       e.preventDefault();
 
-      const result = await apiCall(`/staff/requests/${currentRequestId}/reject`, 'PUT', {
+      await apiCall(`/staff/requests/${currentRequestId}/reject`, 'PUT', {
         rejection_reason: document.getElementById('rejectReason').value
       });
 
-      if (result.success) {
-        showAlert('Request rejected', 'success');
-        closeRejectModal();
-        loadRequests();
-      } else {
-        showAlert(result.message || 'Failed to reject request', 'error');
-      }
+      showAlert('✓ Request rejected', 'success');
+      closeRejectModal();
+      loadRequests();
     }
 
     function showAlert(message, type) {

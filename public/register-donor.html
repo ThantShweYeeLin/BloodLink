@@ -117,6 +117,31 @@
       border-radius: 8px;
       margin-bottom: 1rem;
     }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .login-link p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .login-link a {
+      color: #c62828;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .login-link a:hover {
+      color: #a01e1e;
+      text-decoration: underline;
+    }
     
     @media (max-width: 768px) {
       .container {
@@ -191,6 +216,10 @@
         </div>
 
         <button type="submit">Register</button>
+
+        <div class="login-link">
+          <p>Have an account? <a href="donor/login-donor.html">Login here</a></p>
+        </div>
       </form>
     </div>
   </div>
